@@ -1321,10 +1321,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update cart count directly from server response
                 if (data.cart_count !== undefined) {
                     const cartCountEl = document.getElementById('cart-count');
-                    const cartCountMobileEl = document.getElementById('cart-count-mobile');
+                    const cartCountMobileHeaderEl = document.getElementById('cart-count-mobile-header');
                     if (cartCountEl) cartCountEl.textContent = data.cart_count;
-                    if (cartCountMobileEl) cartCountMobileEl.textContent = data.cart_count;
+                    if (cartCountMobileHeaderEl) cartCountMobileHeaderEl.textContent = data.cart_count;
                     console.log('🛒 Cart count updated to:', data.cart_count);
+                }
+                
+                // Also trigger Alpine.js cart count update for consistency
+                const app = Alpine.$data(document.querySelector('[x-data]'));
+                if (app && app.updateCartCount) {
+                    app.updateCartCount();
                 }
             } else {
                 console.error('🛒 Server returned error:', data.error);
