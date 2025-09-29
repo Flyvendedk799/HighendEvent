@@ -2,6 +2,7 @@
 
 from flask import Blueprint, request, current_app
 from flask_login import login_required
+from flask_wtf.csrf import exempt
 import json
 
 import stripe
@@ -12,6 +13,7 @@ bp = Blueprint('stripe_webhooks', __name__)
 
 
 @bp.route('/stripe/test', methods=['GET', 'POST'])
+@exempt
 def stripe_test():
     """Test endpoint to verify webhooks can reach the server."""
     if request.method == 'POST':
@@ -26,6 +28,7 @@ def stripe_test():
 
 
 @bp.route('/stripe/webhook', methods=['POST'])
+@exempt
 def stripe_webhook():
     """Handle Stripe webhook events."""
     
