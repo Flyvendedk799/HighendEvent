@@ -32,7 +32,7 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def save_uploaded_file(file, upload_folder='app/static/uploads/products'):
+def save_uploaded_file(file, upload_folder='app/static/images'):
     """Save uploaded file and return the filename."""
     if file and allowed_file(file.filename):
         # Generate unique filename
@@ -47,8 +47,8 @@ def save_uploaded_file(file, upload_folder='app/static/uploads/products'):
         file_path = os.path.join(upload_folder, unique_filename)
         file.save(file_path)
         
-        # Return relative path for database storage
-        return f"uploads/products/{unique_filename}"
+        # Return just the filename (image filter will handle the /static/images/ part)
+        return unique_filename
     return None
 
 
