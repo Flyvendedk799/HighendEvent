@@ -28,6 +28,21 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+    
+    # Handle CSRF errors for webhook endpoints
+    @app.errorhandler(400)
+    def handle_csrf_error(error):
+        """Handle CSRF errors, especially for webhook endpoints."""
+        from flask import request
+        
+        # If this is a webhook endpoint, return 200 OK to prevent retries
+        if request and request.path and request.path.startswith('/stripe/'):
+            from flask import current_app
+            current_app.logger.info(f'🔗 CSRF error on webhook endpoint {request.path} - returning 200 OK')
+            return 'Webhook received', 200
+            
+        # For all other 400 errors, return the original error
+        return error
 
     # Configure login manager
     login_manager.login_view = 'customer.login'  # Default to customer login
