@@ -8,7 +8,7 @@ import os
 
 # Add your project directory to the Python path
 # Update this path to match your PythonAnywhere directory
-path = '/home/yourusername/highendevent'
+path = '/home/TobiasMastek/festudlej'
 if path not in sys.path:
     sys.path.insert(0, path)
 
