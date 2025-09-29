@@ -1211,18 +1211,41 @@ def order_confirmation(booking_no=None):
                             
                             current_app.logger.info(f'Production mode: Booking {booking.booking_no} created and marked as paid')
                             
-                            # Log in the guest customer if they were just created
-                            if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
-                                from flask_login import login_user
-                                login_user(booking.customer)
-                                session['user_type'] = 'customer'
-                                session.permanent = True  # Make session persistent
-                                current_app.logger.info(f'🔐 Guest customer {booking.customer.email} logged in successfully')
-                                current_app.logger.info(f'🔐 Customer ID: {booking.customer.id}, First name: {booking.customer.first_name}')
-                                current_app.logger.info(f'🔐 Session user_type set to: {session.get("user_type")}')
-                                current_app.logger.info(f'🔐 Current user authenticated: {booking.customer.is_authenticated}')
+                            # Only do guest user flow if current user is not already authenticated
+                            from flask_login import current_user as flask_current_user
+                            if not flask_current_user.is_authenticated:
+                                # Log in the guest customer if they were just created
+                                if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
+                                    from flask_login import login_user
+                                    login_user(booking.customer)
+                                    session['user_type'] = 'customer'
+                                    session.permanent = True  # Make session persistent
+                                    current_app.logger.info(f'🔐 Guest customer {booking.customer.email} logged in successfully')
+                                    current_app.logger.info(f'🔐 Customer ID: {booking.customer.id}, First name: {booking.customer.first_name}')
+                                    current_app.logger.info(f'🔐 Session user_type set to: {session.get("user_type")}')
+                                    current_app.logger.info(f'🔐 Current user authenticated: {booking.customer.is_authenticated}')
+                                    
+                                    # Send profile completion email for guest customers
+                                    try:
+                                        from app.services.email_service import email_service
+                                        current_app.logger.info(f'📧 Checking guest customer for profile email: {booking.customer.email}')
+                                        current_app.logger.info(f'📧 Customer password_hash: {booking.customer.password_hash}')
+                                        current_app.logger.info(f'📧 Customer first_name: {booking.customer.first_name}')
+                                        current_app.logger.info(f'📧 About to send profile completion email to {booking.customer.email}')
+                                        
+                                        result = email_service.send_profile_completion_email(
+                                            booking.customer.email,
+                                            booking.customer.first_name
+                                        )
+                                        current_app.logger.info(f'📧 Profile completion email sent successfully to {booking.customer.email}: {result}')
+                                    except Exception as e:
+                                        current_app.logger.error(f'❌ Failed to send profile completion email: {str(e)}')
+                                        import traceback
+                                        current_app.logger.error(f'❌ Full traceback: {traceback.format_exc()}')
+                            else:
+                                current_app.logger.info(f'🔐 User already authenticated: {flask_current_user.email}, skipping guest login flow')
                             
-                            # Send order confirmation email
+                            # Send order confirmation email (always send this)
                             try:
                                 from app.services.email_service import email_service
                                 result = email_service.send_order_confirmation(
@@ -1233,30 +1256,6 @@ def order_confirmation(booking_no=None):
                                 current_app.logger.info(f'Order confirmation email sent to {booking.email}: {result}')
                             except Exception as e:
                                 current_app.logger.error(f'Failed to send order confirmation email: {str(e)}')
-                            
-                            # Send profile completion email for guest customers
-                            if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
-                                try:
-                                    from app.services.email_service import email_service
-                                    current_app.logger.info(f'📧 Checking guest customer for profile email: {booking.customer.email}')
-                                    current_app.logger.info(f'📧 Customer password_hash: {booking.customer.password_hash}')
-                                    current_app.logger.info(f'📧 Customer first_name: {booking.customer.first_name}')
-                                    current_app.logger.info(f'📧 About to send profile completion email to {booking.customer.email}')
-                                    
-                                    result = email_service.send_profile_completion_email(
-                                        booking.customer.email,
-                                        booking.customer.first_name
-                                    )
-                                    current_app.logger.info(f'📧 Profile completion email sent successfully to {booking.customer.email}: {result}')
-                                except Exception as e:
-                                    current_app.logger.error(f'❌ Failed to send profile completion email: {str(e)}')
-                                    import traceback
-                                    current_app.logger.error(f'❌ Full traceback: {traceback.format_exc()}')
-                            else:
-                                if booking.customer:
-                                    current_app.logger.info(f'📧 Customer {booking.customer.email} is not a guest (password_hash: {booking.customer.password_hash})')
-                                else:
-                                    current_app.logger.info(f'📧 No customer associated with booking {booking.booking_no}')
                         else:
                             current_app.logger.error('Development mode: Failed to create booking from session data')
                     else:
@@ -1332,18 +1331,41 @@ def order_confirmation(booking_no=None):
                         
                         current_app.logger.info(f'Booking {booking.booking_no} created and marked as paid')
                         
-                        # Log in the guest customer if they were just created
-                        if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
-                            from flask_login import login_user
-                            login_user(booking.customer)
-                            session['user_type'] = 'customer'
-                            session.permanent = True  # Make session persistent
-                            current_app.logger.info(f'🔐 Guest customer {booking.customer.email} logged in successfully')
-                            current_app.logger.info(f'🔐 Customer ID: {booking.customer.id}, First name: {booking.customer.first_name}')
-                            current_app.logger.info(f'🔐 Session user_type set to: {session.get("user_type")}')
-                            current_app.logger.info(f'🔐 Current user authenticated: {booking.customer.is_authenticated}')
+                        # Only do guest user flow if current user is not already authenticated
+                        from flask_login import current_user as flask_current_user
+                        if not flask_current_user.is_authenticated:
+                            # Log in the guest customer if they were just created
+                            if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
+                                from flask_login import login_user
+                                login_user(booking.customer)
+                                session['user_type'] = 'customer'
+                                session.permanent = True  # Make session persistent
+                                current_app.logger.info(f'🔐 Guest customer {booking.customer.email} logged in successfully')
+                                current_app.logger.info(f'🔐 Customer ID: {booking.customer.id}, First name: {booking.customer.first_name}')
+                                current_app.logger.info(f'🔐 Session user_type set to: {session.get("user_type")}')
+                                current_app.logger.info(f'🔐 Current user authenticated: {booking.customer.is_authenticated}')
+                                
+                                # Send profile completion email for guest customers
+                                try:
+                                    from app.services.email_service import email_service
+                                    current_app.logger.info(f'📧 Checking guest customer for profile email: {booking.customer.email}')
+                                    current_app.logger.info(f'📧 Customer password_hash: {booking.customer.password_hash}')
+                                    current_app.logger.info(f'📧 Customer first_name: {booking.customer.first_name}')
+                                    current_app.logger.info(f'📧 About to send profile completion email to {booking.customer.email}')
+                                    
+                                    result = email_service.send_profile_completion_email(
+                                        booking.customer.email,
+                                        booking.customer.first_name
+                                    )
+                                    current_app.logger.info(f'📧 Profile completion email sent successfully to {booking.customer.email}: {result}')
+                                except Exception as e:
+                                    current_app.logger.error(f'❌ Failed to send profile completion email: {str(e)}')
+                                    import traceback
+                                    current_app.logger.error(f'❌ Full traceback: {traceback.format_exc()}')
+                        else:
+                            current_app.logger.info(f'🔐 User already authenticated: {flask_current_user.email}, skipping guest login flow')
                         
-                        # Send order confirmation email
+                        # Send order confirmation email (always send this)
                         try:
                             from app.services.email_service import email_service
                             result = email_service.send_order_confirmation(
@@ -1354,30 +1376,6 @@ def order_confirmation(booking_no=None):
                             current_app.logger.info(f'Order confirmation email sent to {booking.email}: {result}')
                         except Exception as e:
                             current_app.logger.error(f'Failed to send order confirmation email: {str(e)}')
-                        
-                        # Send profile completion email for guest customers
-                        if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
-                            try:
-                                from app.services.email_service import email_service
-                                current_app.logger.info(f'📧 Checking guest customer for profile email: {booking.customer.email}')
-                                current_app.logger.info(f'📧 Customer password_hash: {booking.customer.password_hash}')
-                                current_app.logger.info(f'📧 Customer first_name: {booking.customer.first_name}')
-                                current_app.logger.info(f'📧 About to send profile completion email to {booking.customer.email}')
-                                
-                                result = email_service.send_profile_completion_email(
-                                    booking.customer.email,
-                                    booking.customer.first_name
-                                )
-                                current_app.logger.info(f'📧 Profile completion email sent successfully to {booking.customer.email}: {result}')
-                            except Exception as e:
-                                current_app.logger.error(f'❌ Failed to send profile completion email: {str(e)}')
-                                import traceback
-                                current_app.logger.error(f'❌ Full traceback: {traceback.format_exc()}')
-                        else:
-                            if booking.customer:
-                                current_app.logger.info(f'📧 Customer {booking.customer.email} is not a guest (password_hash: {booking.customer.password_hash})')
-                            else:
-                                current_app.logger.info(f'📧 No customer associated with booking {booking.booking_no}')
                     else:
                         current_app.logger.error('Development mode: Failed to create booking from session data')
                         return f"""

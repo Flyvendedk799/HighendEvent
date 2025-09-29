@@ -76,71 +76,17 @@ def stripe_webhook():
 def handle_checkout_session_completed(session):
     """Handle successful checkout session completion."""
     try:
-        # Check if this is a cart-based checkout (new flow)
-        if session.get('metadata', {}).get('checkout_type') == 'cart_based':
-            # Create booking from session data
-            from flask import session as flask_session
-            from app.blueprints.shop import create_booking_from_cart
-            from app.forms import CheckoutForm
-            
-            checkout_data = flask_session.get('checkout_data')
-            if not checkout_data:
-                current_app.logger.error(f'No checkout data found in session for Stripe session: {session["id"]}')
-                return
-            
-            # Create form object from stored data
-            form = CheckoutForm()
-            form.customer_name.data = checkout_data['form_data']['customer_name']
-            form.email.data = checkout_data['form_data']['email']
-            form.phone.data = checkout_data['form_data']['phone']
-            form.address.data = checkout_data['form_data']['address']
-            form.zip_code.data = checkout_data['form_data']['zip_code']
-            form.city.data = checkout_data['form_data']['city']
-            form.delivery_type.data = checkout_data['form_data']['delivery_type']
-            form.notes.data = checkout_data['form_data']['notes']
-            
-            # Create booking from cart data
-            booking = create_booking_from_cart(checkout_data['cart_data'], form)
-            
-            if not booking:
-                current_app.logger.error('Failed to create booking from cart data in webhook')
-                return
-            
-            # Update booking with Stripe session info
-            booking.stripe_session_id = session['id']
-            booking.stripe_payment_intent_id = session.get('payment_intent')
-            booking.status = BookingStatus.FULLY_PAID
-            
-            db.session.commit()
-            
-            # Clear checkout data from session
-            flask_session.pop('checkout_data', None)
-            
-            # Send confirmation email
-            from app.utils.email import send_booking_confirmation
-            send_booking_confirmation(booking)
-            
-            current_app.logger.info(f'Booking {booking.booking_no} created and marked as paid')
-            
-        else:
-            # Legacy flow - get existing booking by Stripe session ID
-            booking = Booking.query.filter_by(stripe_session_id=session['id']).first()
-            
-            if not booking:
-                current_app.logger.error(f'Booking not found for Stripe session: {session["id"]}')
-                return
-            
-            # Update booking status to fully paid (full amount received upfront)
-            booking.status = BookingStatus.FULLY_PAID
-            booking.stripe_payment_intent_id = session.get('payment_intent')
-            
-            db.session.commit()
-            
-            # Send confirmation email
-            from app.utils.email import send_booking_confirmation
-            send_booking_confirmation(booking)
-            
-            current_app.logger.info(f'Booking {booking.booking_no} marked as paid')
+        current_app.logger.info(f'🔗 Processing checkout.session.completed for session: {session["id"]}')
+        
+        # Check if booking already exists (created via direct flow)
+        existing_booking = Booking.query.filter_by(stripe_session_id=session['id']).first()
+        if existing_booking:
+            current_app.logger.info(f'✅ Booking {existing_booking.booking_no} already exists for session {session["id"]}')
+            return
+        
+        # For webhooks, we don't have access to Flask session, so we skip creation
+        # The booking should already be created via the direct flow after Stripe redirect
+        current_app.logger.info(f'⚠️ No existing booking found for session {session["id"]}, but this is expected in webhook context')
         
     except Exception as e:
         current_app.logger.error(f'Error handling checkout session completed: {str(e)}')

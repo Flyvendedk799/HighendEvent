@@ -167,8 +167,8 @@
         </div>
         {% endif %}
         
-        <!-- Profile Completion Call-to-Action -->
-        {% if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING' %}
+        <!-- Profile Completion Call-to-Action (only for guest users who aren't fully registered) -->
+        {% if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING' and current_user.is_authenticated and current_user.password_hash == 'GUEST_ACCOUNT_PENDING' %}
         <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-8">
             <div class="text-center">
                 <h3 class="text-xl font-semibold text-green-900 mb-2">Fuldfør din profil for at se dine bookinger</h3>
