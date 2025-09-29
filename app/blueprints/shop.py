@@ -1145,9 +1145,10 @@ def order_confirmation(booking_no=None):
         booking = Booking.query.filter_by(stripe_session_id=session_id).first()
         
         if not booking:
-            # In development mode, try to create booking from session data
-            if current_app.config.get('ENV') == 'development' or current_app.debug:
-                current_app.logger.info('Development mode: Creating booking from session data after Stripe return')
+            # Try to create booking from session data (for both dev and production)
+            # This handles cases where webhooks haven't processed yet
+            if True:  # Always try this approach
+                current_app.logger.info('Creating booking from session data after Stripe return')
                 try:
                     checkout_data = session.get('checkout_data')
                     if checkout_data:
@@ -1244,7 +1245,7 @@ def order_confirmation(booking_no=None):
                     
                     debug_info += f"<h3>Booking Creation Result:</h3><pre>{booking}</pre>"
                     
-                    current_app.logger.info(f'Development mode: Booking creation result: {booking}')
+                    current_app.logger.info(f'Booking creation result: {booking}')
                     
                     if booking:
                         # Update booking status
@@ -1260,7 +1261,7 @@ def order_confirmation(booking_no=None):
                         # Clear checkout data from session
                         session.pop('checkout_data', None)
                         
-                        current_app.logger.info(f'Development mode: Booking {booking.booking_no} created and marked as paid')
+                        current_app.logger.info(f'Booking {booking.booking_no} created and marked as paid')
                         
                         # Log in the guest customer if they were just created
                         if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING':
@@ -1821,8 +1822,9 @@ def create_stripe_session_from_cart(total_amount: Decimal, customer_name: str, c
                         'line_items[0][price_data][unit_amount]': int(total_amount * 100),
                         'line_items[0][quantity]': 1,
                         'mode': 'payment',
-                        'success_url': url_for('shop.order_confirmation', _external=True),
-                        'cancel_url': url_for('shop.checkout', _external=True)
+                        'success_url': url_for('shop.order_confirmation', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+                        'cancel_url': url_for('shop.checkout', _external=True),
+                        'metadata[checkout_type]': 'cart_based'
                     }
                     
                     response = requests.post('https://api.stripe.com/v1/checkout/sessions', headers=headers, data=data)
