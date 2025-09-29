@@ -1,0 +1,223 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Mersalgs for {{ product.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    Mersalgs for <strong>{{ product.name }}</strong>
+                </h1>
+                <p class="text-lg text-gray-600">Administrer tilkøbsprodukter for dette produkt</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{{ url_for('admin.products') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m0 7h18"></path>
+                    </svg>
+                    Tilbage til produkter
+                </a>
+                <a href="{{ url_for('admin.edit_product', id=product.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Rediger produkt
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Current Upsells -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-lg font-semibold text-gray-900">
+                        Tilknyttede Mersalgs Produkter
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">{{ current_upsells|length }}</span>
+                    </h5>
+                </div>
+                <div class="p-6">
+                    {% if current_upsells %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Billede</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Navn</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pris</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lager</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rækkefølge</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Handlinger</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for upsell_assoc, upsell_product in current_upsells %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if upsell_product.image_url %}
+                                        <img src="{{ url_for('static', filename=upsell_product.image_url) }}" 
+                                             alt="{{ upsell_product.name }}" 
+                                             class="w-10 h-10 rounded-lg object-cover border border-gray-200">
+                                        {% else %}
+                                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ upsell_product.name }}</div>
+                                        {% if upsell_product.description %}
+                                        <div class="text-sm text-gray-500">{{ upsell_product.description[:60] }}{% if upsell_product.description|length > 60 %}...{% endif %}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ upsell_product.price_dkk }} DKK</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if upsell_product.stock_qty > 10 %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ upsell_product.stock_qty }}</span>
+                                        {% elif upsell_product.stock_qty > 0 %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">{{ upsell_product.stock_qty }}</span>
+                                        {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ upsell_assoc.sort_order }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <form method="POST" 
+                                              action="{{ url_for('admin.remove_product_upsell', product_id=product.id, upsell_id=upsell_product.id) }}" 
+                                              class="inline"
+                                              onsubmit="return confirm('Er du sikker på at du vil fjerne dette mersalgs produkt?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="text-red-600 hover:text-red-900 transition-colors duration-200" title="Fjern">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen mersalgs produkter tilknyttet</h3>
+                        <p class="mt-1 text-sm text-gray-500">Tilføj mersalgs produkter fra listen til højre.</p>
+                    </div>
+                    {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+        <!-- Available Upsells -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-lg font-semibold text-gray-900">
+                        Tilgængelige Mersalgs Produkter
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">{{ available_upsells|length }}</span>
+                    </h5>
+                </div>
+                <div class="p-6">
+                    {% if available_upsells %}
+                    <form method="POST" action="{{ url_for('admin.add_product_upsell', product_id=product.id) }}" class="mb-6">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-4">
+                            <label for="upsell_product_id" class="block text-sm font-medium text-gray-700 mb-2">Vælg mersalgs produkt:</label>
+                            <select name="upsell_product_id" id="upsell_product_id" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">-- Vælg produkt --</option>
+                                {% for upsell in available_upsells %}
+                                <option value="{{ upsell.id }}">
+                                    {{ upsell.name }} ({{ upsell.price_dkk }} DKK)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Tilføj
+                        </button>
+                    </form>
+
+                    <div class="border-t border-gray-200 pt-6">
+                        <h6 class="text-sm font-medium text-gray-700 mb-4">Oversigt over tilgængelige produkter:</h6>
+                        <div class="space-y-3">
+                            {% for upsell in available_upsells %}
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                {% if upsell.image_url %}
+                                <img src="{{ url_for('static', filename=upsell.image_url) }}" 
+                                     alt="{{ upsell.name }}" 
+                                     class="w-10 h-10 rounded-lg object-cover border border-gray-200 mr-3">
+                                {% else %}
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                {% endif %}
+                                <div class="flex-1">
+                                    <h6 class="text-sm font-medium text-gray-900">{{ upsell.name }}</h6>
+                                    <p class="text-sm text-gray-500">{{ upsell.price_dkk }} DKK</p>
+                                    {% if upsell.description %}
+                                    <p class="text-xs text-gray-400 mt-1">{{ upsell.description[:50] }}{% if upsell.description|length > 50 %}...{% endif %}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen tilgængelige mersalgs produkter</h3>
+                        <p class="mt-1 text-sm text-gray-500">Alle mersalgs produkter er allerede tilknyttet dette produkt, eller der er ingen oprettet.</p>
+                        <div class="mt-4">
+                            <a href="{{ url_for('admin.create_upsell_product') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Opret nyt
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                        </div>
+                    </div>
+
+            <!-- Quick Actions -->
+            <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-lg font-semibold text-gray-900">Hurtige handlinger</h5>
+                </div>
+                <div class="p-6 space-y-3">
+                    <a href="{{ url_for('admin.upsell_products') }}" class="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                        Alle mersalgs produkter
+                    </a>
+                    <a href="{{ url_for('admin.create_upsell_product') }}" class="flex items-center justify-center w-full px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Opret nyt mersalgs produkt
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

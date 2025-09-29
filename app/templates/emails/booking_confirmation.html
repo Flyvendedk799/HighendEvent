@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking bekræftelse - {{ booking.booking_no }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background-color: #f9fafb; }
+        .booking-details { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+        .button { display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background-color: #f3f4f6; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking bekræftet!</h1>
+            <p>Tak for din booking hos Festudlej</p>
+        </div>
+        
+        <div class="content">
+            <h2>Hej {{ booking.customer_name }},</h2>
+            <p>Tak for din booking! Vi har modtaget din anmodning og vil behandle den hurtigst muligt.</p>
+            
+            <div class="booking-details">
+                <h3>Booking detaljer</h3>
+                <table>
+                    <tr>
+                        <th>Booking nummer:</th>
+                        <td>{{ booking.booking_no }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>{{ booking.status | status_text }}</td>
+                    </tr>
+                    <tr>
+                        <th>Periode:</th>
+                        <td>{{ booking.start_date | date_format }} - {{ booking.end_date | date_format }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="booking-details">
+                <h3>💳 Betalingsoversigt</h3>
+                <table style="margin-bottom: 20px;">
+                    <tr style="background-color: #dbeafe;">
+                        <th colspan="2" style="color: #1e40af; text-align: center;">Du har betalt</th>
+                    </tr>
+                    <tr>
+                        <th>Leje af udstyr:</th>
+                        <td><strong>{{ booking.subtotal_dkk | currency }}</strong></td>
+                    </tr>
+                    {% if booking.delivery_fee_dkk > 0 %}
+                    <tr>
+                        <th>Leveringsgebyr:</th>
+                        <td><strong>{{ booking.delivery_fee_dkk | currency }}</strong></td>
+                    </tr>
+                    {% endif %}
+                    <tr style="background-color: #f3f4f6; font-weight: bold;">
+                        <th>Betalt i alt:</th>
+                        <td><strong>{{ booking.total_dkk | currency }}</strong></td>
+                    </tr>
+                </table>
+
+                {% if booking.deposit_dkk > 0 %}
+                <table style="margin-top: 10px;">
+                    <tr style="background-color: #fef3c7;">
+                        <th colspan="2" style="color: #92400e; text-align: center;">🔒 Depositum (refunderbart)</th>
+                    </tr>
+                    <tr>
+                        <th>Depositum for udstyr:</th>
+                        <td><strong>{{ booking.deposit_dkk | currency }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="font-size: 12px; color: #92400e; padding: 10px;">
+                            ℹ️ Depositummet returneres efter udstyret er afleveret i god stand
+                        </td>
+                    </tr>
+                </table>
+                {% endif %}
+            </div>
+            
+            <h3>Bookede produkter</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produkt</th>
+                        <th>Antal</th>
+                        <th>Pris</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in booking.items %}
+                    <tr>
+                        <td>{{ item.name_snapshot }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ (item.unit_price_dkk * item.quantity) | currency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if booking.notes %}
+            <h3>Bemærkninger</h3>
+            <p>{{ booking.notes }}</p>
+            {% endif %}
+            
+            <p><a href="{{ url_for('shop.order_confirmation', booking_no=booking.booking_no, _external=True) }}" class="button">Se booking detaljer</a></p>
+        </div>
+        
+        <div class="footer">
+            <p>Festudlej ApS<br>
+            Eventvej 123, 2100 København Ø<br>
+            +45 12 34 56 78 | info@festudlej.dk</p>
+        </div>
+    </div>
+</body>
+</html>
+
+
+

@@ -1,0 +1,185 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if upsell_product %}Rediger{% else %}Opret{% endif %} Mersalgs Produkt - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    {% if upsell_product %}Rediger{% else %}Opret{% endif %} Mersalgs Produkt
+                </h1>
+                <p class="text-lg text-gray-600">{% if upsell_product %}Opdater{% else %}Tilføj nyt{% endif %} mersalgs produkt til systemet</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{{ url_for('admin.upsell_products') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m0 7h18"></path>
+                    </svg>
+                    Tilbage til liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-lg font-semibold text-gray-900">Produkt information</h5>
+                </div>
+                <div class="p-6">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="md:col-span-3">
+                                <div class="mb-6">
+                                    {{ form.name.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                    {{ form.name(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.name.errors else "")) }}
+                                    {% if form.name.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="md:col-span-1">
+                                <div class="mb-6">
+                                    {{ form.price_dkk.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                    <div class="relative">
+                                        {{ form.price_dkk(class="block w-full pl-3 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.price_dkk.errors else "")) }}
+                                        <div class="absolute inset-y-0 right-0 flex items-center">
+                                            <span class="text-gray-500 sm:text-sm pr-3">DKK</span>
+                                        </div>
+                                    </div>
+                                    {% if form.price_dkk.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.price_dkk.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            {{ form.description.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.description(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.description.errors else "")) }}
+                            {% if form.description.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Beskriv mersalgs produktet og dets fordele.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="mb-6">
+                                    {{ form.stock_qty.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                    {{ form.stock_qty(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.stock_qty.errors else "")) }}
+                                    {% if form.stock_qty.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.stock_qty.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <p class="mt-1 text-sm text-gray-500">Antal enheder på lager. Sæt til 0 hvis udsolgt.</p>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                    <div class="flex items-center">
+                                        {{ form.is_active(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                                        {{ form.is_active.label(class="ml-2 block text-sm text-gray-900") }}
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-500">Kun aktive produkter vises til kunder.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            {{ form.image.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.image(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" + (" border-red-300" if form.image.errors else "")) }}
+                            {% if form.image.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.image.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Upload et billede af mersalgs produktet. Understøttede formater: JPG, PNG, GIF, WebP.</p>
+                        </div>
+
+                        <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                            <a href="{{ url_for('admin.upsell_products') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                                Annuller
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {% if upsell_product %}Opdater{% else %}Opret{% endif %} Mersalgs Produkt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 space-y-6">
+            {% if upsell_product and upsell_product.image_url %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-lg font-semibold text-gray-900">Nuværende billede</h5>
+                </div>
+                <div class="p-6">
+                    <img src="{{ url_for('static', filename=upsell_product.image_url) }}" 
+                         alt="{{ upsell_product.name }}" 
+                         class="w-full h-auto rounded-lg">
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-lg font-semibold text-gray-900">Hjælp</h5>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <h6 class="font-semibold text-gray-900 mb-2">Mersalgs produkter</h6>
+                        <p class="text-sm text-gray-600">
+                            Mersalgs produkter er tilkøbs produkter som kunder kan tilføje til deres lejeperiode. 
+                            For eksempel: popcorn pakker til popcorn maskiner, ekstra udstyr, etc.
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h6 class="font-semibold text-gray-900 mb-2">Prissætning</h6>
+                        <p class="text-sm text-gray-600">
+                            Mersalgs produkter har en fast pris uanset lejeperiode. Prisen er pr. styk/pakke.
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h6 class="font-semibold text-gray-900 mb-2">Lagerstyring</h6>
+                        <p class="text-sm text-gray-600">
+                            Hold øje med lagerantallet. Når det når 0, vises produktet som udsolgt til kunder.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

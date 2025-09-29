@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+            <p class="text-lg text-gray-600">Udfyld dine oplysninger for at gennemføre bestillingen</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Customer Information Form -->
+            <div>
+
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Kundeoplysninger</h2>
+                    
+                    <form method="POST" action="{{ url_for('shop.process_checkout') }}" class="space-y-6">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Name -->
+                        <div>
+                            {{ form.customer_name.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.customer_name(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.customer_name.errors else "")) }}
+                            {% if form.customer_name.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.customer_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Email -->
+                        <div>
+                            {{ form.email.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.email(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.email.errors else "")) }}
+                            {% if form.email.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Phone -->
+                        <div>
+                            {{ form.phone.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.phone(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.phone.errors else "")) }}
+                            {% if form.phone.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.phone.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Address -->
+                        <div>
+                            {{ form.address.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.address(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.address.errors else "")) }}
+                            {% if form.address.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- ZIP and City -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                {{ form.zip_code.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                {{ form.zip_code(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.zip_code.errors else "")) }}
+                                {% if form.zip_code.errors %}
+                                    <div class="mt-1 text-sm text-red-600">
+                                        {% for error in form.zip_code.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {{ form.city.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                {{ form.city(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.city.errors else "")) }}
+                                {% if form.city.errors %}
+                                    <div class="mt-1 text-sm text-red-600">
+                                        {% for error in form.city.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Delivery Type -->
+                        <div>
+                            {{ form.delivery_type.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.delivery_type(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.delivery_type.errors else "")) }}
+                            {% if form.delivery_type.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.delivery_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Vælg om du vil hente udstyret eller have det leveret</p>
+                        </div>
+                        
+                        <!-- Notes -->
+                        <div>
+                            {{ form.notes.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.notes(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500") }}
+                            {% if form.notes.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Bank Account Information -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="text-lg font-medium text-blue-900 mb-4">Bankoplysninger til depositum refusion (valgfrit)</h3>
+                            <p class="text-sm text-blue-800 mb-4">Du kan angive dine bankoplysninger nu for hurtigere refusion af depositum, eller du kan oplyse dem senere via email.</p>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Account Number -->
+                                <div>
+                                    {{ form.account_number.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                    {{ form.account_number(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.account_number.errors else "")) }}
+                                    {% if form.account_number.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.account_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Registration Number -->
+                                <div>
+                                    {{ form.registration_number.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                                    {{ form.registration_number(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.registration_number.errors else "")) }}
+                                    {% if form.registration_number.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.registration_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms (Simple text instead of checkbox since form doesn't have it) -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="text-sm text-gray-700">
+                                Ved at fortsætte accepterer du vores 
+                                <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">handelsbetingelser</a> 
+                                og 
+                                <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">privatlivspolitik</a>.
+                            </p>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="pt-6">
+                            <button type="submit" 
+                                    class="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Fortsæt til betaling
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div>
+                <div class="bg-gray-50 rounded-lg p-6 sticky top-8">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">Din bestilling</h2>
+                    
+                    <!-- Cart Items Summary -->
+                    <div class="space-y-4 mb-6">
+                        {% for item in session.get('cart', []) %}
+                        {% set product = item.product if item.product else none %}
+                        {% if product %}
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                {% if product.hero_image_url %}
+                                <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}"
+                                     class="w-12 h-12 object-cover rounded-lg">
+                                {% else %}
+                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <span class="text-gray-400 text-xs">Img</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-medium text-gray-900">{{ product.name }}</h4>
+                                <p class="text-xs text-gray-500">{{ item.start_date }} - {{ item.end_date }}</p>
+                                <p class="text-xs text-gray-500">Antal: {{ item.quantity }}</p>
+                            </div>
+                            <div class="text-sm font-medium text-gray-900">
+                                {% if item.price_estimate %}
+                                    {{ item.price_estimate['subtotal'] | currency }}
+                                {% else %}
+                                    Vælg datoer
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pricing Breakdown -->
+                    <div class="border-t pt-6 mb-6">
+                        <!-- Payment Section -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <h3 class="text-sm font-semibold text-blue-900 mb-3">💳 Du betaler nu (via kort)</h3>
+                            <div class="space-y-2">
+                                {% set ns = namespace(total_rental=0, total_deposit=0) %}
+                                {% for item in cart_products %}
+                                    {% if item.price_estimate %}
+                                        {% set ns.total_rental = ns.total_rental + (item.price_estimate.subtotal * item.quantity) %}
+                                        {% if item.price_estimate.deposit_amount > 0 %}
+                                            {% set ns.total_deposit = ns.total_deposit + (item.price_estimate.deposit_amount * item.quantity) %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <!-- Rental amount -->
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Leje af udstyr</span>
+                                    <span class="text-blue-900 font-medium">{{ ns.total_rental | currency }}</span>
+                                </div>
+                                
+                                <!-- Deposit amount -->
+                                {% if ns.total_deposit > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Depositum (refunderbart)</span>
+                                    <span class="text-blue-900 font-medium">{{ ns.total_deposit | currency }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Upsell products -->
+                                {% if upsell_total > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Tilkøb</span>
+                                    <span class="text-blue-900 font-medium">{{ upsell_total | currency }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Delivery fee -->
+                                <div class="flex justify-between text-sm" id="delivery-fee-line" style="display: {% if delivery_fee and delivery_fee > 0 %}flex{% else %}none{% endif %};">
+                                    <span class="text-blue-700">Leveringsgebyr</span>
+                                    <span class="text-blue-900 font-medium" id="delivery-fee-amount">{{ delivery_fee | currency }}</span>
+                                </div>
+                                
+                                <div class="border-t border-blue-200 pt-2">
+                                    <div class="flex justify-between text-base font-bold">
+                                        <span class="text-blue-900">Betales nu via kort</span>
+                                        <span class="text-blue-900" id="total-estimate-amount">{{ total_estimate | currency }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-blue-600 mt-2">
+                                    💡 Dette trækkes fra dit kort ved bestilling
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Payment Security Info -->
+                    <div class="border-t pt-6">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">Sikker betaling</h3>
+                                <p class="text-xs text-gray-500">Dine betalingsoplysninger er beskyttet med SSL-kryptering</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4 text-sm text-gray-600">
+                            <span class="font-medium">Powered by</span>
+                            <svg class="h-6" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M59.5 12.5c0 6.904-5.596 12.5-12.5 12.5s-12.5-5.596-12.5-12.5S40.096 0 47 0s12.5 5.596 12.5 12.5zM47 22c5.247 0 9.5-4.253 9.5-9.5S52.247 3 47 3s-9.5 4.253-9.5 9.5S41.753 22 47 22z" fill="#6772E5"/>
+                                <path d="M17.385 10.242c0-2.212 1.732-3.387 4.72-3.387 2.131 0 4.814.542 6.946 1.653l1.329-3.387C28.238 4.298 25.157 3.5 21.772 3.5c-5.926 0-9.657 3.122-9.657 7.88 0 7.688 10.6 6.446 10.6 9.779 0 1.281-1.12 2.143-2.988 2.143-2.514 0-5.548-.862-7.871-2.143L10.527 24.5c2.323 1.281 5.836 2.143 9.292 2.143 6.118 0 10.025-3.122 10.025-7.88 0-8.262-10.6-6.828-10.6-10.353 0-1.281 1.024-2.143 2.707-2.143 1.924 0 4.335.542 6.178 1.484l1.329-3.387C27.502 3.756 24.61 3.5 21.772 3.5c-2.035 0-3.883.479-5.357 1.35l.97 5.392z" fill="#6772E5"/>
+                                <path d="M1.333 4.167h5.334v16.666H1.333V4.167z" fill="#6772E5"/>
+                                <path d="M8 4.167h5.333L8 20.833V4.167z" fill="#6772E5"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+// Initialize Stripe (for future enhancements)
+const stripe = Stripe('{{ config.STRIPE_PUBLIC_KEY }}');
+
+// Add any additional checkout-specific JavaScript here
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus first input
+    const firstInput = document.querySelector('input[type="text"], input[type="email"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+                <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Behandler...
+            `;
+        });
+    }
+    
+    
+    // Dynamic pricing updates - wait for DOM to be ready
+    setTimeout(() => {
+        const deliveryTypeSelect = document.querySelector('select[name="delivery_type"]');
+        if (deliveryTypeSelect) {
+            console.log('Delivery type select found:', deliveryTypeSelect);
+            console.log('Initial value:', deliveryTypeSelect.value);
+            
+            // Remove any existing event listeners
+            const newSelect = deliveryTypeSelect.cloneNode(true);
+            deliveryTypeSelect.parentNode.replaceChild(newSelect, deliveryTypeSelect);
+            
+            // Add event listener to the new element
+            newSelect.addEventListener('change', function(e) {
+                console.log('Delivery type changed to:', this.value);
+                console.log('Event:', e);
+                
+                // Check if the value actually changed
+                setTimeout(() => {
+                    console.log('Value after change:', this.value);
+                    if (this.value !== 'delivery') {
+                        console.log('Value was reset! Checking for validation errors...');
+                        const errorDiv = this.parentNode.querySelector('.text-red-600');
+                        if (errorDiv) {
+                            console.log('Validation error found:', errorDiv.textContent);
+                        }
+                    }
+                }, 100);
+                
+                updatePricingDynamically(this.value);
+            });
+            
+            // Debug: Log any form resets
+            const form = newSelect.closest('form');
+            if (form) {
+                form.addEventListener('reset', function() {
+                    console.log('Form was reset!');
+                });
+                
+                // Debug: Log form submissions
+                form.addEventListener('submit', function(e) {
+                    console.log('Form is being submitted!');
+                    console.log('Delivery type at submit:', newSelect.value);
+                });
+            }
+        } else {
+            console.log('Delivery type select not found!');
+        }
+    }, 100);
+});
+
+// Function to update pricing dynamically via AJAX
+async function updatePricingDynamically(deliveryType) {
+    console.log('updatePricingDynamically called with:', deliveryType);
+    try {
+        // Show loading state
+        const pricingSection = document.querySelector('.bg-blue-50');
+        if (pricingSection) {
+            pricingSection.style.opacity = '0.6';
+        }
+        
+        console.log('Making AJAX request to /shop/api/calculate-pricing');
+        console.log('Request data:', { delivery_type: deliveryType });
+        // Make AJAX request to calculate pricing
+        const response = await fetch('/shop/api/calculate-pricing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({
+                delivery_type: deliveryType
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Response error:', response.status, errorData);
+            throw new Error(`Failed to calculate pricing: ${response.status} - ${errorData.error || 'Unknown error'}`);
+        }
+        
+        const data = await response.json();
+        console.log('AJAX response received:', data);
+        
+        // Update pricing display
+        updatePricingDisplay(data);
+        console.log('Pricing display updated');
+        
+    } catch (error) {
+        console.error('Error updating pricing:', error);
+        console.log('NOT reloading page to preserve form state');
+        // Don't reload page as it resets the form
+    } finally {
+        // Remove loading state
+        const pricingSection = document.querySelector('.bg-blue-50');
+        if (pricingSection) {
+            pricingSection.style.opacity = '1';
+        }
+    }
+}
+
+// Function to update the pricing display
+function updatePricingDisplay(data) {
+    console.log('updatePricingDisplay called with:', data);
+    
+    // Update total estimate
+    const totalEstimateElement = document.getElementById('total-estimate-amount');
+    if (totalEstimateElement) {
+        totalEstimateElement.textContent = formatCurrency(data.total_estimate);
+        console.log('Updated total estimate to:', formatCurrency(data.total_estimate));
+    } else {
+        console.log('Total estimate element not found');
+    }
+    
+    // Update rental amount
+    const rentalElements = document.querySelectorAll('.text-blue-700');
+    for (let element of rentalElements) {
+        if (element.textContent.includes('Leje af udstyr')) {
+            const nextElement = element.nextElementSibling;
+            if (nextElement) {
+                nextElement.textContent = formatCurrency(data.total_rental);
+            }
+        }
+    }
+    
+    // Update deposit amount
+    for (let element of rentalElements) {
+        if (element.textContent.includes('Depositum')) {
+            const nextElement = element.nextElementSibling;
+            if (nextElement) {
+                nextElement.textContent = formatCurrency(data.total_deposit);
+            }
+        }
+    }
+    
+    // Update delivery fee
+    console.log('Updating delivery fee:', data.delivery_fee);
+    const deliveryFeeLine = document.getElementById('delivery-fee-line');
+    const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
+    
+    if (deliveryFeeLine && deliveryFeeAmount) {
+        if (data.delivery_fee > 0) {
+            deliveryFeeAmount.textContent = formatCurrency(data.delivery_fee);
+            deliveryFeeLine.style.display = 'flex';
+            console.log('Updated delivery fee to:', formatCurrency(data.delivery_fee));
+        } else {
+            deliveryFeeLine.style.display = 'none';
+            console.log('Hiding delivery fee (fee is 0)');
+        }
+    } else {
+        console.log('Delivery fee elements not found');
+    }
+    
+    // Update upsell total (tilkøb)
+    console.log('Updating upsell total:', data.upsell_total);
+    for (let element of document.querySelectorAll('.text-blue-700')) {
+        if (element.textContent.includes('Tilkøb')) {
+            const nextElement = element.nextElementSibling;
+            if (nextElement && data.upsell_total !== undefined) {
+                nextElement.textContent = formatCurrency(data.upsell_total);
+                console.log('Updated upsell total to:', formatCurrency(data.upsell_total));
+            }
+        }
+    }
+    
+}
+
+// Helper function to format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('da-DK', {
+        style: 'currency',
+        currency: 'DKK',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

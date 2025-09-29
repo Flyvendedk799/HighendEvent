@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Udstyr returneret - {{ booking.booking_no }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+            margin-bottom: 10px;
+        }
+        .return-title {
+            color: #1F2937;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .order-number {
+            color: #6B7280;
+            font-size: 16px;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #10B981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .success-message {
+            background-color: #D1FAE5;
+            border: 1px solid #10B981;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .payment-info {
+            background-color: #EFF6FF;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .detail-label {
+            color: #6B7280;
+        }
+        .detail-value {
+            color: #1F2937;
+            font-weight: 500;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #4F46E5;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            color: #6B7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎉 Festudlej</div>
+            <h1 class="return-title">Udstyr returneret</h1>
+            <p class="order-number">Ordrenummer: {{ booking.booking_no }}</p>
+            <div class="status-badge">Returneret i god stand</div>
+        </div>
+        
+        <div class="content">
+            <p>Hej {{ customer_name }},</p>
+            
+            <div class="success-message">
+                <div class="success-icon">✅</div>
+                <h3>Tak for at returnere udstyret!</h3>
+                <p>Vi har modtaget og kontrolleret dit udlejede udstyr, og det er i perfekt stand. Depositummet vil blive refunderet til dig.</p>
+            </div>
+            
+            <p>Din booking er nu afsluttet, og vi håber du har haft en fantastisk oplevelse med vores udstyr!</p>
+            
+            <div class="payment-info">
+                <h3>Betalingsoversigt</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Lejeafgift (nu betalt):</span>
+                    <span class="detail-value">{{ booking.remaining_payment_dkk | currency }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Depositum (refunderet):</span>
+                    <span class="detail-value">-{{ booking.deposit_dkk | currency }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">I alt betalt for leje:</span>
+                    <span class="detail-value">{{ booking.total_dkk | currency }}</span>
+                </div>
+            </div>
+            
+            <p><strong>Depositum refunderet:</strong> Dit depositum på {{ booking.deposit_dkk | currency }} vil blive refunderet til det betalingskort, du brugte ved bestillingen. Refusionen kan tage 3-5 arbejdsdage at nå frem.</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ url_for('customer.booking_detail', id=booking.id, _external=True) }}" class="cta-button">
+                    Se booking detaljer
+                </a>
+            </div>
+            
+            <p>Vi håber du vil overveje at bruge vores tjenester igen i fremtiden. Følg os på sociale medier for at holde dig opdateret på nye produkter og tilbud!</p>
+            
+            <p>Med venlig hilsen,<br>
+            <strong>Festudlej Teamet</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>Festudlej - Professionelt udstyr til dine events</p>
+            <p>Denne email blev sendt til {{ customer_name }}. Hvis du har spørgsmål, er du velkommen til at kontakte os.</p>
+        </div>
+    </div>
+</body>
+</html>
+

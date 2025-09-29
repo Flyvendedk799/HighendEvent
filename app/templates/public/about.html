@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Om os - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Om Festudlej</h1>
+            <p class="text-lg text-gray-600">Din pålidelige partner til professionelt udstyr til fester og events</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="prose max-w-none">
+            {% if about_block %}
+                {{ about_block.content_md | safe }}
+            {% else %}
+                <h2>Vores mission</h2>
+                <p>At gøre det nemt og sikkert at leje professionelt udstyr til fester og events.</p>
+                
+                <h2>Vores værdier</h2>
+                <ul>
+                    <li>Kvalitet i alt vi gør</li>
+                    <li>Service med et smil</li>
+                    <li>Pålidelighed og punktlighed</li>
+                    <li>Fair priser og transparente vilkår</li>
+                </ul>
+                
+                <h2>Vores historie</h2>
+                <p>Festudlej blev grundlagt i 2014 med visionen om at gøre det nemt at leje professionelt udstyr til fester og events. Vi har over 10 års erfaring i branchen og har hjulpet tusindvis af kunder med at skabe uforglemmelige oplevelser.</p>
+                
+                <h2>Vores team</h2>
+                <p>Vores erfarne team består af professionelle medarbejdere, der er specialiserede i at hjælpe dig med at finde det perfekte udstyr til din fest. Vi er stolte af vores høje kundetilfredshed og vores evne til at levere på tid.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

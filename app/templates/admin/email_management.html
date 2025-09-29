@@ -1,0 +1,222 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Email Management - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Email Management</h1>
+                <p class="text-lg text-gray-600">Administrer nyhedsbreve og send emails til kunder</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Nyhedsbrev Abonnenter</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ subscribers|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Kunde Emails</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ customer_emails|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Modtagere</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ (subscribers|length) + (customer_emails|length) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Forms -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Newsletter Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Send Nyhedsbrev</h3>
+            <p class="text-sm text-gray-600 mb-4">Send til alle nyhedsbrev abonnenter ({{ subscribers|length }} modtagere)</p>
+            
+            <form id="newsletter-form">
+                <div class="mb-4">
+                    <label for="newsletter-subject" class="block text-sm font-medium text-gray-700 mb-2">Emne</label>
+                    <input type="text" id="newsletter-subject" name="subject" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Indtast emne..." required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="newsletter-title" class="block text-sm font-medium text-gray-700 mb-2">Titel</label>
+                    <input type="text" id="newsletter-title" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Indtast titel..." required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="newsletter-content" class="block text-sm font-medium text-gray-700 mb-2">Indhold (HTML)</label>
+                    <textarea id="newsletter-content" name="content" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Skriv dit nyhedsbrev indhold her..." required></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200">
+                    Send Nyhedsbrev
+                </button>
+            </form>
+        </div>
+
+        <!-- Bulk Email Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Send til Alle Kunder</h3>
+            <p class="text-sm text-gray-600 mb-4">Send til alle kunder med bookinger ({{ customer_emails|length }} modtagere)</p>
+            
+            <form id="bulk-email-form">
+                <div class="mb-4">
+                    <label for="bulk-subject" class="block text-sm font-medium text-gray-700 mb-2">Emne</label>
+                    <input type="text" id="bulk-subject" name="subject" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Indtast emne..." required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="bulk-title" class="block text-sm font-medium text-gray-700 mb-2">Titel</label>
+                    <input type="text" id="bulk-title" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Indtast titel..." required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="bulk-content" class="block text-sm font-medium text-gray-700 mb-2">Indhold (HTML)</label>
+                    <textarea id="bulk-content" name="content" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Skriv dit email indhold her..." required></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    Send til Alle Kunder
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subscribers List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Nyhedsbrev Abonnenter</h3>
+        </div>
+        
+        {% if subscribers %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tilmeldt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for subscriber in subscribers %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ subscriber.email }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ subscriber.subscribed_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Aktiv
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen abonnenter</h3>
+            <p class="mt-1 text-sm text-gray-500">Der er ingen aktive nyhedsbrev abonnenter endnu.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Newsletter form submission
+document.getElementById('newsletter-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('csrf_token', '{{ csrf_token() }}');
+    
+    fetch('{{ url_for("admin.send_newsletter") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            this.reset();
+        } else {
+            alert('Fejl: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Der opstod en fejl');
+    });
+});
+
+// Bulk email form submission
+document.getElementById('bulk-email-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    formData.append('csrf_token', '{{ csrf_token() }}');
+    
+    fetch('{{ url_for("admin.send_bulk_email") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            this.reset();
+        } else {
+            alert('Fejl: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Der opstod en fejl');
+    });
+});
+</script>
+{% endblock %}
+

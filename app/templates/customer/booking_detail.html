@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Booking #{{ booking.booking_no }} - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Booking #{{ booking.booking_no }}</h1>
+                <p class="text-lg text-gray-600">Dato: {{ booking.start_date.strftime('%d/%m/%Y') }} - {{ booking.end_date.strftime('%d/%m/%Y') }}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{{ url_for('customer.dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Tilbage til Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Status -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Status</h3>
+                <div class="flex items-center space-x-3">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                        {% if booking.status.value == 'pending' %}bg-yellow-100 text-yellow-800
+                        {% elif booking.status.value == 'deposit_paid' %}bg-blue-100 text-blue-800
+                        {% elif booking.status.value == 'out_for_delivery' %}bg-purple-100 text-purple-800
+                        {% elif booking.status.value == 'returned_good' %}bg-green-100 text-green-800
+                        {% elif booking.status.value == 'returned_damaged' %}bg-orange-100 text-orange-800
+                        {% elif booking.status.value == 'fully_paid' %}bg-green-100 text-green-800
+                        {% elif booking.status.value == 'cancelled' %}bg-red-100 text-red-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {% if booking.status.value == 'deposit_paid' %}Deposit Betalt
+                        {% elif booking.status.value == 'out_for_delivery' %}Udleveret
+                        {% elif booking.status.value == 'returned_good' %}Returneret (God Stand)
+                        {% elif booking.status.value == 'returned_damaged' %}Returneret (Skadet)
+                        {% elif booking.status.value == 'fully_paid' %}Fuldt Betalt
+                        {% else %}{{ booking.status.value | title }}{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Items -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Lejede Produkter</h3>
+                <div class="space-y-4">
+                    {% for item in booking.items %}
+                    <div class="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900">{{ item.name_snapshot }}</h4>
+                            <p class="text-sm text-gray-500">Antal: {{ item.quantity }}</p>
+                            
+                            <!-- Display upsell items -->
+                            {% if item.upsell_items %}
+                            <div class="mt-2 pl-3 border-l-2 border-gray-200">
+                                <p class="text-xs text-gray-600 font-medium mb-1">Tilkøb:</p>
+                                {% for upsell in item.upsell_items %}
+                                <div class="flex justify-between text-xs text-gray-600">
+                                    <span>{{ upsell.name_snapshot }} × {{ upsell.quantity }}</span>
+                                    <span>{{ (upsell.unit_price_dkk * upsell.quantity) | currency }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-900">{{ (item.unit_price_dkk * item.quantity) | currency }}</p>
+                            <p class="text-sm text-gray-500">{{ item.unit_price_dkk | currency }} pr. dag</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Betalingsinformation</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Leje ({{ booking.start_date.strftime('%d/%m') }} - {{ booking.end_date.strftime('%d/%m') }})</span>
+                        <span class="text-sm font-medium text-gray-900">{{ booking.subtotal_dkk | currency }}</span>
+                    </div>
+                    
+                    {% if booking.delivery_fee_dkk > 0 %}
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Levering</span>
+                        <span class="text-sm font-medium text-gray-900">{{ booking.delivery_fee_dkk | currency }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Moms (25%)</span>
+                        <span class="text-sm font-medium text-gray-900">{{ booking.vat_dkk | currency }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Depositum (refunderbart)</span>
+                        <span class="text-sm font-medium text-gray-900">{{ booking.deposit_dkk | currency }}</span>
+                    </div>
+                    
+                    {% if upsell_total > 0 %}
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Tilkøb</span>
+                        <span class="text-sm font-medium text-gray-900">{{ upsell_total | currency }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex justify-between py-2 text-lg font-semibold">
+                        <span class="text-gray-900">Total</span>
+                        <span class="text-gray-900">{{ (booking.total_dkk + upsell_total) | currency }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outstanding Payment -->
+            {% if outstanding_amount > 0 %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-8 w-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-yellow-800">Udestående Betaling</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-yellow-700">
+                                Du skylder stadig <strong>{{ outstanding_amount | currency }}</strong> for denne booking.
+                            </p>
+                            <div class="mt-4">
+                                <button onclick="payRemaining()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                    </svg>
+                                    Betal Nu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Customer Information -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Kunde Information</h3>
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Navn:</span>
+                        <span class="ml-2 text-sm text-gray-900">{{ booking.customer_name }}</span>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">E-mail:</span>
+                        <span class="ml-2 text-sm text-gray-900">{{ booking.email }}</span>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Telefon:</span>
+                        <span class="ml-2 text-sm text-gray-900">{{ booking.phone }}</span>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Adresse:</span>
+                        <span class="ml-2 text-sm text-gray-900">{{ booking.address }}, {{ booking.zip_code }} {{ booking.city }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Breakdown -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Betalingsopdeling</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Betalt (deposit + levering):</span>
+                        <span class="text-sm font-medium text-green-600">{{ booking.upfront_payment_dkk | currency }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Efter returnering:</span>
+                        <span class="text-sm font-medium text-blue-600">{{ booking.remaining_payment_dkk | currency }}</span>
+                    </div>
+                    {% if booking.damage_fee_dkk > 0 %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Skadegebyr:</span>
+                        <span class="text-sm font-medium text-red-600">{{ booking.damage_fee_dkk | currency }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notes -->
+            {% if booking.notes %}
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Bemærkninger</h3>
+                <p class="text-sm text-gray-600">{{ booking.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function payRemaining() {
+    if (!confirm('Er du sikker på at du vil betale det udestående beløb?')) {
+        return;
+    }
+    
+    const csrfToken = '{{ csrf_token() }}';
+    
+    fetch(`{{ url_for('customer.pay_remaining', booking_id=booking.id) }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `csrf_token=${csrfToken}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.checkout_url) {
+            window.location.href = data.checkout_url;
+        } else {
+            alert(data.error || 'Der opstod en fejl');
+        }
+    })
+    .catch(error => {
+        alert('Netværksfejl');
+    });
+}
+</script>
+{% endblock %}

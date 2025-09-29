@@ -1,0 +1,806 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Bookinger - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    {% if show_deleted %}
+                        Slettede Bookinger
+                    {% else %}
+                        Bookinger
+                    {% endif %}
+                </h1>
+                <p class="text-lg text-gray-600">
+                    {% if show_deleted %}
+                        Administrer slettede bookinger og gendan dem
+                    {% else %}
+                        Administrer kundebokinger og reservationer
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex items-center space-x-3">
+                {% if show_deleted %}
+                    <a href="{{ url_for('admin.bookings') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Tilbage til aktive
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('admin.bookings', show_deleted='true') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Slettede bookinger
+                    </a>
+                    <a href="{{ url_for('admin.bookings') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Ny booking
+                    </a>
+                {% endif %}
+                <a href="{{ url_for('admin.overview_calendar') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Kalender
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Afventer</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ pending_count or 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Betalt</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ paid_count or 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">I gang</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ in_progress_count or 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Omsætning</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_revenue | currency }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs (only show for non-deleted bookings) -->
+    {% if not show_deleted %}
+    <div class="mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <a href="{{ url_for('admin.bookings', tab='active', status=status, search=search) }}" 
+                   class="py-2 px-1 border-b-2 font-medium text-sm {{ 'border-indigo-500 text-indigo-600' if tab == 'active' else 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    Active Bookinger
+                </a>
+                <a href="{{ url_for('admin.bookings', tab='completed', status=status, search=search) }}" 
+                   class="py-2 px-1 border-b-2 font-medium text-sm {{ 'border-indigo-500 text-indigo-600' if tab == 'completed' else 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    Afsluttede Bookinger
+                </a>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div class="md:col-span-2">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Søg bookinger</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" id="search" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Søg efter booking nummer, navn eller e-mail..." value="{{ search or '' }}">
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="status" name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Alle statuser</option>
+                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>Afventer</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>Betalt</option>
+                    <option value="fulfilled" {% if status == 'fulfilled' %}selected{% endif %}>Fuldført</option>
+                    <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Annulleret</option>
+                </select>
+            </div>
+
+            <!-- Date Filter -->
+            <div>
+                <label for="date_range" class="block text-sm font-medium text-gray-700 mb-2">Dato</label>
+                <select id="date_range" name="date_range" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Alle datoer</option>
+                    <option value="today">I dag</option>
+                    <option value="week">Denne uge</option>
+                    <option value="month">Denne måned</option>
+                    <option value="upcoming">Kommende</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="mt-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <button onclick="applyFilters()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    Filtrer
+                </button>
+                <button onclick="clearFilters()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Ryd filtre
+                </button>
+            </div>
+            <div class="text-sm text-gray-500">
+                {{ bookings.total }} bookinger fundet
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6" id="bulk-actions" style="display: none;">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-700">
+                    <span id="selected-count">0</span> bookinger valgt
+                </span>
+                <div class="flex items-center space-x-2">
+                    {% if show_deleted %}
+                        <button onclick="bulkAction('restore')" class="inline-flex items-center px-3 py-1 border border-green-300 rounded-md text-sm font-medium text-green-700 bg-white hover:bg-green-50">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Gendan
+                        </button>
+                    {% else %}
+                        <button onclick="bulkAction('mark_paid')" class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Marker som betalt
+                        </button>
+                        <button onclick="bulkAction('mark_fulfilled')" class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Marker som fuldført
+                        </button>
+                        <button onclick="bulkAction('cancel')" class="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50">
+                            Annuller
+                        </button>
+                        <button onclick="bulkAction('soft_delete')" class="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Slet
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            <button onclick="clearSelection()" class="text-sm text-gray-500 hover:text-gray-700">
+                Ryd valg
+            </button>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {% if bookings.items %}
+        <!-- Desktop Table -->
+        <div class="hidden xl:block">
+            <table class="w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-3 py-3 text-left w-8">
+                            <input type="checkbox" id="select-all" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        </th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Booking</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Kunde</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Periode</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Produkter</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Beløb</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
+                        {% if show_deleted %}
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Slettet</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Slettet af</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Årsag</th>
+                        {% endif %}
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Handlinger</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for booking in bookings.items %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-200" data-booking-id="{{ booking.id }}">
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <input type="checkbox" class="booking-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" value="{{ booking.id }}">
+                        </td>
+                        <td class="px-3 py-3">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">#{{ booking.booking_no }}</div>
+                                <div class="text-xs text-gray-500">{{ booking.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                            </div>
+                        </td>
+                        <td class="px-3 py-3">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 truncate">{{ booking.customer_name }}</div>
+                                <div class="text-xs text-gray-500 truncate">{{ booking.email }}</div>
+                                {% if booking.phone %}
+                                <div class="text-xs text-gray-500">{{ booking.phone }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-3 py-3">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">{{ booking.start_date.strftime('%d/%m/%Y') }}</div>
+                                <div class="text-xs text-gray-500">til {{ booking.end_date.strftime('%d/%m/%Y') }}</div>
+                                <div class="text-xs text-gray-400">{{ (booking.end_date - booking.start_date).days + 1 }} dage</div>
+                            </div>
+                        </td>
+                        <td class="px-3 py-3">
+                            <div class="text-sm text-gray-900">
+                                {% for item in booking.items[:1] %}
+                                <div class="truncate">{{ item.name_snapshot }}</div>
+                                <div class="text-xs text-gray-500">x{{ item.quantity }}</div>
+                                {% endfor %}
+                                {% if booking.items|length > 1 %}
+                                <div class="text-xs text-gray-500">+{{ booking.items|length - 1 }} flere</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ (booking.total_dkk + booking_upsells.get(booking.id, 0)) | currency }}</div>
+                            {% if booking.deposit_dkk > 0 %}
+                            <div class="text-xs text-gray-500">Dep: {{ booking.deposit_dkk | currency }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ booking.status | status_badge_class }}">
+                                <div class="w-1.5 h-1.5 rounded-full mr-1.5 {{ 'bg-yellow-400' if booking.status == 'pending' else 'bg-green-400' if booking.status == 'paid' else 'bg-blue-400' if booking.status == 'fulfilled' else 'bg-red-400' }}"></div>
+                                {{ booking.status | status_text }}
+                            </span>
+                        </td>
+                        {% if show_deleted %}
+                        <td class="px-3 py-3">
+                            <div class="text-sm text-gray-900">{{ booking.deleted_at.strftime('%d/%m/%Y %H:%M') if booking.deleted_at else 'N/A' }}</div>
+                        </td>
+                        <td class="px-3 py-3">
+                            <div class="text-sm text-gray-900 truncate">{{ booking.deleted_by_user.email if booking.deleted_by_user else 'System' }}</div>
+                        </td>
+                        <td class="px-3 py-3">
+                            <div class="text-sm text-gray-900 truncate" title="{{ booking.deletion_reason or 'Ingen årsag angivet' }}">
+                                {{ booking.deletion_reason or 'Ingen årsag angivet' }}
+                            </div>
+                        </td>
+                        {% endif %}
+                        <td class="px-3 py-3 text-right">
+                            <div class="flex justify-end space-x-1">
+                                <a href="{{ url_for('admin.booking_detail', id=booking.id) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-medium">
+                                    Se detaljer
+                                </a>
+                                {% if not show_deleted %}
+                                <button onclick="changeStatus({{ booking.id }})" class="text-gray-600 hover:text-gray-900 text-xs font-medium">
+                                    Rediger
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mobile/Tablet Card Layout -->
+        <div class="xl:hidden">
+            {% for booking in bookings.items %}
+            <div class="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors duration-200" data-booking-id="{{ booking.id }}">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center">
+                        <input type="checkbox" class="booking-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-3" value="{{ booking.id }}">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">#{{ booking.booking_no }}</div>
+                            <div class="text-xs text-gray-500">{{ booking.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ booking.status | status_badge_class }}">
+                        <div class="w-2 h-2 rounded-full mr-2 {{ 'bg-yellow-400' if booking.status == 'pending' else 'bg-green-400' if booking.status == 'paid' else 'bg-blue-400' if booking.status == 'fulfilled' else 'bg-red-400' }}"></div>
+                        {{ booking.status | status_text }}
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Kunde</div>
+                        <div class="text-sm text-gray-900">{{ booking.customer_name }}</div>
+                        <div class="text-xs text-gray-500">{{ booking.email }}</div>
+                        {% if booking.phone %}
+                        <div class="text-xs text-gray-500">{{ booking.phone }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Periode</div>
+                        <div class="text-sm text-gray-900">{{ booking.start_date.strftime('%d/%m/%Y') }}</div>
+                        <div class="text-xs text-gray-500">til {{ booking.end_date.strftime('%d/%m/%Y') }}</div>
+                        <div class="text-xs text-gray-400">{{ (booking.end_date - booking.start_date).days + 1 }} dage</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Produkter</div>
+                    <div class="text-sm text-gray-900">
+                        {% for item in booking.items[:2] %}
+                        <div class="flex items-center justify-between">
+                            <span>{{ item.name_snapshot }}</span>
+                            <span class="text-gray-500">x{{ item.quantity }}</span>
+                        </div>
+                        {% endfor %}
+                        {% if booking.items|length > 2 %}
+                        <div class="text-xs text-gray-500">+{{ booking.items|length - 2 }} flere</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Beløb</div>
+                        <div class="text-sm font-medium text-gray-900">{{ (booking.total_dkk + booking_upsells.get(booking.id, 0)) | currency }}</div>
+                        {% if booking.deposit_dkk > 0 %}
+                        <div class="text-xs text-gray-500">Depositum: {{ booking.deposit_dkk | currency }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <a href="{{ url_for('admin.booking_detail', id=booking.id) }}" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                            Se detaljer
+                        </a>
+                        {% if not show_deleted %}
+                        <button onclick="changeStatus({{ booking.id }})" class="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                            Rediger
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if show_deleted %}
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div>
+                            <div class="font-medium text-gray-500">Slettet</div>
+                            <div class="text-gray-900">{{ booking.deleted_at.strftime('%d/%m/%Y %H:%M') if booking.deleted_at else 'N/A' }}</div>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-500">Slettet af</div>
+                            <div class="text-gray-900">{{ booking.deleted_by_user.email if booking.deleted_by_user else 'System' }}</div>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-500">Årsag</div>
+                            <div class="text-gray-900 truncate" title="{{ booking.deletion_reason or 'Ingen årsag angivet' }}">
+                                {{ booking.deletion_reason or 'Ingen årsag angivet' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if bookings.pages > 1 %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if bookings.has_prev %}
+                <a href="{{ url_for('admin.bookings', page=bookings.prev_num, search=search, status=status) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Forrige
+                </a>
+                {% endif %}
+                {% if bookings.has_next %}
+                <a href="{{ url_for('admin.bookings', page=bookings.next_num, search=search, status=status) }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Næste
+                </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Viser <span class="font-medium">{{ ((bookings.page - 1) * bookings.per_page) + 1 }}</span> til <span class="font-medium">{{ bookings.page * bookings.per_page if bookings.page * bookings.per_page < bookings.total else bookings.total }}</span> af <span class="font-medium">{{ bookings.total }}</span> resultater
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if bookings.has_prev %}
+                        <a href="{{ url_for('admin.bookings', page=bookings.prev_num, search=search, status=status) }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Forrige</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                        {% endif %}
+                        
+                        {% for page_num in bookings.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != bookings.page %}
+                                <a href="{{ url_for('admin.bookings', page=page_num, search=search, status=status) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ page_num }}
+                                </a>
+                                {% else %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                    {{ page_num }}
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                ...
+                            </span>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if bookings.has_next %}
+                        <a href="{{ url_for('admin.bookings', page=bookings.next_num, search=search, status=status) }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Næste</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen bookinger</h3>
+            <p class="mt-1 text-sm text-gray-500">Der er ingen bookinger der matcher dine filtre.</p>
+            <div class="mt-6">
+                <a href="{{ url_for('admin.bookings') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Ny booking
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Bulk selection functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('select-all');
+    const bookingCheckboxes = document.querySelectorAll('.booking-checkbox');
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+
+    function updateBulkActions() {
+        // Only count checkboxes from the visible layout
+        const desktopTable = document.querySelector('.hidden.xl\\:block');
+        const mobileLayout = document.querySelector('.xl\\:hidden');
+        
+        let checkedBoxes;
+        let allCheckboxes;
+        
+        // Check if desktop table is visible (not hidden)
+        if (desktopTable && window.getComputedStyle(desktopTable).display !== 'none') {
+            checkedBoxes = desktopTable.querySelectorAll('.booking-checkbox:checked');
+            allCheckboxes = desktopTable.querySelectorAll('.booking-checkbox');
+        } else {
+            // Mobile layout is visible
+            checkedBoxes = mobileLayout.querySelectorAll('.booking-checkbox:checked');
+            allCheckboxes = mobileLayout.querySelectorAll('.booking-checkbox');
+        }
+        
+        const count = checkedBoxes.length;
+        
+        selectedCount.textContent = count;
+        bulkActions.style.display = count > 0 ? 'block' : 'none';
+        
+        // Update select all checkbox state (only if it exists - desktop view)
+        if (selectAllCheckbox) {
+            if (count === 0) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = false;
+            } else if (count === allCheckboxes.length) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = true;
+            } else {
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            // Only affect checkboxes in the visible layout
+            const desktopTable = document.querySelector('.hidden.xl\\:block');
+            const mobileLayout = document.querySelector('.xl\\:hidden');
+            
+            let targetCheckboxes;
+            if (desktopTable && window.getComputedStyle(desktopTable).display !== 'none') {
+                targetCheckboxes = desktopTable.querySelectorAll('.booking-checkbox');
+            } else {
+                targetCheckboxes = mobileLayout.querySelectorAll('.booking-checkbox');
+            }
+            
+            targetCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkActions();
+        });
+    }
+
+    // Add event listeners to all checkboxes (both layouts)
+    bookingCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+});
+
+function clearSelection() {
+    document.querySelectorAll('.booking-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    const selectAllCheckbox = document.getElementById('select-all');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+    document.getElementById('bulk-actions').style.display = 'none';
+}
+
+function applyFilters() {
+    const search = document.getElementById('search').value;
+    const status = document.getElementById('status').value;
+    const dateRange = document.getElementById('date_range').value;
+    
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    if (dateRange) params.append('date_range', dateRange);
+    
+    // Preserve current tab
+    const currentTab = '{{ tab }}';
+    if (currentTab) params.append('tab', currentTab);
+    
+    window.location.href = '{{ url_for("admin.bookings") }}?' + params.toString();
+}
+
+function clearFilters() {
+    document.getElementById('search').value = '';
+    document.getElementById('status').value = '';
+    document.getElementById('date_range').value = '';
+    
+    // Preserve current tab when clearing filters
+    const currentTab = '{{ tab }}';
+    const url = currentTab ? '{{ url_for("admin.bookings") }}?tab=' + currentTab : '{{ url_for("admin.bookings") }}';
+    window.location.href = url;
+}
+
+function bulkAction(action) {
+    // Only count checkboxes from the visible layout
+    const desktopTable = document.querySelector('.hidden.xl\\:block');
+    const mobileLayout = document.querySelector('.xl\\:hidden');
+    
+    let checkedBoxes;
+    // Check if desktop table is visible (not hidden)
+    if (desktopTable && window.getComputedStyle(desktopTable).display !== 'none') {
+        checkedBoxes = desktopTable.querySelectorAll('.booking-checkbox:checked');
+    } else {
+        // Mobile layout is visible
+        checkedBoxes = mobileLayout.querySelectorAll('.booking-checkbox:checked');
+    }
+    
+    const bookingIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (bookingIds.length === 0) {
+        alert('Vælg mindst én booking');
+        return;
+    }
+    
+    if (action === 'soft_delete') {
+        showDeleteModal(bookingIds);
+        return;
+    }
+    
+    if (action === 'restore') {
+        if (!confirm(`Er du sikker på at du vil gendanne ${bookingIds.length} bookinger?`)) {
+            return;
+        }
+        restoreBookings(bookingIds);
+        return;
+    }
+    
+    if (action === 'cancel') {
+        if (!confirm(`Er du sikker på at du vil annullere ${bookingIds.length} bookinger?`)) {
+            return;
+        }
+    }
+    
+    // Implement other bulk actions
+    console.log('Bulk action:', action, 'on bookings:', bookingIds);
+}
+
+function showDeleteModal(bookingIds) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    modal.id = 'delete-modal';
+    modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Slet ${bookingIds.length} bookinger</h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Årsag til sletning</label>
+                    <textarea id="deletion-reason" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Angiv årsag til sletning..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-delete-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Annuller
+                    </button>
+                    <button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Slet bookinger
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('cancel-delete-btn').addEventListener('click', closeDeleteModal);
+    document.getElementById('confirm-delete-btn').addEventListener('click', function() {
+        confirmDelete(bookingIds);
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeDeleteModal();
+        }
+    });
+    
+    // Focus on textarea
+    setTimeout(() => {
+        const textarea = document.getElementById('deletion-reason');
+        if (textarea) {
+            textarea.focus();
+        }
+    }, 100);
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('delete-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function confirmDelete(bookingIds) {
+    const reason = document.getElementById('deletion-reason').value;
+    if (!reason.trim()) {
+        alert('Angiv en årsag til sletning');
+        return;
+    }
+    
+    if (!confirm(`Er du sikker på at du vil slette ${bookingIds.length} bookinger?`)) {
+        return;
+    }
+    
+    softDeleteBookings(bookingIds, reason);
+    closeDeleteModal();
+}
+
+function softDeleteBookings(bookingIds, reason) {
+    const formData = new FormData();
+    formData.append('csrf_token', '{{ csrf_token() }}');
+    formData.append('deletion_reason', reason);
+    bookingIds.forEach(id => formData.append('booking_ids[]', id));
+    
+    fetch('{{ url_for("admin.soft_delete_bookings") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Fejl: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Der opstod en fejl');
+    });
+}
+
+function restoreBookings(bookingIds) {
+    const formData = new FormData();
+    formData.append('csrf_token', '{{ csrf_token() }}');
+    bookingIds.forEach(id => formData.append('booking_ids[]', id));
+    
+    fetch('{{ url_for("admin.restore_bookings") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Fejl: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Der opstod en fejl');
+    });
+}
+
+function changeStatus(bookingId) {
+    // Redirect to booking detail page where status can be changed
+    window.location.href = `/admin/bookings/${bookingId}`;
+}
+</script>
+{% endblock %}

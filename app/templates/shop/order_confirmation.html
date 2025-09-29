@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Booking bekræftelse - {{ booking.booking_no }} - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Success Header -->
+        <div class="text-center mb-8">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Booking bekræftet!</h1>
+            <p class="text-lg text-gray-600">Tak for din booking. Du vil modtage en bekræftelse på e-mail.</p>
+        </div>
+        
+        <!-- Booking Details -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Booking detaljer</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Booking nummer</h3>
+                    <p class="text-lg font-semibold text-gray-900">{{ booking.booking_no }}</p>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Status</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ booking.status | status_badge_class }}">
+                        {{ booking.status | status_text }}
+                    </span>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Periode</h3>
+                    <p class="text-gray-900">{{ booking.start_date | date_format }} - {{ booking.end_date | date_format }}</p>
+                </div>
+            </div>
+
+            <!-- Pricing Breakdown -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Prisoversigt</h3>
+
+                <div class="space-y-3">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-blue-900 mb-2">💳 Du betaler nu</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Leje af udstyr</span>
+                                <span class="text-blue-900 font-medium">{{ booking.subtotal_dkk | currency }}</span>
+                            </div>
+
+                            {% if booking.delivery_fee_dkk > 0 %}
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Leveringsgebyr</span>
+                                <span class="text-blue-900 font-medium">{{ booking.delivery_fee_dkk | currency }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if booking.deposit_dkk > 0 %}
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Depositum (refunderbart)</span>
+                                <span class="text-blue-900 font-medium">{{ booking.deposit_dkk | currency }}</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Display upsell total -->
+                            {% if upsell_total > 0 %}
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Tilkøb</span>
+                                <span class="text-blue-900 font-medium">{{ upsell_total | currency }}</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="border-t border-blue-200 pt-2">
+                                <div class="flex justify-between text-lg font-bold">
+                                    <span class="text-blue-900">Betalt i alt</span>
+                                    <span class="text-blue-900">{{ (booking.total_dkk + upsell_total) | currency }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if booking.deposit_dkk > 0 %}
+                            <p class="text-xs text-blue-600 mt-2">
+                                ℹ️ Depositummet returneres efter udstyret er afleveret i god stand
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if booking.vat_dkk > 0 %}
+                    <div class="text-xs text-gray-500 mt-4">
+                        Alle priser er inkl. moms (25%). Moms beløb: {{ booking.vat_dkk | currency }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Information -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Kundeoplysninger</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Navn</h3>
+                    <p class="text-gray-900">{{ booking.customer_name }}</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">E-mail</h3>
+                    <p class="text-gray-900">{{ booking.email }}</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Telefon</h3>
+                    <p class="text-gray-900">{{ booking.phone }}</p>
+                </div>
+                
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Adresse</h3>
+                    <p class="text-gray-900">{{ booking.address }}, {{ booking.zip_code }} {{ booking.city }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Bookede produkter</h2>
+            
+            <div class="space-y-4">
+                {% for item in booking.items %}
+                <div class="flex items-center justify-between py-4 border-b border-gray-200 last:border-b-0">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">{{ item.name_snapshot }}</h3>
+                        <p class="text-sm text-gray-500">Antal: {{ item.quantity }}</p>
+                        
+                        <!-- Display upsell items -->
+                        {% if item.upsell_items %}
+                        <div class="mt-2 pl-4 border-l-2 border-gray-200">
+                            <p class="text-xs text-gray-600 font-medium mb-1">Tilkøb:</p>
+                            {% for upsell in item.upsell_items %}
+                            <div class="flex justify-between text-xs text-gray-600">
+                                <span>{{ upsell.name_snapshot }} × {{ upsell.quantity }}</span>
+                                <span>{{ (upsell.unit_price_dkk * upsell.quantity) | currency }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-semibold text-gray-900">{{ (item.unit_price_dkk * item.quantity) | currency }}</p>
+                        <p class="text-sm text-gray-500">{{ item.unit_price_dkk | currency }} pr. stk.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        
+        <!-- Notes -->
+        {% if booking.notes %}
+        <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Bemærkninger</h2>
+            <p class="text-gray-700">{{ booking.notes }}</p>
+        </div>
+        {% endif %}
+        
+        <!-- Profile Completion Call-to-Action -->
+        {% if booking.customer and booking.customer.password_hash == 'GUEST_ACCOUNT_PENDING' %}
+        <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-8">
+            <div class="text-center">
+                <h3 class="text-xl font-semibold text-green-900 mb-2">Fuldfør din profil for at se dine bookinger</h3>
+                <p class="text-green-800 mb-4">Opret en adgangskode for at få adgang til din booking og se status opdateringer</p>
+                <a href="{{ url_for('customer.complete_profile', token=booking.customer.email|urlencode) }}" 
+                   class="inline-flex items-center bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Fuldfør profil
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('shop.download_invoice', booking_no=booking.booking_no) }}" 
+               class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 text-center">
+                Download faktura
+            </a>
+            
+            <a href="{{ url_for('public.catalog') }}" 
+               class="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition duration-200 text-center">
+                Se mere udstyr
+            </a>
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">Næste skridt</h3>
+            <div class="text-blue-800 space-y-2">
+                <p>• Du vil modtage en bekræftelse på e-mail inden for få minutter</p>
+                <p>• Vi kontakter dig for at aftale levering/afhentning</p>
+                <p>• Ved spørgsmål kan du kontakte os på +45 12 34 56 78</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

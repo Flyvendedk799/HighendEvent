@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking afsluttet - {{ booking.booking_no }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #059669;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .completion-message {
+            background-color: #D1FAE5;
+            border: 1px solid #10B981;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .summary {
+            background-color: #F9FAFB;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎉 HighendEvent</div>
+            <h1>Booking afsluttet!</h1>
+            <p>Ordrenummer: {{ booking.booking_no }}</p>
+            <div class="status-badge">✅ Fuldt betalt</div>
+        </div>
+        
+        <div class="content">
+            <p>Hej {{ customer_name }},</p>
+            
+            <div class="completion-message">
+                <h3>🎉 Tak for din booking!</h3>
+                <p>Din booking er nu fuldt afsluttet og alle betalinger er gennemført.</p>
+            </div>
+            
+            <div class="summary">
+                <h3>Booking Oversigt</h3>
+                <div class="detail-row">
+                    <span>Periode:</span>
+                    <span>{{ booking.start_date.strftime('%d/%m/%Y') }} - {{ booking.end_date.strftime('%d/%m/%Y') }}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Lejeafgift:</span>
+                    <span>{{ booking.remaining_payment_dkk | currency }}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Depositum (refunderet):</span>
+                    <span>-{{ booking.deposit_dkk | currency }}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Total betalt:</span>
+                    <span>{{ booking.total_dkk | currency }}</span>
+                </div>
+            </div>
+            
+            <p>Vi håber du har haft en fantastisk oplevelse med vores udstyr! Hvis du har feedback eller spørgsmål, er du altid velkommen til at kontakte os.</p>
+            
+            <p>Vi glæder os til at se dig igen snart! 🎉</p>
+            
+            <p>Med venlig hilsen,<br>HighendEvent Team</p>
+        </div>
+    </div>
+</body>
+</html>

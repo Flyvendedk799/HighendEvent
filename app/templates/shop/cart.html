@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Kurv - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Din kurv</h1>
+            <p class="text-lg text-gray-600">Gennemgå dine valgte produkter og datoer</p>
+        </div>
+        
+        {% if cart_products %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2">
+                <div class="space-y-6">
+                    {% for item in cart_products %}
+                    <div class="bg-white border border-gray-200 rounded-lg p-6" x-data="cartItem({{ item.product.id }}, '{{ item.start_date }}', '{{ item.end_date }}', '{{ item.delivery_type.value }}')">
+                        <div class="flex items-start space-x-4">
+                            <!-- Product Image -->
+                            <div class="flex-shrink-0">
+                                {% if item.product.hero_image_url %}
+                                <img src="{{ item.product.hero_image_url | image_url }}" alt="{{ item.product.name }}" 
+                                     class="w-20 h-20 object-cover rounded-lg">
+                                {% else %}
+                                <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <span class="text-gray-500 text-xs">Ingen billede</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ item.product.name }}</h3>
+                                <p class="text-sm text-gray-500">{{ item.product.category.name }}</p>
+                                
+                                <div class="mt-2 text-sm text-gray-600">
+                                    <p><strong>Periode:</strong> {{ item.start_date | date_format }} - {{ item.end_date | date_format }}</p>
+                                    <p><strong>Levering:</strong> {{ 'Levering' if item.delivery_type.value == 'delivery' else 'Afhentning' }}</p>
+                                </div>
+                                
+                                <!-- Upsell Products -->
+                                {% if item.upsells %}
+                                <div class="mt-3 border-t border-gray-100 pt-3">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Tilkøb:</h4>
+                                    <div class="space-y-1">
+                                        {% for upsell_id, quantity in item.upsells.items() %}
+                                        {% set upsell = item.upsell_products.get(upsell_id) %}
+                                        {% if upsell %}
+                                        <div class="flex justify-between text-xs text-gray-600">
+                                            <span>{{ upsell.name }} × {{ quantity }}</span>
+                                            <span>{{ "%.2f"|format(upsell.price_dkk|float * quantity|int) }} DKK</span>
+                                        </div>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Quantity Controls -->
+                                <div class="mt-4 flex items-center space-x-4">
+                                    <label class="text-sm font-medium text-gray-700">Antal:</label>
+                                    <div class="flex items-center space-x-2">
+                                        <button @click="updateQuantity(quantity - 1)" 
+                                                :disabled="quantity <= 1"
+                                                class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                            </svg>
+                                        </button>
+                                        <span class="w-8 text-center" x-text="quantity"></span>
+                                        <button @click="updateQuantity(quantity + 1)" 
+                                                :disabled="quantity >= {{ item.product.stock_qty }}"
+                                                class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Price and Actions -->
+                            <div class="flex-shrink-0 text-right">
+                                {% if item.price_estimate %}
+                                <div class="text-lg font-semibold text-gray-900">
+                                    {{ item.price_estimate['total'] | currency }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    Leje: {{ item.price_estimate['subtotal'] | currency }}
+                                </div>
+                                {% if item.price_estimate['deposit_amount'] > 0 %}
+                                <div class="text-xs text-yellow-600">
+                                    Deposit: {{ item.price_estimate['deposit_amount'] | currency }}
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="text-sm text-gray-500">
+                                    Vælg datoer for at se pris
+                                </div>
+                                {% endif %}
+
+                                <button @click="removeItem()"
+                                        class="mt-2 text-red-600 hover:text-red-800 text-sm font-medium">
+                                    Fjern
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-50 rounded-lg p-6 sticky top-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Ordreoversigt</h2>
+                    
+                    <div class="space-y-3 mb-6">
+                        {% for item in cart_products %}
+                        <div class="flex justify-between text-sm">
+                            <span>{{ item.product.name }} x{{ item.quantity }}</span>
+                            <span>
+                                {% if item.price_estimate %}
+                                    {{ item.price_estimate['subtotal'] | currency }}
+                                {% else %}
+                                    Vælg datoer
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Payment Breakdown -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                            <h4 class="text-sm font-semibold text-blue-900 mb-2">💳 Du betaler nu (via kort)</h4>
+                            <div class="space-y-1">
+                                {% set ns = namespace(total_rental=0, total_deposit=0) %}
+                                {% for item in cart_products %}
+                                    {% if item.price_estimate %}
+                                        {% set ns.total_rental = ns.total_rental + (item.price_estimate.subtotal * item.quantity) %}
+                                        {% if item.price_estimate.deposit_amount > 0 %}
+                                            {% set ns.total_deposit = ns.total_deposit + (item.price_estimate.deposit_amount * item.quantity) %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <!-- Rental amount -->
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Leje af udstyr</span>
+                                    <span class="text-blue-900 font-medium">{{ ns.total_rental | currency }}</span>
+                                </div>
+                                
+                                <!-- Deposit amount -->
+                                {% if ns.total_deposit > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Depositum (refunderbart)</span>
+                                    <span class="text-blue-900 font-medium">{{ ns.total_deposit | currency }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Upsell products -->
+                                {% if upsell_total > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Tilkøb</span>
+                                    <span class="text-blue-900 font-medium">{{ upsell_total | currency }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Delivery fee -->
+                                {% if delivery_fee > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Leveringsgebyr</span>
+                                    <span class="text-blue-900 font-medium">{{ delivery_fee | currency }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="border-t border-blue-200 pt-1 mt-2">
+                                    <div class="flex justify-between text-sm font-semibold">
+                                        <span class="text-blue-900">Betales via kort</span>
+                                        <span class="text-blue-900">{{ total_estimate | currency }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-blue-600 mt-2">
+                                    💡 Dette trækkes fra dit kort ved bestilling
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Deposit Information -->
+                        {% set total_deposit = 0 %}
+                        {% for item in cart_products %}
+                            {% if item.price_estimate and item.price_estimate['deposit_amount'] > 0 %}
+                                {% set total_deposit = total_deposit + (item.price_estimate['deposit_amount'] * item.quantity) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if total_deposit > 0 %}
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <h4 class="text-sm font-semibold text-yellow-900 mb-2">🔒 Depositum (håndteres separat)</h4>
+                            <div class="space-y-1">
+                                {% for item in cart_products %}
+                                {% if item.price_estimate and item.price_estimate['deposit_amount'] > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-yellow-700">{{ item.product.name }} x{{ item.quantity }}</span>
+                                    <span class="text-yellow-900">{{ (item.price_estimate['deposit_amount'] * item.quantity) | currency }}</span>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                                <div class="border-t border-yellow-200 pt-1 mt-2">
+                                    <div class="flex justify-between text-sm font-semibold">
+                                        <span class="text-yellow-900">Total depositum</span>
+                                        <span class="text-yellow-900">{{ total_deposit | currency }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-yellow-600 mt-2">
+                                    💡 Depositum håndteres separat og returneres efter aflevering i god stand
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ url_for('shop.checkout') }}" 
+                       class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200 text-center block">
+                        Gå til checkout
+                    </a>
+                    
+                    <div class="mt-3 text-center">
+                        <p class="text-xs text-gray-500 mb-2">Sikker betaling med</p>
+                        <div class="flex items-center justify-center space-x-2">
+                            <svg class="h-6" viewBox="0 0 60 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M59.5 12.5c0 6.904-5.596 12.5-12.5 12.5s-12.5-5.596-12.5-12.5S40.096 0 47 0s12.5 5.596 12.5 12.5zM47 22c5.247 0 9.5-4.253 9.5-9.5S52.247 3 47 3s-9.5 4.253-9.5 9.5S41.753 22 47 22z" fill="#6772E5"/>
+                                <path d="M17.385 10.242c0-2.212 1.732-3.387 4.72-3.387 2.131 0 4.814.542 6.946 1.653l1.329-3.387C28.238 4.298 25.157 3.5 21.772 3.5c-5.926 0-9.657 3.122-9.657 7.88 0 7.688 10.6 6.446 10.6 9.779 0 1.281-1.12 2.143-2.988 2.143-2.514 0-5.548-.862-7.871-2.143L10.527 24.5c2.323 1.281 5.836 2.143 9.292 2.143 6.118 0 10.025-3.122 10.025-7.88 0-8.262-10.6-6.828-10.6-10.353 0-1.281 1.024-2.143 2.707-2.143 1.924 0 4.335.542 6.178 1.484l1.329-3.387C27.502 3.756 24.61 3.5 21.772 3.5c-2.035 0-3.883.479-5.357 1.35l.97 5.392z" fill="#6772E5"/>
+                                <path d="M1.333 4.167h5.334v16.666H1.333V4.167z" fill="#6772E5"/>
+                                <path d="M8 4.167h5.333L8 20.833V4.167z" fill="#6772E5"/>
+                            </svg>
+                            <span class="text-xs text-gray-500">og andre sikre betalingsmetoder</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="{{ url_for('public.catalog') }}" 
+                           class="text-indigo-600 hover:text-indigo-500 text-sm">
+                            Fortsæt shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Empty Cart -->
+        <div class="text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <img src="{{ url_for('static', filename='images/shopping-cart-icon-shopping-basket-on-transparent-background-free-png.webp') }}" 
+                     alt="Empty Shopping Cart" 
+                     class="mx-auto h-16 w-16 opacity-40 filter grayscale">
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Din kurv er tom</h3>
+            <p class="text-gray-600 mb-4">Tilføj nogle produkter til din kurv for at komme i gang.</p>
+            <a href="{{ url_for('public.catalog') }}" 
+               class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200">
+                Se vores udstyr
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function cartItem(productId, startDate, endDate, deliveryType) {
+    return {
+        productId: productId,
+        startDate: startDate,
+        endDate: endDate,
+        deliveryType: deliveryType,
+        quantity: 1,
+        
+        init() {
+            // Get quantity from cart data
+            const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
+            const item = cart.find(item => 
+                item.product_id === productId && 
+                item.start_date === startDate && 
+                item.end_date === endDate &&
+                item.delivery_type === deliveryType
+            );
+            if (item) {
+                this.quantity = item.quantity;
+            }
+        },
+        
+        updateQuantity(newQuantity) {
+            if (newQuantity < 1) return;
+            
+            this.quantity = newQuantity;
+            
+            const formData = new FormData();
+            formData.append('product_id', this.productId);
+            formData.append('quantity', this.quantity);
+            formData.append('start_date', this.startDate);
+            formData.append('end_date', this.endDate);
+            formData.append('delivery_type', this.deliveryType);
+            formData.append('csrf_token', '{{ csrf_token() }}');
+            
+            fetch('/shop/update-cart-quantity', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload page to update prices
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Der opstod en fejl');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating quantity:', error);
+                alert('Der opstod en fejl under opdatering');
+            });
+        },
+        
+        removeItem() {
+            if (confirm('Er du sikker på, at du vil fjerne dette produkt fra kurven?')) {
+                const formData = new FormData();
+                formData.append('product_id', this.productId);
+                formData.append('start_date', this.startDate);
+                formData.append('end_date', this.endDate);
+                formData.append('delivery_type', this.deliveryType);
+                formData.append('csrf_token', '{{ csrf_token() }}');
+                
+                fetch('/shop/remove-from-cart', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload page to remove item
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Der opstod en fejl');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing item:', error);
+                    alert('Der opstod en fejl under fjernelse');
+                });
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

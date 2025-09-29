@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velkommen til HighendEvent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+            margin-bottom: 10px;
+        }
+        .welcome-title {
+            color: #1F2937;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .highlight {
+            background-color: #F3F4F6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #4F46E5;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            color: #6B7280;
+            font-size: 14px;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-links a {
+            color: #4F46E5;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo"><img src="{{ url_for('static', filename='images/logo1.png', _external=True) }}" alt="HighendEvent Logo" style="height: 40px; width: auto; vertical-align: middle; margin-right: 10px;">HighendEvent</div>
+            <h1 class="welcome-title">Velkommen til HighendEvent!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hej {{ customer_name }},</p>
+            
+            <p>Tak for at oprette en konto hos HighendEvent! Vi er glade for at have dig med i vores fællesskab.</p>
+            
+            <div class="highlight">
+                <h3>Hvad kan du gøre nu?</h3>
+                <ul>
+                    <li>Udlej professionelt udstyr til dine events</li>
+                    <li>Se dine aktive bookinger i dit dashboard</li>
+                    <li>Få notifikationer om status på dine bookinger</li>
+                    <li>Få tilgang til eksklusive tilbud og nyheder</li>
+                </ul>
+            </div>
+            
+            <p>Vi har et stort udvalg af høj kvalitets udstyr til alle typer events - fra popcornmaskiner til slush ice maskiner og meget mere!</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ url_for('public.index', _external=True) }}" class="cta-button">
+                    Udforsk vores udstyr
+                </a>
+            </div>
+            
+            <p>Hvis du har spørgsmål eller brug for hjælp, er du altid velkommen til at kontakte os.</p>
+            
+            <p>Med venlig hilsen,<br>
+            <strong>HighendEvent Teamet</strong></p>
+        </div>
+        
+        <div class="footer">
+            <div class="social-links">
+                <a href="#">Facebook</a> |
+                <a href="#">Instagram</a> |
+                <a href="#">LinkedIn</a>
+            </div>
+            <p>HighendEvent - Professionelt udstyr til dine events</p>
+            <p>Denne email blev sendt til {{ customer_name }}. Hvis du ikke ønsker at modtage emails fra os, kan du <a href="#">afmelde dig her</a>.</p>
+        </div>
+    </div>
+</body>
+</html>
+

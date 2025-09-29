@@ -1,0 +1,129 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Indstillinger - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Indstillinger</h1>
+        <p class="text-lg text-gray-600">Administrer systemindstillinger</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Delivery Settings -->
+        <div class="bg-white shadow-lg rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-900">Leveringsindstillinger</h2>
+                    <a href="{{ url_for('admin.create_delivery_setting') }}" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Tilføj
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                {% if delivery_settings %}
+                <div class="space-y-4">
+                    {% for setting in delivery_settings %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">
+                                    {% if setting.type.value == 'pickup' %}
+                                        Afhentning
+                                    {% else %}
+                                        Levering
+                                    {% endif %}
+                                </h3>
+                                <p class="text-sm text-gray-500">{{ setting.notes or 'Ingen noter' }}</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ setting.base_fee_dkk | currency }}
+                                    {% if setting.per_km_fee_dkk > 0 %}
+                                        + {{ setting.per_km_fee_dkk | currency }}/km
+                                    {% endif %}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {% if setting.is_active %}
+                                        <span class="text-green-600">Aktiv</span>
+                                    {% else %}
+                                        <span class="text-red-600">Inaktiv</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen leveringsindstillinger</h3>
+                    <p class="mt-1 text-sm text-gray-500">Tilføj leveringsindstillinger for at komme i gang.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- CMS Blocks -->
+        <div class="bg-white shadow-lg rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-900">CMS Blokke</h2>
+                    <a href="{{ url_for('admin.create_cms_block') }}" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-indigo-100 hover:bg-indigo-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Tilføj
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                {% if cms_blocks %}
+                <div class="space-y-4">
+                    {% for block in cms_blocks %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">{{ block.title }}</h3>
+                                <p class="text-sm text-gray-500">Key: {{ block.key }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ block.content_md[:100] }}{% if block.content_md|length > 100 %}...{% endif %}</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500">
+                                    {% if block.is_active %}
+                                        <span class="text-green-600">Aktiv</span>
+                                    {% else %}
+                                        <span class="text-red-600">Inaktiv</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen CMS blokke</h3>
+                    <p class="mt-1 text-sm text-gray-500">Tilføj CMS blokke for at administrere indhold.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

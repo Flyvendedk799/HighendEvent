@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuldfør din profil - HighendEvent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .title {
+            color: #1f2937;
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 15px 0;
+            transition: background-color 0.3s;
+        }
+        .cta-button:hover {
+            background: #059669;
+        }
+        .benefits {
+            background-color: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .benefits h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+        .benefits ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .benefits li {
+            margin: 8px 0;
+            color: #374151;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .security-note {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo1.png', _external=True) }}" 
+                     alt="HighendEvent Logo" 
+                     style="height: 40px; width: auto; vertical-align: middle; margin-right: 10px;">
+                HighendEvent
+            </div>
+            <h1 class="title">Fuldfør din profil</h1>
+        </div>
+
+        <div class="content">
+            <p>Hej {{ customer_name }},</p>
+            
+            <p>Tak for din bestilling hos HighendEvent! Din ordre er blevet oprettet, og vi har automatisk oprettet en konto til dig.</p>
+            
+            <div class="highlight-box">
+                <h3 style="margin-top: 0; font-size: 20px;">🔐 Opret din adgangskode</h3>
+                <p style="margin-bottom: 20px;">For at få fuld adgang til din konto og kunne følge dine bookinger, skal du oprette en adgangskode.</p>
+                <a href="{{ profile_completion_url }}" class="cta-button">Fuldfør profil</a>
+            </div>
+
+            <div class="benefits">
+                <h3>Med en komplet profil kan du:</h3>
+                <ul>
+                    <li>Se status på dine bookinger i realtid</li>
+                    <li>Downloade fakturaer og kvitteringer</li>
+                    <li>Få besked når dine produkter er klar til afhentning</li>
+                    <li>Se historik over alle dine tidligere bookinger</li>
+                    <li>Opdatere dine kontaktoplysninger</li>
+                </ul>
+            </div>
+
+            <div class="security-note">
+                <strong>Sikkerhedsnote:</strong> Dette link er personligt og kan kun bruges én gang. Hvis du ikke ønsker at oprette en adgangskode nu, kan du altid gøre det senere ved at kontakte os.
+            </div>
+
+            <p>Hvis du har spørgsmål til din bestilling eller har brug for hjælp, er du velkommen til at kontakte os.</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>HighendEvent Teamet</strong></p>
+            <p>HighendEvent - Professionelt udstyr til dine events</p>
+            <p>Denne email blev sendt til {{ customer_name }}. Hvis du har spørgsmål, er du velkommen til at kontakte os.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Ofte stillede spørgsmål</h1>
+            <p class="text-lg text-gray-600">Find svar på de mest almindelige spørgsmål</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="prose max-w-none">
+            {% if faq_block %}
+                {{ faq_block.content_md | safe }}
+            {% else %}
+                <h2>Hvordan booker jeg udstyr?</h2>
+                <ol>
+                    <li>Vælg det udstyr du ønsker at leje</li>
+                    <li>Vælg datoer og antal</li>
+                    <li>Gennemfør checkout</li>
+                    <li>Modtag bekræftelse på e-mail</li>
+                </ol>
+                
+                <h2>Hvornår leveres udstyr?</h2>
+                <p>Vi leverer normalt mellem 09:00-18:00 på hverdage og 10:00-16:00 på lørdage.</p>
+                
+                <h2>Hvad koster levering?</h2>
+                <p>Levering koster 150 DKK + 5 DKK per km inden for 20 km radius.</p>
+                
+                <h2>Hvad hvis udstyret går i stykker?</h2>
+                <p>Kontakt os straks. Vi har erstatningsudstyr klar til hurtig levering.</p>
+                
+                <h2>Kan jeg annullere min booking?</h2>
+                <p>Ja, se vores annulleringspolitik i lejebetingelserne.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

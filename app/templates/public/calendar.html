@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Tilgængelighedskalender - Festudlej{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full mb-6">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+            <p class="text-xl text-gray-600 mb-6">Vælg dine ønskede datoer og se tilgængelighed med det samme</p>
+            
+            <!-- Product Info Card -->
+            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        {% if product.hero_image_url %}
+                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" 
+                             class="w-16 h-16 object-cover rounded-lg">
+                        {% else %}
+                        <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <div class="text-left">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ product.name }}</h3>
+                            <p class="text-sm text-gray-600">{{ product.category.name if product.category else 'Generel' }}</p>
+                            <p class="text-sm text-gray-500">Antal tilgængelige: {{ product.stock_qty }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-indigo-600">{{ product.daily_price_dkk | currency }}</div>
+                        <div class="text-sm text-gray-500">pr. dag</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Calendar Section -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <!-- Calendar Header with Selection Info -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Vælg dine datoer</h2>
+                        <p class="text-indigo-100 mt-1">Klik på start- og slutdato for at se tilgængelighed</p>
+                    </div>
+                    <div class="text-right">
+                        <div id="selection-info" class="text-white">
+                            <div class="text-sm opacity-75">Vælg datoer</div>
+                            <div id="selected-dates" class="font-semibold">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calendar Container -->
+            <div class="p-6">
+                <div id="calendar" class="calendar-container"></div>
+            </div>
+            
+            <!-- Selection Summary & Actions -->
+            <div id="selection-summary" class="hidden bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div id="availability-status" class="flex items-center">
+                            <!-- Status icon will be inserted here -->
+                        </div>
+                        <div>
+                            <div id="availability-text" class="font-semibold text-gray-900"></div>
+                            <div id="availability-details" class="text-sm text-gray-600"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button id="clear-selection" 
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                            Ryd valg
+                        </button>
+                        <button id="book-now" 
+                                class="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                            Book nu
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div class="flex flex-wrap items-center justify-center gap-6">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded-full mr-3 shadow-sm"></div>
+                        <span class="text-sm font-medium text-gray-700">Tilgængelig</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-500 rounded-full mr-3 shadow-sm"></div>
+                        <span class="text-sm font-medium text-gray-700">Ikke tilgængelig</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-gray-500 rounded-full mr-3 shadow-sm"></div>
+                        <span class="text-sm font-medium text-gray-700">Sortdato</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-yellow-500 rounded-full mr-3 shadow-sm"></div>
+                        <span class="text-sm font-medium text-gray-700">Begrænset</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 text-center">
+            <a href="{{ url_for('public.product_detail', slug=product.slug) }}" 
+               class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Se produktdetaljer
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let selectedStartDate = null;
+    let selectedEndDate = null;
+    let calendar = null;
+    let availabilityData = {};
+    
+    // Initialize calendar
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'da',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,dayGridWeek,listWeek'
+        },
+        buttonText: {
+            today: 'I dag',
+            month: 'Måned',
+            week: 'Uge',
+            list: 'Liste'
+        },
+        selectable: true,
+        selectMirror: true,
+        selectOverlap: false,
+        unselectAuto: false,
+        events: function(info, successCallback, failureCallback) {
+            // Show loading state
+            calendarEl.innerHTML = '<div class="flex items-center justify-center h-64"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>';
+            
+            // Fetch availability data
+            const startDate = info.startStr.split('T')[0];
+            const endDate = info.endStr.split('T')[0];
+            fetch(`/api/calendar-data/{{ product.id }}?start=${startDate}&end=${endDate}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Store availability data for later use
+                    data.forEach(day => {
+                        availabilityData[day.date] = day;
+                    });
+                    
+                    const events = data.map(day => {
+                        let backgroundColor, borderColor, title, className;
+                        
+                        if (day.is_blacked_out) {
+                            backgroundColor = '#6b7280';
+                            borderColor = '#4b5563';
+                            title = 'Sortdato - Ikke tilgængelig';
+                            className = 'blackout-date';
+                        } else if (day.is_available) {
+                            if (day.available_quantity > 3) {
+                                backgroundColor = '#10b981';
+                                borderColor = '#059669';
+                                title = `${day.available_quantity} tilgængelig`;
+                                className = 'available-date';
+                            } else {
+                                backgroundColor = '#f59e0b';
+                                borderColor = '#d97706';
+                                title = `${day.available_quantity} tilgængelig - Begrænset`;
+                                className = 'limited-date';
+                            }
+                        } else {
+                            backgroundColor = '#ef4444';
+                            borderColor = '#dc2626';
+                            title = 'Ikke tilgængelig';
+                            className = 'unavailable-date';
+                        }
+                        
+                        return {
+                            date: day.date,
+                            display: 'background',
+                            backgroundColor: backgroundColor,
+                            borderColor: borderColor,
+                            title: title,
+                            classNames: className
+                        };
+                    });
+                    successCallback(events);
+                })
+                .catch(error => {
+                    console.error('Error fetching calendar data:', error);
+                    calendarEl.innerHTML = '<div class="flex items-center justify-center h-64 text-red-600"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><p class="text-lg font-medium">Fejl ved indlæsning af kalender</p><p class="text-sm">Prøv at opdatere siden</p></div></div>';
+                    failureCallback(error);
+                });
+        },
+        select: function(info) {
+            const startDate = info.startStr;
+            const endDate = info.endStr;
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Validate dates
+            if (startDate < today) {
+                showNotification('Vælg venligst en fremtidig startdato', 'warning');
+                calendar.unselect();
+                return;
+            }
+            
+            // Check if it's a single day selection
+            if (startDate === endDate) {
+                selectedStartDate = startDate;
+                selectedEndDate = startDate;
+            } else {
+                selectedStartDate = startDate;
+                selectedEndDate = endDate;
+            }
+            
+            updateSelectionDisplay();
+            checkAvailability();
+        },
+        dateClick: function(info) {
+            const clickedDate = info.dateStr;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (clickedDate < today) {
+                showNotification('Vælg venligst en fremtidig dato', 'warning');
+                return;
+            }
+            
+            // If no selection or clicking on a different date, start new selection
+            if (!selectedStartDate || clickedDate !== selectedStartDate) {
+                selectedStartDate = clickedDate;
+                selectedEndDate = clickedDate;
+            } else {
+                // If clicking on the same date, clear selection
+                selectedStartDate = null;
+                selectedEndDate = null;
+            }
+            
+            updateSelectionDisplay();
+            if (selectedStartDate) {
+                checkAvailability();
+            } else {
+                hideSelectionSummary();
+            }
+        },
+        dayMaxEvents: false,
+        height: 'auto',
+        dayCellClassNames: function(info) {
+            const today = new Date();
+            const cellDate = new Date(info.date);
+            
+            if (cellDate < today) {
+                return ['past-date'];
+            }
+            return [];
+        }
+    });
+    
+    calendar.render();
+    
+    // Update selection display
+    function updateSelectionDisplay() {
+        const selectedDatesEl = document.getElementById('selected-dates');
+        const selectionInfoEl = document.getElementById('selection-info');
+        
+        if (selectedStartDate && selectedEndDate) {
+            if (selectedStartDate === selectedEndDate) {
+                selectedDatesEl.textContent = formatDate(selectedStartDate);
+            } else {
+                selectedDatesEl.textContent = `${formatDate(selectedStartDate)} - ${formatDate(selectedEndDate)}`;
+            }
+            selectionInfoEl.querySelector('.text-sm').textContent = 'Valgte datoer';
+        } else {
+            selectedDatesEl.textContent = '-';
+            selectionInfoEl.querySelector('.text-sm').textContent = 'Vælg datoer';
+        }
+    }
+    
+    // Check availability for selected dates
+    function checkAvailability() {
+        if (!selectedStartDate || !selectedEndDate) return;
+        
+        const availabilityStatusEl = document.getElementById('availability-status');
+        const availabilityTextEl = document.getElementById('availability-text');
+        const availabilityDetailsEl = document.getElementById('availability-details');
+        const selectionSummaryEl = document.getElementById('selection-summary');
+        
+        // Show loading state
+        availabilityStatusEl.innerHTML = '<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>';
+        availabilityTextEl.textContent = 'Tjekker tilgængelighed...';
+        availabilityDetailsEl.textContent = '';
+        selectionSummaryEl.classList.remove('hidden');
+        
+        // Check availability using the stored data
+        let isAvailable = true;
+        let minAvailableQuantity = Infinity;
+        let hasBlackout = false;
+        
+        const startDate = new Date(selectedStartDate);
+        const endDate = new Date(selectedEndDate);
+        const currentDate = new Date(startDate);
+        
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayData = availabilityData[dateStr];
+            
+            if (dayData) {
+                if (dayData.is_blacked_out) {
+                    hasBlackout = true;
+                    isAvailable = false;
+                    break;
+                } else if (!dayData.is_available) {
+                    isAvailable = false;
+                    break;
+                } else {
+                    minAvailableQuantity = Math.min(minAvailableQuantity, dayData.available_quantity);
+                }
+            } else {
+                isAvailable = false;
+                break;
+            }
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Update UI based on availability
+        if (isAvailable && !hasBlackout) {
+            availabilityStatusEl.innerHTML = '<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            availabilityTextEl.textContent = 'Tilgængelig!';
+            availabilityTextEl.className = 'font-semibold text-green-800';
+            availabilityDetailsEl.textContent = `${minAvailableQuantity} enheder tilgængelige`;
+            availabilityDetailsEl.className = 'text-sm text-green-600';
+        } else {
+            availabilityStatusEl.innerHTML = '<svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            availabilityTextEl.textContent = 'Ikke tilgængelig';
+            availabilityTextEl.className = 'font-semibold text-red-800';
+            if (hasBlackout) {
+                availabilityDetailsEl.textContent = 'Sortdato i den valgte periode';
+            } else {
+                availabilityDetailsEl.textContent = 'Ikke tilgængelig i den valgte periode';
+            }
+            availabilityDetailsEl.className = 'text-sm text-red-600';
+        }
+    }
+    
+    // Clear selection
+    document.getElementById('clear-selection').addEventListener('click', function() {
+        selectedStartDate = null;
+        selectedEndDate = null;
+        calendar.unselect();
+        updateSelectionDisplay();
+        hideSelectionSummary();
+    });
+    
+    // Book now button
+    document.getElementById('book-now').addEventListener('click', function() {
+        if (selectedStartDate && selectedEndDate) {
+            // Redirect to product detail with selected dates
+            const url = new URL(`{{ url_for('public.product_detail', slug=product.slug) }}`, window.location.origin);
+            url.searchParams.set('start_date', selectedStartDate);
+            url.searchParams.set('end_date', selectedEndDate);
+            window.location.href = url.toString();
+        }
+    });
+    
+    // Hide selection summary
+    function hideSelectionSummary() {
+        document.getElementById('selection-summary').classList.add('hidden');
+    }
+    
+    // Format date for display
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('da-DK', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+    
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 translate-x-full`;
+        
+        const colors = {
+            info: 'bg-blue-500 text-white',
+            success: 'bg-green-500 text-white',
+            warning: 'bg-yellow-500 text-white',
+            error: 'bg-red-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type]}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <span class="mr-2">${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+});
+</script>
+
+<style>
+.calendar-container {
+    min-height: 500px;
+}
+
+.past-date {
+    opacity: 0.5;
+    background-color: #f9fafb;
+}
+
+.fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.fc-button {
+    background-color: #6366f1 !important;
+    border-color: #6366f1 !important;
+    color: white !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
+}
+
+.fc-button:hover {
+    background-color: #4f46e5 !important;
+    border-color: #4f46e5 !important;
+}
+
+.fc-button:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+.fc-daygrid-day {
+    border-radius: 0.5rem;
+    margin: 0.125rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fc-daygrid-day:hover {
+    background-color: #f3f4f6;
+    transform: scale(1.02);
+}
+
+.fc-daygrid-day-number {
+    padding: 0.5rem;
+    font-weight: 500;
+}
+
+.fc-day-today {
+    background-color: #dbeafe !important;
+    color: #1e40af !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+    font-weight: 700;
+}
+
+.fc-daygrid-day.fc-day-selected {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.fc-daygrid-day.fc-day-selected .fc-daygrid-day-number {
+    color: white !important;
+    font-weight: 700;
+}
+
+.available-date {
+    position: relative;
+}
+
+.available-date::after {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.unavailable-date {
+    position: relative;
+}
+
+.unavailable-date::after {
+    content: '✗';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.limited-date {
+    position: relative;
+}
+
+.limited-date::after {
+    content: '!';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.blackout-date {
+    position: relative;
+}
+
+.blackout-date::after {
+    content: '●';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

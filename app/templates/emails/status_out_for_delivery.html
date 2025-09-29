@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Udstyr udleveret - {{ booking.booking_no }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #8B5CF6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .delivery-info {
+            background-color: #F0F9FF;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3B82F6;
+        }
+        .return-info {
+            background-color: #F0FDF4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #10B981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎉 HighendEvent</div>
+            <h1>Udstyr udleveret!</h1>
+            <p>Ordrenummer: {{ booking.booking_no }}</p>
+            <div class="status-badge">📦 Udleveret</div>
+        </div>
+        
+        <div class="content">
+            <p>Hej {{ customer_name }},</p>
+            
+            <p>Fantastisk! Dit udstyr er nu udleveret og klar til brug.</p>
+            
+            <div class="delivery-info">
+                <h3>📦 Leveringsinformation</h3>
+                <p><strong>Leveringstype:</strong> {{ 'Hjemmelevering' if booking.delivery_fee_dkk > 0 else 'Afhentning' }}</p>
+                <p><strong>Periode:</strong> {{ booking.start_date.strftime('%d/%m/%Y') }} - {{ booking.end_date.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Antal dage:</strong> {{ (booking.end_date - booking.start_date).days + 1 }} dage</p>
+            </div>
+            
+            <div class="return-info">
+                <h3>🔄 Returneringsinformation</h3>
+                <p><strong>Returneringsdato:</strong> {{ booking.end_date.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Returneringstid:</strong> Senest kl. 18:00</p>
+                <p><strong>Returneringssted:</strong> {{ 'Vi henter udstyret' if booking.delivery_fee_dkk > 0 else 'Afhentning på vores adresse' }}</p>
+            </div>
+            
+            <p><strong>Vigtigt:</strong> Sørg for at returnere udstyret i samme stand som modtaget. Depositummet refunderes ved returnering i god stand.</p>
+            
+            <p>Held og lykke med dit event! 🎉</p>
+            
+            <p>Med venlig hilsen,<br>HighendEvent Team</p>
+        </div>
+    </div>
+</body>
+</html>

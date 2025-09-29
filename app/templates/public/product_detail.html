@@ -1,0 +1,2026 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Festudlej{% endblock %}
+
+{% block extra_head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Gradient Background -->
+<div class="bg-gradient-to-br from-slate-50 via-white to-blue-50 relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%230ea5e9" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
+        <!-- Enhanced Breadcrumb -->
+        <nav class="mb-6 lg:mb-8" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="{{ url_for('public.index') }}" class="text-gray-500 hover:text-primary-600 transition-colors duration-200 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Hjem
+                </a></li>
+                <li class="text-gray-300">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li><a href="{{ url_for('public.catalog') }}" class="text-gray-500 hover:text-primary-600 transition-colors duration-200">Katalog</a></li>
+                <li class="text-gray-300">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li><a href="{{ url_for('public.catalog', category=product.category.id) }}" class="text-gray-500 hover:text-primary-600 transition-colors duration-200">{{ product.category.name }}</a></li>
+                <li class="text-gray-300">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </li>
+                <li class="text-gray-900 font-medium">{{ product.name }}</li>
+            </ol>
+        </nav>
+        
+        <!-- Product Title -->
+        <h1 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 leading-tight text-center">
+            {{ product.name }}
+        </h1>
+        
+        <!-- Main Product Section -->
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-8 lg:gap-12">
+            <!-- Enhanced Product Gallery -->
+            <div class="xl:col-span-3">
+                <!-- Main Product Image -->
+                <div class="relative group mb-6">
+                    <div class="aspect-w-16 aspect-h-12 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                        {% if product.hero_image_url %}
+                        <img id="main-product-image" 
+                             src="{{ product.hero_image_url | image_url }}" 
+                             alt="{{ product.name }}" 
+                             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                        <!-- Image Zoom Overlay -->
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="bg-white bg-opacity-90 backdrop-blur-sm rounded-full p-3 shadow-lg">
+                                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-gray-500 text-lg font-medium">Intet billede tilgængeligt</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Image Badges -->
+                    <div class="absolute top-4 left-4 flex flex-col space-y-2">
+                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Tilgængelig
+                        </div>
+                        {% if product.weekend_price_dkk %}
+                        <div class="bg-accent-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                            Weekend-special
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Thumbnail Gallery -->
+                <div class="flex space-x-3 overflow-x-auto pb-2">
+                    {% if product.hero_image_url %}
+                    <button class="thumbnail-btn flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 border-primary-500 shadow-md" 
+                            data-image="{{ product.hero_image_url | image_url }}">
+                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" 
+                             class="w-full h-full object-cover">
+                    </button>
+                    {% endif %}
+                    {% if product.images %}
+                        {% for image in product.images[:6] %}
+                        <button class="thumbnail-btn flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-500 transition-all duration-200 shadow-md hover:shadow-lg" 
+                                data-image="{{ image.url }}">
+                            <img src="{{ image.url }}" alt="{{ image.alt or product.name }}" 
+                                 class="w-full h-full object-cover hover:scale-110 transition-transform duration-200">
+                        </button>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <!-- Trust Signals -->
+                <div class="mt-8 grid grid-cols-3 gap-4">
+                    <div class="text-center p-4 bg-white rounded-xl shadow-md border border-gray-100">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Forsikret</p>
+                        <p class="text-xs text-gray-500">Fuldt dækket</p>
+                    </div>
+                    <div class="text-center p-4 bg-white rounded-xl shadow-md border border-gray-100">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Hurtig levering</p>
+                        <p class="text-xs text-gray-500">Samme dag</p>
+                    </div>
+                    <div class="text-center p-4 bg-white rounded-xl shadow-md border border-gray-100">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.5v19M2.5 12h19"></path>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">Support 24/7</p>
+                        <p class="text-xs text-gray-500">Altid hjælp</p>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Product Description -->
+                {% if product.description %}
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-8 mt-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Produktbeskrivelse
+                    </h3>
+                    <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+                        {{ product.description | safe }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Enhanced Product Specifications -->
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                        </svg>
+                        Specifikationer
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Category -->
+                        <div class="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-200">
+                            <dt class="text-sm font-bold text-primary-800 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                Kategori
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ product.category.name }}</dd>
+                        </div>
+                        
+                        <!-- Stock -->
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-200">
+                            <dt class="text-sm font-bold text-green-800 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M9 12l8-4"></path>
+                                </svg>
+                                Lager status
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                {% if product.stock_qty > 5 %}
+                                    På lager ({{ product.stock_qty }} stk.)
+                                {% elif product.stock_qty > 0 %}
+                                    Få tilbage ({{ product.stock_qty }} stk.)
+                                {% else %}
+                                    Udsolgt
+                                {% endif %}
+                            </dd>
+                        </div>
+                        
+                        <!-- Dimensions if available -->
+                        {% if product.dimensions %}
+                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                            <dt class="text-sm font-bold text-blue-800 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4a2 2 0 012-2h2M4 16v4a2 2 0 002 2h2m8-18h2a2 2 0 012 2v4m0 8v4a2 2 0 01-2 2h-2"></path>
+                                </svg>
+                                Dimensioner
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ product.dimensions }}</dd>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Deposit -->
+                        {% if product.deposit_dkk %}
+                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200">
+                            <dt class="text-sm font-bold text-yellow-800 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z"></path>
+                                </svg>
+                                Depositum
+                            </dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ product.deposit_dkk | currency }}</dd>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Upsell Products Section -->
+                {% if upsell_products %}
+                <div class="mt-8 bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Tilkøb til din leje
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for upsell in upsell_products %}
+                        <div class="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-200 hover:border-primary-300 group">
+                            <div class="flex items-start space-x-4">
+                                {% if upsell.image_url %}
+                                <img src="{{ url_for('static', filename=upsell.image_url) }}" 
+                                     alt="{{ upsell.name }}" 
+                                     class="w-16 h-16 rounded-lg object-cover flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+                                {% else %}
+                                <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"></path>
+                                    </svg>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors duration-200">
+                                        {{ upsell.name }}
+                                    </h4>
+                                    {% if upsell.description %}
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        {{ upsell.description[:80] }}{% if upsell.description|length > 80 %}...{% endif %}
+                                    </p>
+                                    {% endif %}
+                                    
+                                    <div class="flex flex-col space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-lg font-bold text-primary-600">{{ "%.2f"|format(upsell.price_dkk|float) }} DKK</span>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm text-gray-500">Antal:</span>
+                                            <div class="flex items-center space-x-1">
+                                                <div class="flex items-center border border-gray-300 rounded-lg">
+                                                <button type="button" 
+                                                        class="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                                                        onclick="updateUpsellQuantity({{ upsell.id }}, -1)">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                                    </svg>
+                                                </button>
+                                                <input type="number" 
+                                                       id="upsell-qty-{{ upsell.id }}"
+                                                       min="0" 
+                                                       max="{{ upsell.stock_qty }}" 
+                                                       value="0"
+                                                       class="w-16 px-2 py-1 text-center border-none focus:ring-0 text-sm font-medium"
+                                                       onchange="updateUpsellTotal()">
+                                                <button type="button" 
+                                                        class="px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                                                        onclick="updateUpsellQuantity({{ upsell.id }}, 1)">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                                    </svg>
+                                                </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if upsell.stock_qty <= 5 %}
+                                    <div class="mt-2">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            Kun {{ upsell.stock_qty }} tilbage
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Upsell Total Display -->
+                    <div id="upsell-total" class="mt-6 p-4 bg-primary-50 rounded-xl border border-primary-200" style="display: none;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-semibold text-primary-900">Tilkøb i alt:</h4>
+                                <p class="text-sm text-primary-700">Tilføjes til din samlede pris</p>
+                            </div>
+                            <div class="text-xl font-bold text-primary-600" id="upsell-total-amount">0 DKK</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Enhanced Product Info -->
+            <div class="xl:col-span-2">
+                
+                <!-- Pricing Section -->
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-8">
+                    <!-- Main Price -->
+                    <div class="mb-4 relative">
+                        <!-- Stock Status Popup (Top Right) -->
+                        {% if product.stock_qty <= 5 and product.stock_qty > 0 %}
+                        <div class="absolute top-0 right-0">
+                            <button class="stock-status-trigger bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full hover:bg-yellow-200 transition-colors duration-200 cursor-pointer">
+                                Få tilbage
+                            </button>
+                            <div class="stock-status-popup absolute bottom-full right-0 mb-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap opacity-0 invisible transition-all duration-200 z-10">
+                                Kun {{ product.stock_qty }} enheder tilbage!
+                                <div class="absolute top-full right-4 border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex items-baseline space-x-1 mb-2">
+                            <div class="text-4xl lg:text-5xl font-bold text-primary-600">
+                                {{ product.daily_price_dkk | currency }}
+                            </div>
+                            <div class="text-xl text-gray-500 font-medium">/dag</div>
+                        </div>
+                        <div class="text-sm text-gray-600 font-medium">
+                            <span class="inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Inklusiv moms og forsikring
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Weekend Pricing -->
+                    {% if product.weekend_price_dkk %}
+                    <div class="bg-gradient-to-r from-accent-50 to-primary-50 rounded-xl p-4 mb-4 border border-accent-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-lg font-bold text-accent-700">
+                                    {{ product.weekend_price_dkk | currency }}/dag
+                                </div>
+                                <div class="text-sm text-accent-600">Weekend pris (lør-søn)</div>
+                            </div>
+                            <div class="bg-accent-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                Special
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Deposit Info -->
+                    {% if product.deposit_dkk %}
+                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-lg font-semibold text-gray-900">
+                                    {{ product.deposit_dkk | currency }}
+                                </div>
+                                <div class="text-sm text-gray-600">Depositum (refunderbart)</div>
+                            </div>
+                            <div class="text-green-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                
+                <!-- Modern Calendar Section -->
+                <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden mb-8">
+                    <!-- Modern Calendar Header -->
+                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-8 py-8 relative overflow-hidden">
+                        <!-- Animated Background -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+                        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.05\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"1.5\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse"></div>
+                        
+                        <div class="relative">
+                            <!-- Main Content (Centered naturally) -->
+                            <div class="text-center lg:text-left">
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4 mx-auto lg:mx-0">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-3xl lg:text-4xl font-bold text-white mb-3 tracking-tight">
+                                    Vælg dine datoer
+                                </h3>
+                                <p class="text-white/80 text-lg mb-6 max-w-md mx-auto lg:mx-0">
+                                    Klik på en dato for enkelt dag eller vælg flere datoer for en periode
+                                </p>
+                                
+                                <!-- Quick Info Cards -->
+                                <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
+                                    <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 text-white/90 text-sm font-medium">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Øjeblikkelig booking
+                                    </div>
+                                    <div class="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 text-white/90 text-sm font-medium">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        Fleksible datoer
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Fixed Selection Display (Desktop) -->
+                            <div id="selection-info" class="hidden lg:block absolute top-0 right-0">
+                                <div class="bg-white/15 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20 text-center w-44 h-16 flex flex-col justify-center">
+                                    <div class="text-white/70 text-xs font-medium mb-1 uppercase tracking-wide">Valgte periode</div>
+                                    <div id="selected-dates" class="font-semibold text-xs text-white leading-tight">
+                                        Ingen valgt
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Modern Calendar Container -->
+                    <div class="p-8 lg:p-12 bg-gradient-to-br from-gray-50 to-white">
+                        <div id="calendar" class="modern-calendar w-full"></div>
+                        
+                        <!-- Mobile Selection Info -->
+                        <div id="mobile-selection-info" class="lg:hidden mt-8 p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
+                            <div class="text-center">
+                                <div class="text-sm text-gray-500 mb-2">Valgte periode</div>
+                                <div id="selected-dates-mobile" class="font-bold text-lg text-gray-900 px-4 py-2 bg-gray-100 rounded-xl">Ingen valgt</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Selection Summary & Actions -->
+                    <div id="selection-summary" class="hidden bg-gradient-to-r from-gray-50 to-white px-6 py-6 border-t border-gray-200">
+                        <div class="space-y-6">
+                            <!-- Availability Status -->
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                                <div class="flex items-center space-x-4">
+                                    <div id="availability-status" class="flex items-center">
+                                        <!-- Status icon will be inserted here -->
+                                    </div>
+                                    <div>
+                                        <div id="availability-text" class="font-bold text-lg text-gray-900"></div>
+                                        <div id="availability-details" class="text-sm text-gray-600"></div>
+                                    </div>
+                                </div>
+                                <div class="text-center lg:text-right">
+                                    <div id="price-display" class="text-3xl lg:text-4xl font-bold text-primary-600 mb-1">
+                                        <!-- Price will be calculated here -->
+                                    </div>
+                                    <div class="text-sm text-gray-600 font-medium" id="price-details">
+                                        <!-- Price details will be shown here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 sm:space-x-4 pt-4 border-t border-gray-200">
+                                <button id="clear-selection" 
+                                        class="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-md hover:shadow-lg">
+                                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    Ryd valg
+                                </button>
+                                <button id="add-to-cart" 
+                                        class="w-full sm:w-auto px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-primary-600 via-primary-700 to-accent-600 rounded-xl hover:from-primary-700 hover:via-primary-800 hover:to-accent-700 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100 group"
+                                        disabled>
+                                    <svg class="w-5 h-5 inline mr-2 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
+                                    </svg>
+                                    Tilføj til kurv
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Legend -->
+                    <div class="bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-6 border-t border-gray-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="flex items-center justify-center sm:justify-start group p-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+                                <div class="w-5 h-5 bg-green-500 rounded-full mr-3 shadow-lg border-2 border-white transform group-hover:scale-125 transition-transform duration-200"></div>
+                                <div>
+                                    <span class="text-sm font-bold text-gray-800">Tilgængelig</span>
+                                    <p class="text-xs text-gray-500">Klar til booking</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-center sm:justify-start group p-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+                                <div class="w-5 h-5 bg-red-500 rounded-full mr-3 shadow-lg border-2 border-white transform group-hover:scale-125 transition-transform duration-200"></div>
+                                <div>
+                                    <span class="text-sm font-bold text-gray-800">Optaget</span>
+                                    <p class="text-xs text-gray-500">Ikke tilgængelig</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-center sm:justify-start group p-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+                                <div class="w-5 h-5 bg-gray-500 rounded-full mr-3 shadow-lg border-2 border-white transform group-hover:scale-125 transition-transform duration-200"></div>
+                                <div>
+                                    <span class="text-sm font-bold text-gray-800">Sortdato</span>
+                                    <p class="text-xs text-gray-500">Lukket dag</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tips Section -->
+                        <div class="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-4 border border-primary-200">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-primary-800 mb-2">Booking tips</h4>
+                                    <ul class="text-sm text-primary-700 space-y-1">
+                                        <li class="flex items-center"><span class="w-1 h-1 bg-primary-500 rounded-full mr-2"></span>Hold musen over farvede prikker for detaljer</li>
+                                        <li class="flex items-center"><span class="w-1 h-1 bg-primary-500 rounded-full mr-2"></span>Klik start/slut-dato for at forkorte periode</li>
+                                        <li class="flex items-center"><span class="w-1 h-1 bg-primary-500 rounded-full mr-2"></span>Minimum lejepriod: 1 dag</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products Section -->
+{% if related_products %}
+<div class="bg-gradient-to-br from-white via-gray-50 to-blue-50 py-16 relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%230ea5e9" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Section Header -->
+        <div class="text-center mb-12">
+            <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Relaterede produkter
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Udforsk andre populære produkter der kunne passe til din fest
+            </p>
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {% for related_product in related_products %}
+            <div class="group bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-100">
+                <!-- Product Image -->
+                <div class="relative overflow-hidden">
+                    <a href="{{ url_for('public.product_detail', slug=related_product.slug) }}" class="block">
+                        {% if related_product.hero_image_url %}
+                        <div class="aspect-w-16 aspect-h-12">
+                            <img src="{{ related_product.hero_image_url | image_url }}" 
+                                 alt="{{ related_product.name }}" 
+                                 class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500">
+                        </div>
+                        {% else %}
+                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-gray-500 text-sm">Intet billede</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </a>
+                    
+                    <!-- Availability Badge -->
+                    <div class="absolute top-3 left-3">
+                        <div class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg">
+                            Tilgængelig
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors duration-200">
+                        <a href="{{ url_for('public.product_detail', slug=related_product.slug) }}">
+                            {{ related_product.name }}
+                        </a>
+                    </h3>
+                    
+                    <!-- Price and CTA -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-2xl font-bold text-primary-600">
+                                {{ related_product.daily_price_dkk | currency }}
+                            </div>
+                            <div class="text-sm text-gray-500 font-medium">/dag</div>
+                        </div>
+                        <a href="{{ url_for('public.product_detail', slug=related_product.slug) }}" 
+                           class="bg-gradient-to-r from-primary-600 to-accent-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-primary-700 hover:to-accent-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 group">
+                            <span class="group-hover:hidden">Se mere</span>
+                            <span class="hidden group-hover:inline-flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                                Udforsk
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- View All CTA -->
+        <div class="text-center mt-12">
+            <a href="{{ url_for('public.catalog') }}" 
+               class="inline-flex items-center bg-white text-primary-600 px-8 py-4 rounded-xl text-lg font-bold hover:bg-gray-50 transition-all duration-200 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-primary-200 hover:border-primary-300">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Se hele kataloget
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let selectedStartDate = null;
+    let selectedEndDate = null;
+    let calendar = null;
+    let availabilityData = {};
+    
+    // Initialize calendar
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'da',
+        firstDay: 1, // Start week with Monday
+        selectAllow: function(selectInfo) {
+            // Allow selection only for future dates
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return selectInfo.start >= today;
+        },
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth'
+        },
+        buttonText: {
+            today: 'I dag',
+            month: 'Måned',
+            week: 'Uge',
+            list: 'Liste'
+        },
+        selectable: false,
+        selectMirror: false,
+        selectOverlap: true,
+        unselectAuto: false,
+        selectLongPressDelay: 300,
+        dayMaxEventRows: false,
+        events: function(info, successCallback, failureCallback) {
+            // Simple, reliable date format extraction
+            let startDate, endDate;
+            
+            // Handle both string and Date objects
+            if (typeof info.start === 'string') {
+                startDate = info.start.split('T')[0];
+            } else {
+                startDate = info.start.toISOString().split('T')[0];
+            }
+            
+            if (typeof info.end === 'string') {
+                endDate = info.end.split('T')[0];
+            } else {
+                endDate = info.end.toISOString().split('T')[0];
+            }
+            
+            console.log('📅 Fetching calendar data:', { startDate, endDate, productId: {{ product.id }} });
+            
+            fetch(`/api/calendar-data/{{ product.id }}?start=${startDate}&end=${endDate}&t=${Date.now()}`)
+                .then(response => {
+                    console.log('📅 Calendar API response:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('📅 Calendar data received:', data.length, 'days');
+                    
+                    // Store availability data for later use
+                    availabilityData = {};
+                    data.forEach(day => {
+                        availabilityData[day.date] = day;
+                    });
+                    
+                    // Store globally for view changes
+                    window.currentAvailabilityData = data;
+                    
+                    // Create clean visual indicators without background colors or text
+                    const events = data.map(day => {
+                        // We'll add corner indicators via CSS instead of background events
+                        // Return empty events array to avoid background coloring
+                        return null;
+                    }).filter(Boolean);
+                    
+                    console.log('📅 Calendar events created:', events.length);
+                    successCallback(events);
+                    
+                    // Add corner indicators after calendar renders
+                    setTimeout(() => {
+                        addStatusIndicators(data);
+                    }, 100);
+                })
+                .catch(error => {
+                    console.error('📅 Calendar error:', error);
+                    // Don't show error in calendar, just log it
+                    successCallback([]);
+                });
+        },
+        dateClick: function(info) {
+            const clickedDate = info.dateStr;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (clickedDate <= today) {
+                showNotification('Vælg venligst fremtidige datoer', 'warning');
+                return;
+            }
+            
+            console.log('Date clicked:', clickedDate, 'Current selection:', selectedStartDate, selectedEndDate);
+            
+            // Intuitive click logic - no delays, no complications
+            if (!selectedStartDate) {
+                // First click - select single date
+                selectedStartDate = clickedDate;
+                selectedEndDate = clickedDate;
+                highlightSingleDate(clickedDate);
+                updateSelectionDisplay();
+                checkAvailability();
+                showNotification('✅ Enkelt dag valgt - klik anden dato for periode', 'success');
+            } else if (selectedStartDate === clickedDate && selectedEndDate === clickedDate) {
+                // Clicking same single date - clear selection
+                selectedStartDate = null;
+                selectedEndDate = null;
+                clearDateHighlights();
+                updateSelectionDisplay();
+                hideSelectionSummary();
+                showNotification('🗑️ Valg ryddet', 'info');
+            } else if (selectedStartDate === clickedDate) {
+                // Clicking start date of a range - trim from start
+                const nextDay = new Date(selectedStartDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                selectedStartDate = nextDay.toISOString().split('T')[0];
+                
+                if (selectedStartDate === selectedEndDate) {
+                    // Range reduced to single day
+                    highlightSingleDate(selectedStartDate);
+                    showNotification('✂️ Reduceret til enkelt dag', 'info');
+                } else {
+                    // Still a range, just smaller
+                    highlightDateRange();
+                    const days = Math.ceil((new Date(selectedEndDate) - new Date(selectedStartDate)) / (1000 * 60 * 60 * 24)) + 1;
+                    showNotification(`✂️ Periode forkortet til ${days} dage`, 'info');
+                }
+                updateSelectionDisplay();
+                checkAvailability();
+            } else if (selectedEndDate === clickedDate) {
+                // Clicking end date of a range - trim from end
+                const prevDay = new Date(selectedEndDate);
+                prevDay.setDate(prevDay.getDate() - 1);
+                selectedEndDate = prevDay.toISOString().split('T')[0];
+                
+                if (selectedStartDate === selectedEndDate) {
+                    // Range reduced to single day
+                    highlightSingleDate(selectedStartDate);
+                    showNotification('✂️ Reduceret til enkelt dag', 'info');
+                } else {
+                    // Still a range, just smaller
+                    highlightDateRange();
+                    const days = Math.ceil((new Date(selectedEndDate) - new Date(selectedStartDate)) / (1000 * 60 * 60 * 24)) + 1;
+                    showNotification(`✂️ Periode forkortet til ${days} dage`, 'info');
+                }
+                updateSelectionDisplay();
+                checkAvailability();
+            } else {
+                // Click on a different date - create or modify range
+                const startDate = new Date(selectedStartDate);
+                const endDate = new Date(clickedDate);
+                
+                if (startDate <= endDate) {
+                    // Clicked date is after start - extend range forward
+                    selectedEndDate = clickedDate;
+                } else {
+                    // Clicked date is before start - extend range backward
+                    selectedEndDate = selectedStartDate;
+                    selectedStartDate = clickedDate;
+                }
+                
+                highlightDateRange();
+                updateSelectionDisplay();
+                checkAvailability();
+                
+                const days = Math.ceil((new Date(selectedEndDate) - new Date(selectedStartDate)) / (1000 * 60 * 60 * 24)) + 1;
+                showNotification(`✅ ${days} dage valgt i periode`, 'success');
+            }
+        },
+        dayMaxEvents: false,
+        height: 'auto',
+        aspectRatio: 1.2,
+        expandRows: true,
+        dayMaxEventRows: false,
+        fixedWeekCount: false,
+        dayCellClassNames: function(info) {
+            const today = new Date();
+            const cellDate = new Date(info.date);
+            
+            if (cellDate <= today) {
+                return ['past-date'];
+            }
+            return [];
+        }
+    });
+    
+    calendar.render();
+    
+    // Update selection display
+    function updateSelectionDisplay() {
+        const selectedDatesEl = document.getElementById('selected-dates');
+        const selectedDatesMobileEl = document.getElementById('selected-dates-mobile');
+        const selectionInfoEl = document.getElementById('selection-info');
+        
+        let displayText = 'Ingen valgt';
+        
+        if (selectedStartDate && selectedEndDate) {
+            if (selectedStartDate === selectedEndDate) {
+                displayText = formatDate(selectedStartDate);
+            } else {
+                displayText = `${formatDate(selectedStartDate)} - ${formatDate(selectedEndDate)}`;
+            }
+            if (selectionInfoEl && selectionInfoEl.querySelector('.text-sm')) {
+                selectionInfoEl.querySelector('.text-sm').textContent = 'Valgte datoer';
+            }
+        } else {
+            if (selectionInfoEl && selectionInfoEl.querySelector('.text-sm')) {
+                selectionInfoEl.querySelector('.text-sm').textContent = 'Valgte datoer';
+            }
+        }
+        
+        if (selectedDatesEl) selectedDatesEl.textContent = displayText;
+        if (selectedDatesMobileEl) selectedDatesMobileEl.textContent = displayText;
+    }
+    
+    // Check availability for selected dates
+    async function checkAvailability() {
+        if (!selectedStartDate || !selectedEndDate) return;
+        
+        const availabilityStatusEl = document.getElementById('availability-status');
+        const availabilityTextEl = document.getElementById('availability-text');
+        const availabilityDetailsEl = document.getElementById('availability-details');
+        const selectionSummaryEl = document.getElementById('selection-summary');
+        const addToCartBtn = document.getElementById('add-to-cart');
+        const priceDisplayEl = document.getElementById('price-display');
+        const priceDetailsEl = document.getElementById('price-details');
+        
+        // Show loading state
+        availabilityStatusEl.innerHTML = '<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>';
+        availabilityTextEl.textContent = 'Tjekker tilgængelighed...';
+        availabilityDetailsEl.textContent = '';
+        priceDisplayEl.textContent = 'Beregner pris...';
+        priceDetailsEl.textContent = '';
+        selectionSummaryEl.classList.remove('hidden');
+        addToCartBtn.disabled = true;
+        
+        // Check availability using the stored data
+        let isAvailable = true;
+        let minAvailableQuantity = Infinity;
+        let hasBlackout = false;
+        
+        const startDate = new Date(selectedStartDate);
+        const endDate = new Date(selectedEndDate);
+        const currentDate = new Date(startDate);
+        
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayData = availabilityData[dateStr];
+            
+            if (dayData) {
+                if (dayData.is_blacked_out) {
+                    hasBlackout = true;
+                    isAvailable = false;
+                    break;
+                } else if (!dayData.is_available) {
+                    isAvailable = false;
+                    break;
+                } else {
+                    minAvailableQuantity = Math.min(minAvailableQuantity, dayData.available_quantity);
+                }
+            } else {
+                isAvailable = false;
+                break;
+            }
+            
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Update UI based on availability
+        if (isAvailable && !hasBlackout) {
+            availabilityStatusEl.innerHTML = '<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            availabilityTextEl.textContent = 'Tilgængelig!';
+            availabilityTextEl.className = 'font-semibold text-green-800';
+            availabilityDetailsEl.textContent = `${minAvailableQuantity} enheder tilgængelige`;
+            availabilityDetailsEl.className = 'text-sm text-green-600';
+            
+            // Calculate and display price
+            calculatePrice();
+        } else {
+            availabilityStatusEl.innerHTML = '<svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            availabilityTextEl.textContent = 'Ikke tilgængelig';
+            availabilityTextEl.className = 'font-semibold text-red-800';
+            if (hasBlackout) {
+                availabilityDetailsEl.textContent = 'Sortdato i den valgte periode';
+            } else {
+                availabilityDetailsEl.textContent = 'Ikke tilgængelig i den valgte periode';
+            }
+            availabilityDetailsEl.className = 'text-sm text-red-600';
+            priceDisplayEl.textContent = '';
+            priceDetailsEl.textContent = '';
+            addToCartBtn.disabled = true;
+        }
+    }
+    
+    // Clear selection
+    document.getElementById('clear-selection').addEventListener('click', function() {
+        selectedStartDate = null;
+        selectedEndDate = null;
+        clearDateHighlights();
+        updateSelectionDisplay();
+        hideSelectionSummary();
+    });
+    
+    // Add to cart button
+    document.getElementById('add-to-cart').addEventListener('click', function() {
+        if (selectedStartDate && selectedEndDate) {
+            // Add loading state
+            this.classList.add('loading-shimmer');
+            this.disabled = true;
+            const originalText = this.innerHTML;
+            this.innerHTML = '<svg class="w-5 h-5 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Tilføjer...';
+            
+            // Add to cart with selected dates
+            const self = this;
+            addToCart().finally(function() {
+                self.classList.remove('loading-shimmer');
+                self.disabled = false;
+                self.innerHTML = originalText;
+            });
+        }
+    });
+    
+    // Hide selection summary
+    function hideSelectionSummary() {
+        document.getElementById('selection-summary').classList.add('hidden');
+    }
+    
+    // Manual date highlighting functions
+    function highlightSingleDate(dateStr) {
+        clearDateHighlights();
+        const dateElement = document.querySelector(`[data-date="${dateStr}"]`);
+        if (dateElement) {
+            dateElement.classList.add('fc-day-selected', 'single-day-selected');
+        }
+    }
+    
+    function clearDateHighlights() {
+        document.querySelectorAll('.fc-day-selected, .single-day-selected').forEach(el => {
+            el.classList.remove('fc-day-selected', 'single-day-selected');
+        });
+        calendar.unselect();
+    }
+    
+    function highlightDateRange() {
+        clearDateHighlights();
+        if (selectedStartDate && selectedEndDate) {
+            const startDate = new Date(selectedStartDate);
+            const endDate = new Date(selectedEndDate);
+            const currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const dateElement = document.querySelector(`[data-date="${dateStr}"]`);
+                if (dateElement) {
+                    dateElement.classList.add('fc-day-selected');
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        }
+    }
+    
+    // Add status indicators to calendar dates
+    function addStatusIndicators(availabilityData) {
+        // Clear any existing indicators
+        document.querySelectorAll('.status-indicator').forEach(el => el.remove());
+        
+        availabilityData.forEach(day => {
+            const dateElement = document.querySelector(`[data-date="${day.date}"] .fc-daygrid-day-number`);
+            if (!dateElement) return;
+            
+            let color, tooltip;
+            
+            if (day.is_blacked_out) {
+                color = '#6b7280'; // Gray
+                tooltip = 'Sortdato - ikke tilgængelig';
+            } else if (day.is_available && day.available_quantity > 0) {
+                color = '#10b981'; // Green - available regardless of quantity
+                tooltip = `Tilgængelig (${day.available_quantity} enheder)`;
+            } else {
+                color = '#ef4444'; // Red
+                tooltip = 'Ikke tilgængelig';
+            }
+            
+            // Create status indicator with improved styling and tooltip
+            const indicator = document.createElement('div');
+            indicator.className = 'status-indicator';
+            indicator.style.cssText = `
+                position: absolute;
+                top: 4px;
+                left: 4px;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background-color: ${color};
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                z-index: 15;
+                cursor: help;
+                border: 1px solid rgba(255,255,255,0.8);
+                transition: all 0.2s ease;
+            `;
+            
+            // Enhanced tooltip setup
+            indicator.title = tooltip;
+            indicator.setAttribute('data-tooltip', tooltip);
+            
+            // Add hover effects
+            indicator.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.3)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+            });
+            
+            indicator.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            });
+            
+            // Make sure parent is positioned
+            const dayCell = dateElement.closest('.fc-daygrid-day');
+            if (dayCell) {
+                dayCell.style.position = 'relative';
+                dayCell.appendChild(indicator);
+            }
+        });
+    }
+    
+    // Image gallery functionality
+    function initializeImageGallery() {
+        const mainImage = document.getElementById('main-product-image');
+        const thumbnailBtns = document.querySelectorAll('.thumbnail-btn');
+        
+        thumbnailBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const newImageSrc = this.getAttribute('data-image');
+                if (mainImage && newImageSrc) {
+                    mainImage.src = newImageSrc;
+                    
+                    // Update active thumbnail
+                    thumbnailBtns.forEach(thumb => {
+                        thumb.classList.remove('border-primary-500');
+                        thumb.classList.add('border-gray-200');
+                    });
+                    this.classList.remove('border-gray-200');
+                    this.classList.add('border-primary-500');
+                }
+            });
+        });
+    }
+    
+    // Initialize image gallery
+    initializeImageGallery();
+    
+    // Robust price calculation
+    async function calculatePrice() {
+        const priceDisplayEl = document.getElementById('price-display');
+        const priceDetailsEl = document.getElementById('price-details');
+        const addToCartBtn = document.getElementById('add-to-cart');
+        
+        if (!selectedStartDate || !selectedEndDate) {
+            priceDisplayEl.textContent = '';
+            priceDetailsEl.textContent = '';
+            addToCartBtn.disabled = true;
+            return;
+        }
+        
+        // Show loading state
+        priceDisplayEl.textContent = 'Beregner...';
+        priceDetailsEl.textContent = '';
+        addToCartBtn.disabled = true;
+        
+        try {
+            console.log('💰 Calculating price for:', selectedStartDate, 'to', selectedEndDate);
+            
+            // Calculate number of days (inclusive)
+            const startDate = new Date(selectedStartDate);
+            const endDate = new Date(selectedEndDate);
+            const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            
+            const url = `/api/price-estimate/{{ product.id }}?start_date=${selectedStartDate}&end_date=${selectedEndDate}&quantity=1&delivery_type=pickup&t=${Date.now()}`;
+            console.log('💰 Fetching price from:', url);
+            
+            const response = await fetch(url);
+            console.log('💰 Price API response:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('💰 Price data received:', data);
+            
+            console.log('💰 Checking response data structure:', JSON.stringify(data));
+            
+            // API returns pricing data directly (no 'success' wrapper)
+            console.log('💰 Checking pricing data:', data);
+            console.log('💰 total:', data.total, 'type:', typeof data.total);
+            
+            // Parse API response - get the daily rate from the line items
+            const totalPrice = data.total ? Math.round(parseFloat(data.total)) : 0;
+            let dailyRate = 0;
+            
+            // Get the daily rate from the first line item (product rental)
+            if (data.line_items && data.line_items.length > 0) {
+                dailyRate = Math.round(parseFloat(data.line_items[0].unit_price));
+            } else {
+                // Fallback calculation if no line items
+                dailyRate = Math.round(totalPrice / daysDiff);
+            }
+            
+            console.log('💰 Line items:', data.line_items);
+            console.log('💰 Parsed values:', { totalPrice, dailyRate, daysDiff, unitPrice: data.line_items?.[0]?.unit_price });
+            
+            if (totalPrice > 0) {
+                priceDisplayEl.textContent = `${totalPrice} kr.`;
+                
+                // Build price details with deposit info
+                let detailsText = `${daysDiff} dag${daysDiff > 1 ? 'e' : ''} • ${dailyRate} kr./dag`;
+                
+                // Add deposit information if present
+                const depositAmount = data.deposit_amount ? Math.round(parseFloat(data.deposit_amount)) : 0;
+                if (depositAmount > 0) {
+                    detailsText += `\nDeposit: ${depositAmount} kr. (refunderbart)`;
+                }
+                
+                priceDetailsEl.innerHTML = detailsText.replace('\n', '<br>');
+                addToCartBtn.disabled = false;
+                
+                console.log('💰 SUCCESS! Price displayed:', { totalPrice, dailyRate, daysDiff, depositAmount });
+                
+                // Add subtle animation to price display
+                priceDisplayEl.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    priceDisplayEl.style.transform = 'scale(1)';
+                }, 200);
+            } else {
+                console.error('💰 No valid price found:', data);
+                throw new Error('No valid price data received');
+            }
+        } catch (error) {
+            console.error('💰 Price calculation error:', error);
+            
+            // Fallback: Show basic price info without API
+            const daysDiff = Math.ceil((new Date(selectedEndDate) - new Date(selectedStartDate)) / (1000 * 60 * 60 * 24)) + 1;
+            priceDisplayEl.textContent = 'Se pris i kurv';
+            priceDetailsEl.textContent = `${daysDiff} dag${daysDiff > 1 ? 'e' : ''} valgt`;
+            addToCartBtn.disabled = false;
+            
+            // Add error state styling
+            priceDisplayEl.classList.add('text-yellow-600');
+            setTimeout(() => {
+                priceDisplayEl.classList.remove('text-yellow-600');
+            }, 3000);
+        }
+    }
+    
+    // Format date for display
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('da-DK', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+    
+    // Add to cart function
+    async function addToCart() {
+        if (!selectedStartDate || !selectedEndDate) {
+            showNotification('Vælg venligst datoer først', 'warning');
+            return;
+        }
+        
+        try {
+            // Collect upsell products
+            const upsellData = {};
+            {% if upsell_products %}
+            {% for upsell in upsell_products %}
+            const qty_{{ upsell.id }} = parseInt(document.getElementById('upsell-qty-{{ upsell.id }}').value) || 0;
+            if (qty_{{ upsell.id }} > 0) {
+                upsellData['{{ upsell.id }}'] = qty_{{ upsell.id }};
+            }
+            {% endfor %}
+            {% endif %}
+            
+            console.log('🛒 Adding to cart with data:', {
+                product_id: {{ product.id }},
+                start_date: selectedStartDate,
+                end_date: selectedEndDate,
+                quantity: 1,
+                delivery_type: 'pickup',
+                upsells: upsellData
+            });
+            
+            // Create FormData with CSRF token
+            const formData = new FormData();
+            formData.append('product_id', {{ product.id }});
+            formData.append('start_date', selectedStartDate);
+            formData.append('end_date', selectedEndDate);
+            formData.append('quantity', 1);
+            formData.append('delivery_type', 'pickup');
+            
+            // Add upsell data
+            if (Object.keys(upsellData).length > 0) {
+                formData.append('upsells', JSON.stringify(upsellData));
+            }
+            
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                const tokenValue = csrfToken.getAttribute('content');
+                formData.append('csrf_token', tokenValue);
+                console.log('🛒 CSRF token found and added:', tokenValue ? 'YES' : 'NO');
+            } else {
+                console.error('🛒 CSRF token meta tag not found!');
+            }
+            
+            console.log('🛒 Sending request to /shop/add-to-cart...');
+            const response = await fetch('/shop/add-to-cart', {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('🛒 Add to cart response status:', response.status);
+            console.log('🛒 Response headers:', response.headers.get('content-type'));
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('🛒 Server error response:', errorText);
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
+            
+            const data = await response.json();
+            console.log('🛒 Response data:', data);
+            
+            if (data.success) {
+                showNotification('Produkt tilføjet til kurv!', 'success');
+                
+                // Update cart count directly from server response
+                if (data.cart_count !== undefined) {
+                    const cartCountEl = document.getElementById('cart-count');
+                    const cartCountMobileEl = document.getElementById('cart-count-mobile');
+                    if (cartCountEl) cartCountEl.textContent = data.cart_count;
+                    if (cartCountMobileEl) cartCountMobileEl.textContent = data.cart_count;
+                    console.log('🛒 Cart count updated to:', data.cart_count);
+                }
+            } else {
+                console.error('🛒 Server returned error:', data.error);
+                showNotification(data.error || 'Der opstod en fejl', 'error');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            showNotification('Der opstod en fejl under tilføjelse til kurv', 'error');
+        }
+    }
+    
+    // Show notification
+    function showNotification(message, type = 'info') {
+        // Remove existing notifications
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(notification => notification.remove());
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        // Set colors based on type
+        let bgColor, textColor, icon;
+        switch (type) {
+            case 'success':
+                bgColor = 'bg-green-500';
+                textColor = 'text-white';
+                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                break;
+            case 'warning':
+                bgColor = 'bg-yellow-500';
+                textColor = 'text-white';
+                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>';
+                break;
+            case 'error':
+                bgColor = 'bg-red-500';
+                textColor = 'text-white';
+                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                break;
+            default:
+                bgColor = 'bg-blue-500';
+                textColor = 'text-white';
+                icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        }
+        
+        notification.className += ` ${bgColor} ${textColor}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                ${icon}
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+});
+</script>
+
+<style>
+/* Modern Calendar Container */
+.modern-calendar {
+    width: 100%;
+    margin: 0 auto;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern Calendar Styling */
+.fc {
+    width: 100% !important;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: white;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.fc-view-harness {
+    width: 100% !important;
+    background: white;
+}
+
+.fc-daygrid {
+    width: 100% !important;
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 768px) {
+    .fc-toolbar {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    .fc-toolbar-chunk {
+        display: flex !important;
+        justify-content: center !important;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1rem !important;
+        order: -1 !important;
+        width: 100% !important;
+        text-align: center !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .fc-button {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        margin: 0 0.0625rem !important;
+    }
+    
+    .fc-daygrid-day {
+        min-height: 3rem !important;
+    }
+    
+    .fc-daygrid-day-frame {
+        min-height: 3rem !important;
+    }
+    
+    .fc-daygrid-day-number {
+        font-size: 0.875rem !important;
+        min-height: 2rem !important;
+    }
+    
+    .status-indicator {
+        width: 8px !important;
+        height: 8px !important;
+        top: 2px !important;
+        left: 2px !important;
+    }
+    
+    /* Mobile calendar adjustments */
+    .modern-calendar {
+        font-size: 0.875rem !important;
+    }
+}
+
+/* Image gallery styles */
+.thumbnail-btn {
+    transition: all 0.3s ease;
+}
+
+.thumbnail-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Enhanced animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-in-up {
+    animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in-scale {
+    animation: fadeInScale 0.4s ease-out;
+}
+
+/* Price display animation */
+.price-display {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Loading states */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Floating animation for trust signals */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.float-animation {
+    animation: float 6s ease-in-out infinite;
+}
+
+.float-animation:nth-child(2) {
+    animation-delay: 2s;
+}
+
+.float-animation:nth-child(3) {
+    animation-delay: 4s;
+}
+
+.past-date {
+    opacity: 0.5;
+    background-color: #f9fafb;
+}
+
+/* Compact Modern Toolbar */
+.fc-toolbar {
+    padding: 0.75rem 1rem !important;
+    background: white !important;
+    border: none !important;
+    margin-bottom: 1rem !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+.fc-toolbar-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin: 0 !important;
+}
+
+.fc-button {
+    background: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.375rem 0.75rem !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+    margin: 0 0.125rem !important;
+}
+
+.fc-button:hover {
+    background: #e5e7eb !important;
+    border-color: #9ca3af !important;
+    transform: none !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.fc-button:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    outline: none !important;
+    border-color: #3b82f6 !important;
+}
+
+.fc-button-active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.fc-button-active:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+/* Modern Day Cell Styling */
+.fc-daygrid-day {
+    border: none !important;
+    margin: 0.25rem !important;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible;
+    background: white;
+    border-radius: 1rem !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    min-height: 4rem !important;
+}
+
+.fc-daygrid-day:hover:not(.fc-day-selected):not(.past-date) {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Prevent hover effects on selected dates */
+.fc-daygrid-day.fc-day-selected:hover {
+    transform: none;
+    background-color: #3b82f6 !important;
+}
+
+.fc-daygrid-day-number {
+    width: 100% !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 3.5rem !important;
+    font-weight: 700 !important;
+    font-size: 1.125rem !important;
+    color: #374151 !important;
+    transition: all 0.2s ease !important;
+}
+
+.fc-daygrid-day.past-date {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.fc-event {
+    border: none !important;
+    border-radius: 0.375rem;
+    margin: 0.0625rem;
+}
+
+/* Clean calendar grid */
+.fc-daygrid-day-frame {
+    min-height: 60px;
+}
+
+/* Modern Calendar Grid */
+.fc-scrollgrid {
+    border: none !important;
+    border-radius: 1.5rem !important;
+    width: 100% !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden;
+}
+
+.fc-scrollgrid-sync-table {
+    width: 100% !important;
+}
+
+/* Modern Column Headers */
+.fc-col-header-cell {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border: none !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    padding: 1rem 0.5rem !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.1em !important;
+}
+
+/* Generous day cell sizing */
+.fc-daygrid-day {
+    width: calc(14.28571429% - 0.5rem) !important; /* Generous spacing */
+    min-width: 0 !important;
+}
+
+.fc-daygrid-day-top {
+    width: 100% !important;
+    justify-content: center !important;
+}
+
+.fc-daygrid-day-frame {
+    min-height: 4rem !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.fc-daygrid-body {
+    border: none;
+}
+
+/* Selection highlighting */
+.fc-highlight {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    opacity: 0.25;
+    border-radius: 0.375rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.25;
+    }
+    50% {
+        opacity: 0.35;
+    }
+}
+
+/* Modern Today Styling */
+.fc-day-today {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb) !important;
+    color: #374151 !important;
+    box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.1) !important;
+    border: 2px solid #9ca3af !important;
+    transform: none !important;
+    opacity: 0.7 !important;
+    pointer-events: none !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+    color: #6b7280 !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+}
+
+/* Modern Selection Styling - Multi-day (Green) */
+.fc-daygrid-day.fc-day-selected {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+    color: white !important;
+    box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.4) !important;
+    border: none !important;
+    transform: scale(1.03) !important;
+}
+
+.fc-daygrid-day.fc-day-selected .fc-daygrid-day-number {
+    color: white !important;
+    font-weight: 800 !important;
+}
+
+/* Single Day Selection - Blue */
+.fc-daygrid-day.single-day-selected {
+    background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+    color: white !important;
+    box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.4) !important;
+    border: none !important;
+    transform: scale(1.03) !important;
+}
+
+.fc-daygrid-day.single-day-selected .fc-daygrid-day-number {
+    color: white !important;
+    font-weight: 800 !important;
+}
+
+/* Remove duplicate single-day selection styling */
+
+/* Smooth transitions for all interactive elements */
+.fc-daygrid-day,
+.fc-daygrid-day-number,
+.status-indicator {
+    transition: all 0.2s ease;
+}
+
+/* Enhanced status indicators */
+.status-indicator {
+    pointer-events: all;
+    user-select: none;
+    position: relative;
+}
+
+.status-indicator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.status-indicator:hover::after {
+    width: 120%;
+    height: 120%;
+}
+
+/* Accessibility improvements */
+.status-indicator:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .status-indicator {
+        border-width: 2px;
+    }
+    
+    .fc-daygrid-day {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .status-indicator,
+    .fc-daygrid-day,
+    .thumbnail-btn,
+    .price-display {
+        transition: none;
+        animation: none;
+    }
+    
+    .float-animation {
+        animation: none;
+    }
+}
+
+.available-date {
+    position: relative;
+}
+
+.available-date::after {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.unavailable-date {
+    position: relative;
+}
+
+.unavailable-date::after {
+    content: '✗';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.limited-date {
+    position: relative;
+}
+
+.limited-date::after {
+    content: '!';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.blackout-date {
+    position: relative;
+}
+
+.blackout-date::after {
+    content: '●';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* Additional utility classes */
+.aspect-w-16 {
+    position: relative;
+    padding-bottom: 75%; /* 16:12 aspect ratio */
+}
+
+.aspect-w-16 > * {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* Focus states for better accessibility */
+button:focus,
+a:focus,
+.thumbnail-btn:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .fc-daygrid-day {
+        min-height: 3rem;
+    }
+    
+    .thumbnail-btn {
+        min-width: 5rem;
+        min-height: 5rem;
+    }
+    
+    button {
+        min-height: 3rem;
+        min-width: 3rem;
+    }
+}
+</style>
+
+<script>
+// Stock status popup functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const trigger = document.querySelector('.stock-status-trigger');
+    const popup = document.querySelector('.stock-status-popup');
+    
+    if (trigger && popup) {
+        trigger.addEventListener('mouseenter', function() {
+            popup.classList.remove('opacity-0', 'invisible');
+            popup.classList.add('opacity-100', 'visible');
+        });
+        
+        trigger.addEventListener('mouseleave', function() {
+            popup.classList.remove('opacity-100', 'visible');
+            popup.classList.add('opacity-0', 'invisible');
+        });
+    }
+});
+
+// Upsell product functions
+let upsellPrices = {};
+
+// Initialize upsell prices
+{% if upsell_products %}
+{% for upsell in upsell_products %}
+upsellPrices['{{ upsell.id }}'] = {{ upsell.price_dkk|float }};
+{% endfor %}
+{% endif %}
+
+function updateUpsellQuantity(upsellId, change) {
+    const input = document.getElementById('upsell-qty-' + upsellId);
+    const currentValue = parseInt(input.value) || 0;
+    const newValue = Math.max(0, Math.min(parseInt(input.max), currentValue + change));
+    input.value = newValue;
+    updateUpsellTotal();
+}
+
+function updateUpsellTotal() {
+    let total = 0;
+    let hasUpsells = false;
+    
+    {% if upsell_products %}
+    {% for upsell in upsell_products %}
+    const qty_{{ upsell.id }} = parseInt(document.getElementById('upsell-qty-{{ upsell.id }}').value) || 0;
+    if (qty_{{ upsell.id }} > 0) {
+        total += qty_{{ upsell.id }} * upsellPrices['{{ upsell.id }}'];
+        hasUpsells = true;
+    }
+    {% endfor %}
+    {% endif %}
+    
+    const totalDisplay = document.getElementById('upsell-total');
+    const totalAmount = document.getElementById('upsell-total-amount');
+    
+    if (hasUpsells) {
+        totalDisplay.style.display = 'block';
+        totalAmount.textContent = total.toFixed(2).replace('.', ',') + ' DKK';
+    } else {
+        totalDisplay.style.display = 'none';
+    }
+}
+</script>
+
+{% endblock %}

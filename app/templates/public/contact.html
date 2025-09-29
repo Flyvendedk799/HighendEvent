@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Kontakt - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Kontakt os</h1>
+            <p class="text-lg text-gray-600">Vi er her for at hjælpe dig med at finde det perfekte udstyr til din fest</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Contact Information -->
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Kontaktoplysninger</h2>
+                
+                {% if contact_block %}
+                <div class="prose max-w-none">
+                    {{ contact_block.content_md | safe }}
+                </div>
+                {% else %}
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Adresse</h3>
+                        <p class="text-gray-600">Eventvej 123<br>2100 København Ø</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Telefon</h3>
+                        <p class="text-gray-600">+45 12 34 56 78</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">E-mail</h3>
+                        <p class="text-gray-600">info@festudlej.dk</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Åbningstider</h3>
+                        <div class="text-gray-600 space-y-1">
+                            <p>Mandag - Fredag: 09:00 - 18:00</p>
+                            <p>Lørdag: 10:00 - 16:00</p>
+                            <p>Søndag: Lukket</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Contact Form -->
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Send os en besked</h2>
+                
+                <form class="space-y-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Navn</label>
+                        <input type="text" id="name" name="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                        <input type="email" id="email" name="email" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
+                        <input type="tel" id="phone" name="phone"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Emne</label>
+                        <select id="subject" name="subject" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Vælg emne</option>
+                            <option value="booking">Booking spørgsmål</option>
+                            <option value="product">Produkt information</option>
+                            <option value="delivery">Levering</option>
+                            <option value="other">Andet</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Besked</label>
+                        <textarea id="message" name="message" rows="4" required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Beskriv dit spørgsmål eller din anmodning..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" 
+                                class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200">
+                            Send besked
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

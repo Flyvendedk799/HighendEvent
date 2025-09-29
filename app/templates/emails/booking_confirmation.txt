@@ -1,0 +1,31 @@
+Booking bekræftet - {{ booking.booking_no }}
+
+Hej {{ booking.customer_name }},
+
+Tak for din booking! Vi har modtaget din anmodning og vil behandle den hurtigst muligt.
+
+BOOKING DETALJER:
+Booking nummer: {{ booking.booking_no }}
+Status: {{ booking.status | status_text }}
+Periode: {{ booking.start_date | date_format }} - {{ booking.end_date | date_format }}
+Total: {{ booking.total_dkk | currency }}
+
+BOOKEDE PRODUKTER:
+{% for item in booking.items %}
+- {{ item.name_snapshot }} (Antal: {{ item.quantity }}, Pris: {{ (item.unit_price_dkk * item.quantity) | currency }})
+{% endfor %}
+
+{% if booking.notes %}
+BEMÆRKNINGER:
+{{ booking.notes }}
+{% endif %}
+
+Se booking detaljer: {{ url_for('shop.order_confirmation', booking_no=booking.booking_no, _external=True) }}
+
+Med venlig hilsen,
+Festudlej ApS
+Eventvej 123, 2100 København Ø
++45 12 34 56 78 | info@festudlej.dk
+
+
+

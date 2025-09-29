@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Fuldfør din profil - HighendEvent{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+            <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="HighendEvent Logo" class="mx-auto h-16 w-auto">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                Fuldfør din profil
+            </h2>
+            <p class="mt-2 text-sm text-gray-600">
+                Hej {{ customer.first_name }}! Opret en adgangskode for at få adgang til dine bookinger
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <form class="space-y-6" method="POST">
+                {{ form.hidden_tag() }}
+                
+                <!-- Customer Info Display -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Dine oplysninger</h3>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <p><strong>Navn:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+                        <p><strong>Email:</strong> {{ customer.email }}</p>
+                        {% if customer.phone %}<p><strong>Telefon:</strong> {{ customer.phone }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    {{ form.password.label(class="block text-sm font-medium text-gray-700") }}
+                    <div class="mt-1">
+                        {{ form.password(class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" + (" border-red-300" if form.password.errors else "")) }}
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="mt-2 text-sm text-red-600">
+                            {% for error in form.password.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Mindst 8 karakterer</p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    {{ form.confirm_password.label(class="block text-sm font-medium text-gray-700") }}
+                    <div class="mt-1">
+                        {{ form.confirm_password(class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" + (" border-red-300" if form.confirm_password.errors else "")) }}
+                    </div>
+                    {% if form.confirm_password.errors %}
+                        <div class="mt-2 text-sm text-red-600">
+                            {% for error in form.confirm_password.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Terms -->
+                <div class="flex items-center">
+                    {{ form.accept_terms(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                    <div class="ml-2">
+                        {{ form.accept_terms.label(class="text-sm text-gray-900") }}
+                    </div>
+                </div>
+                {% if form.accept_terms.errors %}
+                    <div class="text-sm text-red-600">
+                        {% for error in form.accept_terms.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Submit -->
+                <div>
+                    <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <svg class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                        Fuldfør profil
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password validation
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('confirm_password');
+    
+    function validatePasswords() {
+        const password = passwordField.value;
+        const confirmPassword = confirmPasswordField.value;
+        
+        if (password.length < 8) {
+            passwordField.setCustomValidity('Adgangskode skal være mindst 8 karakterer');
+        } else {
+            passwordField.setCustomValidity('');
+        }
+        
+        if (password !== confirmPassword && confirmPassword.length > 0) {
+            confirmPasswordField.setCustomValidity('Adgangskoderne matcher ikke');
+        } else {
+            confirmPasswordField.setCustomValidity('');
+        }
+    }
+    
+    passwordField.addEventListener('input', validatePasswords);
+    confirmPasswordField.addEventListener('input', validatePasswords);
+});
+</script>
+{% endblock %}
+{% endblock %}

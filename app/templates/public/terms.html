@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Lejebetingelser - Festudlej{% endblock %}
+
+{% block content %}
+<div class="bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Lejebetingelser</h1>
+            <p class="text-lg text-gray-600">Generelle vilkår for udlejning af udstyr</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="prose max-w-none">
+            {% if terms_block %}
+                {{ terms_block.content_md | safe }}
+            {% else %}
+                <h2>1. Generelt</h2>
+                <p>Disse lejebetingelser gælder for alle udlejninger fra Festudlej ApS.</p>
+                
+                <h2>2. Booking og betaling</h2>
+                <ul>
+                    <li>Booking bekræftes ved betaling</li>
+                    <li>Fuld betaling skal ske før levering/afhentning</li>
+                    <li>Depositum kræves for alle udlejninger</li>
+                </ul>
+                
+                <h2>3. Levering og afhentning</h2>
+                <ul>
+                    <li>Levering og afhentning sker i aftalt tidsrum</li>
+                    <li>Kunde skal være til stede ved levering/afhentning</li>
+                    <li>Forsinkelser kan medføre ekstra gebyr</li>
+                </ul>
+                
+                <h2>4. Ansvarsforhold</h2>
+                <ul>
+                    <li>Kunde er ansvarlig for udstyr under lejeperioden</li>
+                    <li>Skader på udstyr debiteres kunden</li>
+                    <li>Depositum tilbagebetales efter returnering i god stand</li>
+                </ul>
+                
+                <h2>5. Annullering</h2>
+                <ul>
+                    <li>Annullering mere end 48 timer før levering: 100% refusion</li>
+                    <li>Annullering 24-48 timer før levering: 50% refusion</li>
+                    <li>Annullering mindre end 24 timer før levering: Ingen refusion</li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+

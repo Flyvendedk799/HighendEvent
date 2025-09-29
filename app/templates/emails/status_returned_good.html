@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Udstyr returneret - {{ booking.booking_no }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #10B981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .success-message {
+            background-color: #D1FAE5;
+            border: 1px solid #10B981;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .payment-info {
+            background-color: #F0F9FF;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎉 HighendEvent</div>
+            <h1>Udstyr returneret!</h1>
+            <p>Ordrenummer: {{ booking.booking_no }}</p>
+            <div class="status-badge">✅ Returneret i god stand</div>
+        </div>
+        
+        <div class="content">
+            <p>Hej {{ customer_name }},</p>
+            
+            <div class="success-message">
+                <h3>🎉 Tak for at returnere udstyret!</h3>
+                <p>Vi har modtaget og kontrolleret dit udlejede udstyr, og det er i perfekt stand.</p>
+            </div>
+            
+            <p>Din booking er nu afsluttet, og vi håber du har haft en fantastisk oplevelse med vores udstyr!</p>
+            
+            <div class="payment-info">
+                <h3>Betalingsoversigt</h3>
+                <div class="detail-row">
+                    <span>Lejeafgift (nu betalt):</span>
+                    <span>{{ booking.remaining_payment_dkk | currency }}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Depositum (refunderes):</span>
+                    <span>-{{ booking.deposit_dkk | currency }}</span>
+                </div>
+                <div class="detail-row">
+                    <span>I alt betalt for leje:</span>
+                    <span>{{ booking.total_dkk | currency }}</span>
+                </div>
+            </div>
+            
+            <p><strong>Depositum refunderet:</strong> Dit depositum på {{ booking.deposit_dkk | currency }} vil blive refunderet til det betalingskort, du brugte ved bestillingen. Refusionen kan tage 3-5 arbejdsdage at nå frem.</p>
+            
+            <p>Vi håber at se dig igen snart! 🎉</p>
+            
+            <p>Med venlig hilsen,<br>HighendEvent Team</p>
+        </div>
+    </div>
+</body>
+</html>
