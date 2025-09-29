@@ -442,7 +442,15 @@ def soft_delete_bookings():
         if booking and not booking.is_deleted:
             booking.is_deleted = True
             booking.deleted_at = datetime.utcnow()
-            booking.deleted_by = current_user.id
+            
+            # Set deleted_by only if current_user is a User (from users table)
+            from app.models import User
+            if isinstance(current_user, User):
+                booking.deleted_by = current_user.id
+            else:
+                # If current_user is a Customer or doesn't exist in users table, set to None
+                booking.deleted_by = None
+                
             booking.deletion_reason = mass_note if mass_note else deletion_reason
             deleted_count += 1
     
