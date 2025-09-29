@@ -1094,10 +1094,6 @@ def debug_cart_pricing():
     return result
 
 
-@bp.route('/debug-session')
-def debug_session():
-    """Debug route to check session data."""
-    return f"<pre>Session data: {dict(session)}</pre>"
 
 
 
