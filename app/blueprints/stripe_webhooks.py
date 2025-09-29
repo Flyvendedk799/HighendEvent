@@ -14,8 +14,11 @@ bp = Blueprint('stripe_webhooks', __name__)
 @bp.route('/stripe/test', methods=['GET', 'POST'])
 def stripe_test():
     """Test endpoint to verify webhooks can reach the server."""
+    current_app.logger.info(f'🧪 Test endpoint accessed: {request.method} {request.path}')
+    
     if request.method == 'POST':
         current_app.logger.info('🧪 Stripe test endpoint received POST request')
+        current_app.logger.info(f'🧪 Headers: {dict(request.headers)}')
         return 'Webhook endpoint is reachable!', 200
     else:
         return '''
@@ -28,6 +31,9 @@ def stripe_test():
 @bp.route('/stripe/webhook', methods=['POST'])
 def stripe_webhook():
     """Handle Stripe webhook events."""
+    
+    current_app.logger.info(f'🔗 Webhook endpoint accessed: {request.method} {request.path}')
+    current_app.logger.info(f'🔗 Headers: {dict(request.headers)}')
     
     try:
         payload = request.get_data()

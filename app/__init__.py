@@ -30,15 +30,34 @@ def create_app(config_class=Config):
     csrf.init_app(app)
     
     # Handle CSRF errors for webhook endpoints
-    @app.errorhandler(400)
+    from flask_wtf.csrf import CSRFError
+    
+    @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
         """Handle CSRF errors, especially for webhook endpoints."""
-        from flask import request
+        from flask import request, current_app
+        
+        current_app.logger.info(f'🔍 CSRF Error on {request.path}: {str(error)}')
         
         # If this is a webhook endpoint, return 200 OK to prevent retries
         if request and request.path and request.path.startswith('/stripe/'):
-            from flask import current_app
             current_app.logger.info(f'🔗 CSRF error on webhook endpoint {request.path} - returning 200 OK')
+            return 'Webhook received', 200
+            
+        # For all other CSRF errors, return the original error
+        current_app.logger.warning(f'⚠️ CSRF error on non-webhook endpoint {request.path}: {str(error)}')
+        return error
+    
+    @app.errorhandler(400)
+    def handle_400_error(error):
+        """Handle general 400 errors."""
+        from flask import request, current_app
+        
+        current_app.logger.info(f'🔍 400 Error on {request.path}: {str(error)}')
+        
+        # If this is a webhook endpoint, return 200 OK to prevent retries
+        if request and request.path and request.path.startswith('/stripe/'):
+            current_app.logger.info(f'🔗 400 error on webhook endpoint {request.path} - returning 200 OK')
             return 'Webhook received', 200
             
         # For all other 400 errors, return the original error
