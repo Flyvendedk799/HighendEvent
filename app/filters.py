@@ -18,9 +18,21 @@ def register_filters(app):
         if image_path.startswith(('http://', 'https://')):
             return image_path
         
-        # If it's a relative path, prepend static URL
+        # If it already starts with /static/, return as is
+        if image_path.startswith('/static/'):
+            return image_path
+        
+        # If it's a relative path starting with uploads/, prepend static URL
         if image_path.startswith('uploads/'):
             return f'/static/{image_path}'
+        
+        # If it's a relative path starting with images/, prepend static URL
+        if image_path.startswith('images/'):
+            return f'/static/{image_path}'
+        
+        # If it's just a filename, assume it's in images directory
+        if '/' not in image_path:
+            return f'/static/images/{image_path}'
         
         # Default case
         return f'/static/{image_path}'
