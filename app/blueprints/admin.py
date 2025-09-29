@@ -32,7 +32,7 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def save_uploaded_file(file, upload_folder='app/static/images'):
+def save_uploaded_file(file, upload_folder=None):
     """Save uploaded file and return the filename."""
     if file and allowed_file(file.filename):
         # Generate unique filename
@@ -40,12 +40,20 @@ def save_uploaded_file(file, upload_folder='app/static/images'):
         name, ext = os.path.splitext(filename)
         unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
         
+        # Set upload folder - use absolute path based on current app instance
+        if upload_folder is None:
+            from flask import current_app
+            upload_folder = os.path.join(current_app.root_path, 'static', 'images')
+        
         # Ensure upload directory exists
         os.makedirs(upload_folder, exist_ok=True)
         
         # Save file
         file_path = os.path.join(upload_folder, unique_filename)
         file.save(file_path)
+        
+        # Log the successful upload
+        current_app.logger.info(f'File uploaded successfully to: {file_path}')
         
         # Return just the filename (image filter will handle the /static/images/ part)
         return unique_filename
