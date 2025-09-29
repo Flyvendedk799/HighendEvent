@@ -29,48 +29,63 @@ def stripe_test():
 def stripe_webhook():
     """Handle Stripe webhook events."""
     
-    payload = request.get_data()
-    sig_header = request.headers.get('Stripe-Signature')
-    
-    current_app.logger.info(f'🔗 Webhook received: {len(payload)} bytes, signature present: {bool(sig_header)}')
-    
-    # Check if webhook secret is configured
-    webhook_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
-    if not webhook_secret:
-        current_app.logger.warning('⚠️ STRIPE_WEBHOOK_SECRET not configured, processing webhook without verification')
-        # Parse the JSON payload directly
+    try:
+        payload = request.get_data()
+        sig_header = request.headers.get('Stripe-Signature')
+        
+        current_app.logger.info(f'🔗 Webhook received: {len(payload)} bytes, signature present: {bool(sig_header)}')
+        
+        # Check if webhook secret is configured
+        webhook_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
+        if not webhook_secret:
+            current_app.logger.warning('⚠️ STRIPE_WEBHOOK_SECRET not configured, processing webhook without verification')
+            # Parse the JSON payload directly
+            try:
+                event = json.loads(payload)
+                current_app.logger.info(f'🔗 Webhook event type: {event.get("type", "unknown")}')
+            except json.JSONDecodeError as e:
+                current_app.logger.error(f'❌ Invalid JSON payload in webhook: {e}')
+                return 'Invalid JSON payload', 400
+        else:
+            try:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, webhook_secret
+                )
+                current_app.logger.info(f'✅ Webhook verified successfully: {event.get("type", "unknown")}')
+            except ValueError as e:
+                # Invalid payload
+                current_app.logger.error(f'❌ Invalid payload in Stripe webhook: {e}')
+                return 'Invalid payload', 400
+            except stripe.error.SignatureVerificationError as e:
+                # Invalid signature
+                current_app.logger.error(f'❌ Invalid signature in Stripe webhook: {e}')
+                return 'Invalid signature', 400
+        
+        # Handle the event
         try:
-            event = json.loads(payload)
-            current_app.logger.info(f'🔗 Webhook event type: {event.get("type", "unknown")}')
-        except json.JSONDecodeError:
-            current_app.logger.error('❌ Invalid JSON payload in webhook')
-            return 'Invalid JSON payload', 400
-    else:
-        try:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, webhook_secret
-            )
-            current_app.logger.info(f'✅ Webhook verified successfully: {event.get("type", "unknown")}')
-        except ValueError:
-            # Invalid payload
-            current_app.logger.error('❌ Invalid payload in Stripe webhook')
-            return 'Invalid payload', 400
-        except stripe.error.SignatureVerificationError:
-            # Invalid signature
-            current_app.logger.error('❌ Invalid signature in Stripe webhook')
-            return 'Invalid signature', 400
-    
-    # Handle the event
-    if event['type'] == 'checkout.session.completed':
-        handle_checkout_session_completed(event['data']['object'])
-    elif event['type'] == 'payment_intent.succeeded':
-        handle_payment_intent_succeeded(event['data']['object'])
-    elif event['type'] == 'payment_intent.payment_failed':
-        handle_payment_intent_failed(event['data']['object'])
-    else:
-        current_app.logger.info(f'Unhandled event type: {event["type"]}')
-    
-    return 'OK', 200
+            if event['type'] == 'checkout.session.completed':
+                handle_checkout_session_completed(event['data']['object'])
+            elif event['type'] == 'payment_intent.succeeded':
+                handle_payment_intent_succeeded(event['data']['object'])
+            elif event['type'] == 'payment_intent.payment_failed':
+                handle_payment_intent_failed(event['data']['object'])
+            else:
+                current_app.logger.info(f'Unhandled event type: {event["type"]}')
+            
+            current_app.logger.info(f'✅ Successfully processed webhook event: {event["type"]}')
+            return 'OK', 200
+            
+        except Exception as e:
+            current_app.logger.error(f'❌ Error processing webhook event: {e}')
+            import traceback
+            current_app.logger.error(f'❌ Webhook traceback: {traceback.format_exc()}')
+            return f'Error processing event: {str(e)}', 500
+            
+    except Exception as e:
+        current_app.logger.error(f'❌ Unexpected error in webhook handler: {e}')
+        import traceback
+        current_app.logger.error(f'❌ Webhook handler traceback: {traceback.format_exc()}')
+        return f'Webhook error: {str(e)}', 500
 
 
 def handle_checkout_session_completed(session):
