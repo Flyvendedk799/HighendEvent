@@ -1768,7 +1768,11 @@ def create_stripe_session_from_cart(total_amount: Decimal, customer_name: str, c
                 current_app.logger.error(f'All Stripe Session import methods failed: {e2}')
                 raise Exception('Stripe Session class not available')
         
-        # Try to create the session with error handling for Stripe library issues
+        # Try to create the session with multiple fallback approaches
+        checkout_session = None
+        session_id = None
+        
+        # Approach 1: Try standard creation
         try:
             checkout_session = session_class.create(
                 payment_method_types=['card'],
@@ -1781,24 +1785,68 @@ def create_stripe_session_from_cart(total_amount: Decimal, customer_name: str, c
                     'checkout_type': 'cart_based'
                 }
             )
-        except AttributeError as attr_error:
-            if "'NoneType' object has no attribute 'Secret'" in str(attr_error):
-                current_app.logger.error('Stripe library compatibility issue with Secret module')
-                # Try with minimal parameters to avoid the Secret module issue
+            current_app.logger.info('Stripe session created successfully with full parameters')
+        except Exception as e1:
+            current_app.logger.error(f'Full parameter Stripe session failed: {e1}')
+            
+            # Approach 2: Try with minimal parameters
+            try:
+                checkout_session = session_class.create(
+                    payment_method_types=['card'],
+                    line_items=line_items,
+                    mode='payment',
+                    success_url=url_for('shop.order_confirmation', _external=True),
+                    cancel_url=url_for('shop.checkout', _external=True)
+                )
+                current_app.logger.info('Stripe session created with minimal parameters')
+            except Exception as e2:
+                current_app.logger.error(f'Minimal parameter Stripe session failed: {e2}')
+                
+                # Approach 3: Use raw API request as last resort
                 try:
-                    checkout_session = session_class.create(
-                        payment_method_types=['card'],
-                        line_items=line_items,
-                        mode='payment',
-                        success_url=url_for('shop.order_confirmation', _external=True),
-                        cancel_url=url_for('shop.checkout', _external=True)
-                    )
-                    current_app.logger.info('Stripe session created with minimal parameters')
-                except Exception as e2:
-                    current_app.logger.error(f'Even minimal Stripe session creation failed: {e2}')
-                    raise Exception(f'Stripe session creation failed: {e2}')
-            else:
-                raise
+                    import requests
+                    
+                    stripe_secret_key = current_app.config.get('STRIPE_SECRET_KEY')
+                    
+                    # Create session via direct API call
+                    headers = {
+                        'Authorization': f'Bearer {stripe_secret_key}',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                    
+                    data = {
+                        'payment_method_types[]': 'card',
+                        'line_items[0][price_data][currency]': 'dkk',
+                        'line_items[0][price_data][product_data][name]': f'HighendEvent Booking - {customer_name}',
+                        'line_items[0][price_data][unit_amount]': int(total_amount * 100),
+                        'line_items[0][quantity]': 1,
+                        'mode': 'payment',
+                        'success_url': url_for('shop.order_confirmation', _external=True),
+                        'cancel_url': url_for('shop.checkout', _external=True)
+                    }
+                    
+                    response = requests.post('https://api.stripe.com/v1/checkout/sessions', headers=headers, data=data)
+                    
+                    if response.status_code == 200:
+                        session_data = response.json()
+                        session_id = session_data.get('id')
+                        session_url = session_data.get('url')
+                        current_app.logger.info(f'Created Stripe session via direct API: {session_id}')
+                        
+                        # Create a minimal session object for compatibility
+                        class MockSession:
+                            def __init__(self, session_id, url):
+                                self.id = session_id
+                                self.url = url
+                        
+                        checkout_session = MockSession(session_id, session_url)
+                    else:
+                        current_app.logger.error(f'Direct API call failed: {response.status_code} - {response.text}')
+                        raise Exception(f'All Stripe session creation methods failed')
+                        
+                except Exception as e3:
+                    current_app.logger.error(f'Direct API approach failed: {e3}')
+                    raise Exception(f'All Stripe session creation methods failed: {e3}')
         current_app.logger.info(f'Stripe session created successfully: {checkout_session.id}')
     except Exception as e:
         current_app.logger.error(f'Error creating Stripe session: {e}')
