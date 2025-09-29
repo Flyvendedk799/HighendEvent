@@ -1133,6 +1133,42 @@ def debug_stripe():
         return f"<pre>Stripe import error: {e}</pre>"
 
 
+@bp.route('/debug-session')
+def debug_session():
+    """Debug route to check session and login status."""
+    from flask_login import current_user
+    
+    debug_info = {
+        'current_user_authenticated': current_user.is_authenticated,
+        'current_user_id': getattr(current_user, 'id', 'N/A'),
+        'current_user_email': getattr(current_user, 'email', 'N/A'),
+        'current_user_password_hash': getattr(current_user, 'password_hash', 'N/A'),
+        'current_user_first_name': getattr(current_user, 'first_name', 'N/A'),
+        'session_user_type': session.get('user_type'),
+        'session_keys': list(session.keys()),
+        'flask_env': current_app.config.get('FLASK_ENV'),
+        'session_permanent': session.permanent,
+        'session_id': session.get('_id', 'No session ID'),
+    }
+    
+    # Also check if there are any recent guest customers
+    from app.models import Customer
+    recent_guests = Customer.query.filter_by(password_hash='GUEST_ACCOUNT_PENDING').order_by(Customer.id.desc()).limit(5).all()
+    
+    guest_info = []
+    for guest in recent_guests:
+        guest_info.append({
+            'id': guest.id,
+            'email': guest.email,
+            'first_name': guest.first_name,
+            'password_hash': guest.password_hash
+        })
+    
+    debug_info['recent_guest_customers'] = guest_info
+    
+    return f"<pre>{debug_info}</pre>"
+
+
 @bp.route('/order/<booking_no>')
 @bp.route('/order')
 def order_confirmation(booking_no=None):

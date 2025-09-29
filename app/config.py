@@ -39,6 +39,9 @@ class Config:
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
+    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'  # HTTPS only in production
+    SESSION_COOKIE_HTTPONLY = True  # Prevent XSS
+    SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
     
     # File upload configuration
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
