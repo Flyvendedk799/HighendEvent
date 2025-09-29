@@ -1755,21 +1755,50 @@ def create_stripe_session_from_cart(total_amount: Decimal, customer_name: str, c
                 from stripe.checkout import Session as StripeSession
                 session_class = StripeSession
             current_app.logger.info(f'Using session class: {session_class}')
-        except ImportError:
-            current_app.logger.error('Could not import Stripe Session class')
-            raise Exception('Stripe Session class not available')
+        except (ImportError, AttributeError) as e:
+            current_app.logger.error(f'Could not import Stripe Session class: {e}')
+            # Try yet another fallback - use the old stripe module approach
+            try:
+                if hasattr(stripe, 'checkout') and hasattr(stripe.checkout, 'Session'):
+                    session_class = stripe.checkout.Session
+                    current_app.logger.info('Using global stripe.checkout.Session')
+                else:
+                    raise Exception('Stripe Session class not available in any form')
+            except Exception as e2:
+                current_app.logger.error(f'All Stripe Session import methods failed: {e2}')
+                raise Exception('Stripe Session class not available')
         
-        checkout_session = session_class.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=url_for('shop.order_confirmation', _external=True),
-            cancel_url=url_for('shop.checkout', _external=True),
-            customer_email=customer_email,
-            metadata={
-                'checkout_type': 'cart_based'
-            }
-        )
+        # Try to create the session with error handling for Stripe library issues
+        try:
+            checkout_session = session_class.create(
+                payment_method_types=['card'],
+                line_items=line_items,
+                mode='payment',
+                success_url=url_for('shop.order_confirmation', _external=True),
+                cancel_url=url_for('shop.checkout', _external=True),
+                customer_email=customer_email,
+                metadata={
+                    'checkout_type': 'cart_based'
+                }
+            )
+        except AttributeError as attr_error:
+            if "'NoneType' object has no attribute 'Secret'" in str(attr_error):
+                current_app.logger.error('Stripe library compatibility issue with Secret module')
+                # Try with minimal parameters to avoid the Secret module issue
+                try:
+                    checkout_session = session_class.create(
+                        payment_method_types=['card'],
+                        line_items=line_items,
+                        mode='payment',
+                        success_url=url_for('shop.order_confirmation', _external=True),
+                        cancel_url=url_for('shop.checkout', _external=True)
+                    )
+                    current_app.logger.info('Stripe session created with minimal parameters')
+                except Exception as e2:
+                    current_app.logger.error(f'Even minimal Stripe session creation failed: {e2}')
+                    raise Exception(f'Stripe session creation failed: {e2}')
+            else:
+                raise
         current_app.logger.info(f'Stripe session created successfully: {checkout_session.id}')
     except Exception as e:
         current_app.logger.error(f'Error creating Stripe session: {e}')
