@@ -5,8 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}HighendEvent - Professionelt udstyr til fester og events{% endblock %}</title>
     
+    <!-- Meta Description -->
+    <meta name="description" content="{% block meta_description %}HighendEvent - Danmarks førende udlejning af professionelt udstyr til fester, events og private arrangementer. Springkastel, borde, stole og meget mere.{% endblock %}">
+    
+    <!-- Meta Keywords -->
+    <meta name="keywords" content="{% block meta_keywords %}udlejning, festudstyr, springkastel, borde, stole, events, fester, arrangementer, professionelt udstyr, Danmark{% endblock %}">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:site_name" content="HighendEvent">
+    <meta property="og:image" content="{{ url_for('static', filename='images/logo1.png', _external=True) }}">
+    <meta property="og:locale" content="da_DK">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ self.title() }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ self.meta_description() }}{% endblock %}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/logo1.png', _external=True) }}">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.url }}">
+    
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo1.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo1.png') }}">
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -150,6 +175,32 @@
             80%, 100% { content: '...'; }
         }
     </style>
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "HighendEvent",
+        "description": "Danmarks førende udlejning af professionelt udstyr til fester, events og private arrangementer",
+        "url": "{{ request.url_root }}",
+        "logo": "{{ url_for('static', filename='images/logo1.png', _external=True) }}",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+45-XX-XX-XX-XX",
+            "contactType": "customer service",
+            "availableLanguage": "Danish"
+        },
+        "address": {
+            "@type": "PostalAddress",
+            "addressCountry": "DK",
+            "addressLocality": "Danmark"
+        },
+        "sameAs": [
+            "https://www.highendevent.dk"
+        ]
+    }
+    </script>
     
     {% block extra_head %}{% endblock %}
 </head>

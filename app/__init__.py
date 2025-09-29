@@ -119,6 +119,9 @@ def create_app(config_class=Config):
     from app.blueprints.calendar import bp as calendar_bp
     app.register_blueprint(calendar_bp)
 
+    from app.blueprints.sitemap import bp as sitemap_bp
+    app.register_blueprint(sitemap_bp)
+
     # Register error handlers
     from app.errors import register_error_handlers
     register_error_handlers(app)
