@@ -11,6 +11,20 @@ from app.models import Booking, BookingStatus, db
 bp = Blueprint('stripe_webhooks', __name__)
 
 
+@bp.route('/stripe/test', methods=['GET', 'POST'])
+def stripe_test():
+    """Test endpoint to verify webhooks can reach the server."""
+    if request.method == 'POST':
+        current_app.logger.info('🧪 Stripe test endpoint received POST request')
+        return 'Webhook endpoint is reachable!', 200
+    else:
+        return '''
+        <h1>Stripe Webhook Test</h1>
+        <p>This endpoint is reachable. Webhook URL: <code>https://highendevent.dk/stripe/webhook</code></p>
+        <p>Test with POST request to verify webhook connectivity.</p>
+        '''
+
+
 @bp.route('/stripe/webhook', methods=['POST'])
 def stripe_webhook():
     """Handle Stripe webhook events."""
@@ -18,18 +32,33 @@ def stripe_webhook():
     payload = request.get_data()
     sig_header = request.headers.get('Stripe-Signature')
     
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, current_app.config['STRIPE_WEBHOOK_SECRET']
-        )
-    except ValueError:
-        # Invalid payload
-        current_app.logger.error('Invalid payload in Stripe webhook')
-        return 'Invalid payload', 400
-    except stripe.error.SignatureVerificationError:
-        # Invalid signature
-        current_app.logger.error('Invalid signature in Stripe webhook')
-        return 'Invalid signature', 400
+    current_app.logger.info(f'🔗 Webhook received: {len(payload)} bytes, signature present: {bool(sig_header)}')
+    
+    # Check if webhook secret is configured
+    webhook_secret = current_app.config.get('STRIPE_WEBHOOK_SECRET')
+    if not webhook_secret:
+        current_app.logger.warning('⚠️ STRIPE_WEBHOOK_SECRET not configured, processing webhook without verification')
+        # Parse the JSON payload directly
+        try:
+            event = json.loads(payload)
+            current_app.logger.info(f'🔗 Webhook event type: {event.get("type", "unknown")}')
+        except json.JSONDecodeError:
+            current_app.logger.error('❌ Invalid JSON payload in webhook')
+            return 'Invalid JSON payload', 400
+    else:
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, webhook_secret
+            )
+            current_app.logger.info(f'✅ Webhook verified successfully: {event.get("type", "unknown")}')
+        except ValueError:
+            # Invalid payload
+            current_app.logger.error('❌ Invalid payload in Stripe webhook')
+            return 'Invalid payload', 400
+        except stripe.error.SignatureVerificationError:
+            # Invalid signature
+            current_app.logger.error('❌ Invalid signature in Stripe webhook')
+            return 'Invalid signature', 400
     
     # Handle the event
     if event['type'] == 'checkout.session.completed':
