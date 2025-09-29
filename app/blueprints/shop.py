@@ -822,6 +822,13 @@ def calculate_pricing():
         
         current_app.logger.info(f'Cart validation passed for {len(cart_data)} items')
         
+        # Update delivery type in session cart items for non-authenticated users
+        if not (current_user.is_authenticated and hasattr(current_user, 'cart_items')):
+            for item in cart_data:
+                item['delivery_type'] = delivery_type
+            session['cart'] = cart_data
+            current_app.logger.info(f'Updated session cart with delivery_type: {delivery_type}')
+        
         # Calculate pricing
         cart_products = []
         booking_items = []
@@ -1729,10 +1736,12 @@ def create_stripe_session_from_cart(total_amount: Decimal, customer_name: str, c
     # Create the session first
     try:
         current_app.logger.info(f'About to create Stripe session with line_items: {line_items}')
-        current_app.logger.info(f'Stripe checkout module: {stripe.checkout}')
-        current_app.logger.info(f'Stripe checkout Session: {stripe.checkout.Session}')
         
-        checkout_session = stripe.checkout.Session.create(
+        # Import stripe dynamically to ensure it's properly loaded
+        import stripe as local_stripe
+        local_stripe.api_key = stripe_secret_key
+        
+        checkout_session = local_stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
