@@ -1741,7 +1741,25 @@ def create_stripe_session_from_cart(total_amount: Decimal, customer_name: str, c
         import stripe as local_stripe
         local_stripe.api_key = stripe_secret_key
         
-        checkout_session = local_stripe.checkout.Session.create(
+        # Debug stripe checkout module
+        current_app.logger.info(f'Stripe version: {getattr(local_stripe, "__version__", "unknown")}')
+        current_app.logger.info(f'Stripe checkout object: {local_stripe.checkout}')
+        current_app.logger.info(f'Stripe checkout type: {type(local_stripe.checkout)}')
+        
+        # Try different ways to access the Session class
+        try:
+            if hasattr(local_stripe.checkout, 'Session'):
+                session_class = local_stripe.checkout.Session
+            else:
+                # Fallback: try importing directly
+                from stripe.checkout import Session as StripeSession
+                session_class = StripeSession
+            current_app.logger.info(f'Using session class: {session_class}')
+        except ImportError:
+            current_app.logger.error('Could not import Stripe Session class')
+            raise Exception('Stripe Session class not available')
+        
+        checkout_session = session_class.create(
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
