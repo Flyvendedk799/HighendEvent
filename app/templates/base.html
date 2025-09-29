@@ -276,16 +276,6 @@
                 </a>
                 {% endif %}
                 
-                <div class="border-t border-gray-200 my-2"></div>
-                <a href="{{ url_for('shop.cart') }}" class="text-gray-700 hover:text-primary-600 block px-4 py-3 rounded-lg text-base font-medium hover:bg-primary-50 transition-all duration-200 flex items-center justify-between">
-                    <span class="flex items-center space-x-3">
-                        <div class="relative">
-                            <img src="{{ url_for('static', filename='images/shopping-cart-icon-shopping-basket-on-transparent-background-free-png.webp') }}" alt="Shopping Cart" class="w-6 h-6 flex-shrink-0 filter hover:brightness-110 transition-all duration-200 object-contain">
-                            <span id="cart-count-mobile" class="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-accent-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold min-w-[1rem] flex-shrink-0">{{ cart_count }}</span>
-                        </div>
-                        <span>Kurv</span>
-                    </span>
-                </a>
             </div>
         </div>
     </nav>
@@ -576,9 +566,9 @@
                             const data = await response.json();
                             this.cartCount = data.cart_count;
                             const cartCountEl = document.getElementById('cart-count');
-                            const cartCountMobileEl = document.getElementById('cart-count-mobile');
+                            const cartCountMobileHeaderEl = document.getElementById('cart-count-mobile-header');
                             if (cartCountEl) cartCountEl.textContent = this.cartCount;
-                            if (cartCountMobileEl) cartCountMobileEl.textContent = this.cartCount;
+                            if (cartCountMobileHeaderEl) cartCountMobileHeaderEl.textContent = this.cartCount;
                         }
                     } catch (error) {
                         console.log('Cart count update failed:', error);
