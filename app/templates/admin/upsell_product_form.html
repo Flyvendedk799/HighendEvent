@@ -144,7 +144,7 @@
                     <h5 class="text-lg font-semibold text-gray-900">Nuværende billede</h5>
                 </div>
                 <div class="p-6">
-                    <img src="{{ url_for('static', filename=upsell_product.image_url) }}" 
+                    <img src="{{ upsell_product.image_url | image_url }}" 
                          alt="{{ upsell_product.name }}" 
                          class="w-full h-auto rounded-lg">
                 </div>

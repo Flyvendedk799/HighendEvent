@@ -59,7 +59,7 @@
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         {% if upsell_product.image_url %}
-                                        <img src="{{ url_for('static', filename=upsell_product.image_url) }}" 
+                                        <img src="{{ upsell_product.image_url | image_url }}" 
                                              alt="{{ upsell_product.name }}" 
                                              class="w-10 h-10 rounded-lg object-cover border border-gray-200">
                                         {% else %}
@@ -156,7 +156,7 @@
                             {% for upsell in available_upsells %}
                             <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                                 {% if upsell.image_url %}
-                                <img src="{{ url_for('static', filename=upsell.image_url) }}" 
+                                <img src="{{ upsell.image_url | image_url }}" 
                                      alt="{{ upsell.name }}" 
                                      class="w-10 h-10 rounded-lg object-cover border border-gray-200 mr-3">
                                 {% else %}
