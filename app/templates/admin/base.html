@@ -342,14 +342,14 @@
                 async loadStats() {
                     try {
                         // Load product count
-                        const productResponse = await fetch('/api/stats/products');
+                        const productResponse = await fetch('/admin/api/stats/products');
                         if (productResponse.ok) {
                             const data = await productResponse.json();
                             this.productCount = data.count;
                         }
                         
                         // Load pending bookings count
-                        const bookingResponse = await fetch('/api/stats/pending-bookings');
+                        const bookingResponse = await fetch('/admin/api/stats/pending-bookings');
                         if (bookingResponse.ok) {
                             const data = await bookingResponse.json();
                             this.pendingBookings = data.count;

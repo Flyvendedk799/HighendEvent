@@ -1313,6 +1313,22 @@ def api_stats_pending_bookings():
     return jsonify({'count': count})
 
 
+@bp.route('/api/debug/images')
+@login_required
+def api_debug_images():
+    """Debug endpoint to check product image paths."""
+    products = Product.query.all()
+    debug_info = []
+    for product in products:
+        debug_info.append({
+            'id': product.id,
+            'name': product.name,
+            'hero_image_url': product.hero_image_url,
+            'is_active': product.is_active
+        })
+    return jsonify({'products': debug_info})
+
+
 @bp.route('/upsell-products')
 @login_required
 def upsell_products():
