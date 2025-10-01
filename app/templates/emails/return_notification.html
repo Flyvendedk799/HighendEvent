@@ -145,7 +145,7 @@
             <p><strong>Depositum refunderet:</strong> Dit depositum på {{ booking.deposit_dkk | currency }} vil blive refunderet til det betalingskort, du brugte ved bestillingen. Refusionen kan tage 3-5 arbejdsdage at nå frem.</p>
             
             <div style="text-align: center;">
-                <a href="{{ url_for('customer.booking_detail', id=booking.id, _external=True) }}" class="cta-button">
+                <a href="{{ url_for('customer.booking_detail', booking_id=booking.id, _external=True) }}" class="cta-button">
                     Se booking detaljer
                 </a>
             </div>

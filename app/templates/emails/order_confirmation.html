@@ -209,7 +209,7 @@
             <p><strong>Vigtigt:</strong> Du betaler kun depositum og levering nu. Lejeafgiften betales efter aflevering og returnering af udstyret.</p>
             
             <div style="text-align: center;">
-                <a href="{{ url_for('customer.booking_detail', id=booking.id, _external=True) }}" class="cta-button">
+                <a href="{{ url_for('customer.booking_detail', booking_id=booking.id, _external=True) }}" class="cta-button">
                     Se din booking
                 </a>
             </div>
