@@ -172,6 +172,9 @@ def generate_invoice_pdf(booking: Booking) -> bytes:
         ['Moms (25%):', f"{booking.vat_dkk:.2f} DKK"],
     ]
     
+    if booking.delivery_fee_dkk > 0:
+        totals_data.append(['Leveringsgebyr:', f"{booking.delivery_fee_dkk:.2f} DKK"])
+    
     if upsell_total > 0:
         totals_data.append(['Tilkøb:', f"{upsell_total:.2f} DKK"])
     

@@ -8,7 +8,9 @@ BOOKING DETALJER:
 Booking nummer: {{ booking.booking_no }}
 Status: {{ booking.status | status_text }}
 Periode: {{ booking.start_date | date_format }} - {{ booking.end_date | date_format }}
-Total: {{ booking.total_dkk | currency }}
+Leje af udstyr: {{ booking.subtotal_dkk | currency }}
+{% if booking.delivery_fee_dkk > 0 %}Leveringsgebyr: {{ booking.delivery_fee_dkk | currency }}
+{% endif %}Total: {{ booking.total_dkk | currency }}
 
 BOOKEDE PRODUKTER:
 {% for item in booking.items %}
