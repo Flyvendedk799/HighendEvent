@@ -47,7 +47,7 @@ def create_sample_data():
         ),
         Category(
             name='Springkasteller',
-            slug='springkasteller',
+            slug='hoppeborg',
             description='Springkasteller og bouncy castles til børn',
             sort_order=3
         ),
@@ -198,7 +198,7 @@ def create_sample_data():
             title='Velkommen til Festudlej',
             content_md='''# Velkommen til Festudlej
 
-Vi lejer ud professionelt udstyr til fester og events. Fra slush ice maskiner til springkasteller - vi har alt hvad du behøver til at gøre din fest til en succes!
+Vi lejer ud professionelt udstyr til fester og events. Fra slush ice maskiner til hoppeborg - vi har alt hvad du behøver til at gøre din fest til en succes!
 
 **Hvorfor vælge os?**
 - Professionelt udstyr af høj kvalitet
