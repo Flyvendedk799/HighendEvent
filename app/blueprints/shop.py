@@ -1751,8 +1751,14 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm) -> Book
             if delivery_setting:
                 distance_km = None
                 if customer_address and customer_zip and customer_city:
-                    company_location = CompanyLocation.query.first()
-                    if company_location:
+                    company_location = CompanyLocation.query.filter(
+                        CompanyLocation.is_primary == True,
+                        CompanyLocation.is_active == True
+                    ).first()
+                    
+                    current_app.logger.info(f'Company location: {company_location}')
+                    
+                    if company_location and company_location.latitude and company_location.longitude:
                         distance_km = DistanceService.calculate_delivery_distance(
                             company_location.latitude, company_location.longitude,
                             customer_address, customer_zip, customer_city
