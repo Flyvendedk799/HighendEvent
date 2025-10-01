@@ -365,6 +365,7 @@ class Booking(db.Model):
     vat_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
     deposit_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
     delivery_fee_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
+    delivery_breakdown: Mapped[Optional[dict]] = mapped_column(db.JSON, nullable=True)  # Store delivery fee breakdown
     total_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
     upfront_payment_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)  # What customer pays now
     remaining_payment_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)  # What customer pays after return

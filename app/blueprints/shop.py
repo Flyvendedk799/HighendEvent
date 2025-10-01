@@ -1727,11 +1727,47 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm) -> Book
         delivery_type_for_pricing = DeliveryType.PICKUP if form.delivery_type.data == 'pickup' else DeliveryType.DELIVERY
         current_app.logger.info(f'Delivery type for pricing: {delivery_type_for_pricing}')
         
+        # Calculate pricing with address for delivery breakdown
+        customer_address = form.address.data if form.address.data else None
+        customer_zip = form.zip_code.data if form.zip_code.data else None
+        customer_city = form.city.data if form.city.data else None
+        
         pricing = pricing_service.calculate_booking_pricing(
             booking_items_dto, 
-            delivery_type_for_pricing
+            delivery_type_for_pricing,
+            customer_address,
+            customer_zip,
+            customer_city
         )
         current_app.logger.info(f'Pricing calculated: total={pricing.total}, deposit={pricing.deposit_amount}, delivery={pricing.delivery_fee}')
+        
+        # Calculate delivery breakdown if delivery fee > 0
+        delivery_breakdown = None
+        if pricing.delivery_fee > 0 and delivery_type_for_pricing == DeliveryType.DELIVERY:
+            from app.models import DeliverySetting, CompanyLocation
+            from app.services.distance import DistanceService
+            
+            delivery_setting = DeliverySetting.query.filter_by(delivery_type=DeliveryType.DELIVERY).first()
+            if delivery_setting:
+                distance_km = None
+                if customer_address and customer_zip and customer_city:
+                    company_location = CompanyLocation.query.first()
+                    if company_location:
+                        distance_service = DistanceService()
+                        distance_km = distance_service.calculate_distance(
+                            company_location.latitude, company_location.longitude,
+                            customer_address, customer_zip, customer_city
+                        )
+                
+                delivery_breakdown = {
+                    'base_fee': float(delivery_setting.base_fee_dkk),
+                    'per_km_fee': float(delivery_setting.per_km_fee_dkk),
+                    'free_delivery_km': delivery_setting.free_delivery_km,
+                    'distance_km': round(distance_km, 2) if distance_km else None,
+                    'chargeable_km': max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else None,
+                    'km_fee': float(delivery_setting.per_km_fee_dkk) * max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else 0
+                }
+                current_app.logger.info(f'Delivery breakdown calculated: {delivery_breakdown}')
         
         # Find or create customer
         current_app.logger.info('Finding or creating customer...')
@@ -1788,6 +1824,7 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm) -> Book
             vat_dkk=pricing.vat_amount,
             deposit_dkk=pricing.deposit_amount,
             delivery_fee_dkk=pricing.delivery_fee,
+            delivery_breakdown=delivery_breakdown,
             total_dkk=pricing.total,
             upfront_payment_dkk=pricing.upfront_payment,  # What customer pays now
             remaining_payment_dkk=pricing.remaining_payment,  # What customer pays after return

@@ -143,6 +143,31 @@ def generate_invoice_pdf(booking: Booking) -> bytes:
             f"{booking.delivery_fee_dkk:.2f} DKK",
             f"{booking.delivery_fee_dkk:.2f} DKK"
         ])
+        
+        # Add delivery fee breakdown if available
+        if hasattr(booking, 'delivery_breakdown') and booking.delivery_breakdown:
+            breakdown = booking.delivery_breakdown
+            if breakdown.get('base_fee', 0) > 0:
+                items_data.append([
+                    '  - Basisgebyr',
+                    '',
+                    f"{breakdown['base_fee']:.2f} DKK",
+                    f"{breakdown['base_fee']:.2f} DKK"
+                ])
+            if breakdown.get('chargeable_km', 0) > 0 and breakdown.get('km_fee', 0) > 0:
+                items_data.append([
+                    f"  - {breakdown['chargeable_km']} km × {breakdown['per_km_fee']:.2f} DKK",
+                    '',
+                    f"{breakdown['km_fee']:.2f} DKK",
+                    f"{breakdown['km_fee']:.2f} DKK"
+                ])
+            if breakdown.get('distance_km'):
+                items_data.append([
+                    f"  - Afstand: {breakdown['distance_km']} km",
+                    '',
+                    '',
+                    ''
+                ])
     
     items_table = Table(items_data, colWidths=[6*cm, 2*cm, 3*cm, 3*cm])
     items_table.setStyle(TableStyle([

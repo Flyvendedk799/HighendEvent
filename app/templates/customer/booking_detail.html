@@ -94,6 +94,29 @@
                         <span class="text-sm text-gray-600">Levering</span>
                         <span class="text-sm font-medium text-gray-900">{{ booking.delivery_fee_dkk | currency }}</span>
                     </div>
+                    
+                    <!-- Delivery fee breakdown -->
+                    {% if booking.delivery_breakdown %}
+                    <div class="ml-4 text-xs text-gray-500 space-y-1">
+                        {% if booking.delivery_breakdown.base_fee > 0 %}
+                        <div class="flex justify-between">
+                            <span>Basisgebyr:</span>
+                            <span>{{ booking.delivery_breakdown.base_fee | currency }}</span>
+                        </div>
+                        {% endif %}
+                        {% if booking.delivery_breakdown.chargeable_km > 0 and booking.delivery_breakdown.km_fee > 0 %}
+                        <div class="flex justify-between">
+                            <span>{{ booking.delivery_breakdown.chargeable_km }} km × {{ booking.delivery_breakdown.per_km_fee | currency }}:</span>
+                            <span>{{ booking.delivery_breakdown.km_fee | currency }}</span>
+                        </div>
+                        {% endif %}
+                        {% if booking.delivery_breakdown.distance_km %}
+                        <div class="text-gray-400">
+                            Afstand: {{ booking.delivery_breakdown.distance_km }} km
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                     {% endif %}
                     
                     <div class="flex justify-between py-2 border-b border-gray-200">

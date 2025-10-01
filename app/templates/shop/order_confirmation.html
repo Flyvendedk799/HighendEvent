@@ -57,6 +57,29 @@
                                 <span class="text-blue-700">Leveringsgebyr</span>
                                 <span class="text-blue-900 font-medium">{{ booking.delivery_fee_dkk | currency }}</span>
                             </div>
+                            
+                            <!-- Delivery fee breakdown -->
+                            {% if booking.delivery_breakdown %}
+                            <div class="ml-4 text-xs text-blue-600">
+                                {% if booking.delivery_breakdown.base_fee > 0 %}
+                                <div class="flex justify-between">
+                                    <span>Basisgebyr:</span>
+                                    <span>{{ booking.delivery_breakdown.base_fee | currency }}</span>
+                                </div>
+                                {% endif %}
+                                {% if booking.delivery_breakdown.chargeable_km > 0 and booking.delivery_breakdown.km_fee > 0 %}
+                                <div class="flex justify-between">
+                                    <span>{{ booking.delivery_breakdown.chargeable_km }} km × {{ booking.delivery_breakdown.per_km_fee | currency }}:</span>
+                                    <span>{{ booking.delivery_breakdown.km_fee | currency }}</span>
+                                </div>
+                                {% endif %}
+                                {% if booking.delivery_breakdown.distance_km %}
+                                <div class="text-blue-500 mt-1">
+                                    Afstand: {{ booking.delivery_breakdown.distance_km }} km
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                             {% endif %}
 
                             {% if booking.deposit_dkk > 0 %}
