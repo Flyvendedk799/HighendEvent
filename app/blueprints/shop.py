@@ -993,7 +993,7 @@ def calculate_pricing():
                     'free_delivery_km': delivery_setting.free_delivery_km,
                     'distance_km': round(distance_km, 2) if distance_km else None,
                     'chargeable_km': max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else None,
-                    'km_fee': float(delivery_setting.per_km_fee_dkk * max(0, (distance_km or 0) - delivery_setting.free_delivery_km)) if distance_km else 0
+                    'km_fee': float(delivery_setting.per_km_fee_dkk) * max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else 0
                 }
                 current_app.logger.info(f'Delivery breakdown: {delivery_breakdown}')
         
