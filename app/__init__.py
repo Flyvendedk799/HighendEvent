@@ -29,39 +29,46 @@ def create_app(config_class=Config):
     mail.init_app(app)
     csrf.init_app(app)
     
-    # Add database health check and retry logic
+    # Add optimized database health check (only when needed)
     @app.before_request
     def before_request():
-        """Check database connection before each request."""
+        """Check database connection only when there might be issues."""
         from flask import current_app, request
         import time
         
-        # Skip health check for static files and health endpoint
-        if request.endpoint in ['static', 'health_check']:
+        # Skip health check for static files, health endpoint, and API calls
+        if request.endpoint in ['static', 'health_check'] or request.path.startswith('/api/'):
             return
+        
+        # Only check database connection occasionally (every 10th request) or if we suspect issues
+        # This reduces overhead while still catching connection problems
+        if hasattr(current_app, '_db_check_counter'):
+            current_app._db_check_counter += 1
+        else:
+            current_app._db_check_counter = 1
             
-        max_retries = 3
-        for attempt in range(max_retries):
+        # Check every 10th request or if we haven't checked in a while
+        should_check = (
+            current_app._db_check_counter % 10 == 0 or 
+            not hasattr(current_app, '_last_db_check') or 
+            time.time() - current_app._last_db_check > 300  # 5 minutes
+        )
+        
+        if should_check:
             try:
-                # Test database connection with a simple query
+                # Quick database ping
                 db.session.execute('SELECT 1')
-                break  # Connection successful, exit retry loop
+                current_app._last_db_check = time.time()
+                current_app._db_check_counter = 0  # Reset counter
             except Exception as e:
-                current_app.logger.warning(f'⚠️ Database connection issue (attempt {attempt + 1}/{max_retries}): {e}')
-                
-                if attempt < max_retries - 1:
-                    # Try to refresh the connection
-                    try:
-                        db.session.close()
-                        db.session.remove()
-                        time.sleep(0.5)  # Brief pause before retry
-                        current_app.logger.info(f'🔄 Attempting to restore database connection (attempt {attempt + 2})')
-                    except Exception as refresh_error:
-                        current_app.logger.error(f'🚨 Failed to refresh database session: {refresh_error}')
-                else:
-                    # Final attempt failed
-                    current_app.logger.error(f'🚨 All database connection attempts failed after {max_retries} tries')
-                    # Don't fail the request, let it continue and handle errors in error handlers
+                current_app.logger.warning(f'⚠️ Database connection issue detected: {e}')
+                # Only retry on actual database errors, not on every request
+                try:
+                    db.session.close()
+                    db.session.remove()
+                    current_app.logger.info('🔄 Database session refreshed')
+                except Exception as refresh_error:
+                    current_app.logger.error(f'🚨 Failed to refresh database session: {refresh_error}')
     
     # Handle CSRF errors for webhook endpoints
     from flask_wtf.csrf import CSRFError
