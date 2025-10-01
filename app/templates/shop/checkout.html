@@ -60,43 +60,42 @@
                             {% endif %}
                         </div>
                         
-                        <!-- Address -->
+                        <!-- Address with Autocomplete -->
                         <div>
-                            {{ form.address.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                            {{ form.address(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.address.errors else "")) }}
-                            {% if form.address.errors %}
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+                            <div class="relative">
+                                <input type="text" 
+                                       id="address-search" 
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" 
+                                       placeholder="Indtast adresse for at søge..."
+                                       autocomplete="off">
+                                <div id="address-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+                                    <!-- Address suggestions will be populated here -->
+                                </div>
+                            </div>
+                            <!-- Hidden fields for form submission -->
+                            {{ form.address(id="address-field", style="display: none;") }}
+                            {{ form.zip_code(id="zip-field", style="display: none;") }}
+                            {{ form.city(id="city-field", style="display: none;") }}
+                            
+                            <!-- Distance display -->
+                            <div id="distance-display" class="mt-2 text-sm text-gray-600 hidden">
+                                <span class="font-medium">Afstand fra vores lokation:</span> <span id="distance-value"></span> km
+                            </div>
+                            
+                            {% if form.address.errors or form.zip_code.errors or form.city.errors %}
                                 <div class="mt-1 text-sm text-red-600">
                                     {% for error in form.address.errors %}
                                         {{ error }}
                                     {% endfor %}
+                                    {% for error in form.zip_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                    {% for error in form.city.errors %}
+                                        {{ error }}
+                                    {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-                        
-                        <!-- ZIP and City -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                {{ form.zip_code.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                {{ form.zip_code(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.zip_code.errors else "")) }}
-                                {% if form.zip_code.errors %}
-                                    <div class="mt-1 text-sm text-red-600">
-                                        {% for error in form.zip_code.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div>
-                                {{ form.city.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                {{ form.city(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.city.errors else "")) }}
-                                {% if form.city.errors %}
-                                    <div class="mt-1 text-sm text-red-600">
-                                        {% for error in form.city.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
                         </div>
                         
                         <!-- Delivery Type -->
@@ -260,10 +259,21 @@
                                 </div>
                                 {% endif %}
                                 
-                                <!-- Delivery fee -->
-                                <div class="flex justify-between text-sm" id="delivery-fee-line" style="display: {% if delivery_fee and delivery_fee > 0 %}flex{% else %}none{% endif %};">
-                                    <span class="text-blue-700">Leveringsgebyr</span>
-                                    <span class="text-blue-900 font-medium" id="delivery-fee-amount">{{ delivery_fee | currency }}</span>
+                                <!-- Delivery fee breakdown -->
+                                <div id="delivery-fee-section" style="display: {% if delivery_fee and delivery_fee > 0 %}block{% else %}none{% endif %};">
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-blue-700">Leveringsgebyr</span>
+                                        <span class="text-blue-900 font-medium" id="delivery-fee-amount">{{ delivery_fee | currency }}</span>
+                                    </div>
+                                    <!-- Detailed breakdown -->
+                                    <div id="delivery-breakdown" class="ml-4 text-xs text-blue-600 hidden">
+                                        <div id="base-fee-line" class="hidden">
+                                            <span>Basisgebyr:</span> <span id="base-fee-amount"></span>
+                                        </div>
+                                        <div id="km-fee-line" class="hidden">
+                                            <span id="km-fee-text"></span> <span id="km-fee-amount"></span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="border-t border-blue-200 pt-2">
@@ -342,6 +352,104 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     
+    // Address autocomplete functionality
+    let addressSearchTimeout;
+    const addressSearchInput = document.getElementById('address-search');
+    const addressDropdown = document.getElementById('address-dropdown');
+    const addressField = document.getElementById('address-field');
+    const zipField = document.getElementById('zip-field');
+    const cityField = document.getElementById('city-field');
+    const distanceDisplay = document.getElementById('distance-display');
+    const distanceValue = document.getElementById('distance-value');
+    
+    // Initialize address search if form is pre-populated
+    if (addressField.value && zipField.value && cityField.value) {
+        addressSearchInput.value = `${addressField.value}, ${zipField.value} ${cityField.value}`;
+    }
+    
+    addressSearchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(addressSearchTimeout);
+        
+        if (query.length < 3) {
+            addressDropdown.classList.add('hidden');
+            return;
+        }
+        
+        addressSearchTimeout = setTimeout(() => {
+            searchAddresses(query);
+        }, 300);
+    });
+    
+    addressSearchInput.addEventListener('focus', function() {
+        if (this.value.trim().length >= 3) {
+            addressDropdown.classList.remove('hidden');
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!addressSearchInput.contains(e.target) && !addressDropdown.contains(e.target)) {
+            addressDropdown.classList.add('hidden');
+        }
+    });
+    
+    function searchAddresses(query) {
+        fetch('/shop/api/address-search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({ query: query })
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayAddressSuggestions(data.addresses);
+        })
+        .catch(error => {
+            console.error('Address search error:', error);
+        });
+    }
+    
+    function displayAddressSuggestions(addresses) {
+        addressDropdown.innerHTML = '';
+        
+        if (addresses.length === 0) {
+            addressDropdown.innerHTML = '<div class="p-3 text-gray-500 text-sm">Ingen adresser fundet</div>';
+        } else {
+            addresses.forEach(addr => {
+                const div = document.createElement('div');
+                div.className = 'p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0';
+                div.textContent = addr.text;
+                
+                div.addEventListener('click', function() {
+                    selectAddress(addr);
+                });
+                
+                addressDropdown.appendChild(div);
+            });
+        }
+        
+        addressDropdown.classList.remove('hidden');
+    }
+    
+    function selectAddress(address) {
+        addressSearchInput.value = address.text;
+        addressField.value = address.address;
+        zipField.value = address.zip_code;
+        cityField.value = address.city;
+        
+        addressDropdown.classList.add('hidden');
+        
+        // Update pricing if delivery is selected
+        const deliveryType = document.querySelector('select[name="delivery_type"]').value;
+        if (deliveryType === 'delivery') {
+            updatePricingDynamically(deliveryType);
+        }
+    }
+
     // Dynamic pricing updates - wait for DOM to be ready
     setTimeout(() => {
         const deliveryTypeSelect = document.querySelector('select[name="delivery_type"]');
@@ -390,23 +498,17 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Delivery type select not found!');
         }
         
-        // Add event listeners to address fields for distance-based pricing
-        const addressFields = ['address', 'zip_code', 'city'];
-        addressFields.forEach(fieldName => {
-            const field = document.querySelector(`input[name="${fieldName}"]`);
-            if (field) {
-                field.addEventListener('input', function() {
-                    // Debounce the pricing update to avoid too many requests
-                    clearTimeout(window.pricingTimeout);
-                    window.pricingTimeout = setTimeout(() => {
-                        const deliveryType = document.querySelector('select[name="delivery_type"]').value;
-                        if (deliveryType === 'delivery') {
-                            console.log(`Address field ${fieldName} changed, updating pricing...`);
-                            updatePricingDynamically(deliveryType);
-                        }
-                    }, 1000); // Wait 1 second after user stops typing
-                });
-            }
+        // Address search input triggers pricing update
+        addressSearchInput.addEventListener('input', function() {
+            // Debounce the pricing update to avoid too many requests
+            clearTimeout(window.pricingTimeout);
+            window.pricingTimeout = setTimeout(() => {
+                const deliveryType = document.querySelector('select[name="delivery_type"]').value;
+                if (deliveryType === 'delivery' && addressField.value && zipField.value && cityField.value) {
+                    console.log('Address changed, updating pricing...');
+                    updatePricingDynamically(deliveryType);
+                }
+            }, 1000); // Wait 1 second after user stops typing
         });
     }, 100);
 });
@@ -509,18 +611,66 @@ function updatePricingDisplay(data) {
         }
     }
     
-    // Update delivery fee
+    // Update delivery fee and breakdown
     console.log('Updating delivery fee:', data.delivery_fee);
-    const deliveryFeeLine = document.getElementById('delivery-fee-line');
+    const deliveryFeeSection = document.getElementById('delivery-fee-section');
     const deliveryFeeAmount = document.getElementById('delivery-fee-amount');
+    const deliveryBreakdown = document.getElementById('delivery-breakdown');
+    const baseFeeLine = document.getElementById('base-fee-line');
+    const baseFeeAmount = document.getElementById('base-fee-amount');
+    const kmFeeLine = document.getElementById('km-fee-line');
+    const kmFeeText = document.getElementById('km-fee-text');
+    const kmFeeAmount = document.getElementById('km-fee-amount');
     
-    if (deliveryFeeLine && deliveryFeeAmount) {
+    if (deliveryFeeSection && deliveryFeeAmount) {
         if (data.delivery_fee > 0) {
             deliveryFeeAmount.textContent = formatCurrency(data.delivery_fee);
-            deliveryFeeLine.style.display = 'flex';
+            deliveryFeeSection.style.display = 'block';
             console.log('Updated delivery fee to:', formatCurrency(data.delivery_fee));
+            
+            // Show detailed breakdown if available
+            if (data.delivery_breakdown) {
+                const breakdown = data.delivery_breakdown;
+                
+                // Show distance
+                if (breakdown.distance_km !== null) {
+                    distanceValue.textContent = breakdown.distance_km;
+                    distanceDisplay.classList.remove('hidden');
+                } else {
+                    distanceDisplay.classList.add('hidden');
+                }
+                
+                // Show base fee
+                if (breakdown.base_fee > 0) {
+                    baseFeeAmount.textContent = formatCurrency(breakdown.base_fee);
+                    baseFeeLine.classList.remove('hidden');
+                } else {
+                    baseFeeLine.classList.add('hidden');
+                }
+                
+                // Show km fee
+                if (breakdown.chargeable_km > 0 && breakdown.km_fee > 0) {
+                    kmFeeText.textContent = `${breakdown.chargeable_km} km × ${formatCurrency(breakdown.per_km_fee)}:`;
+                    kmFeeAmount.textContent = formatCurrency(breakdown.km_fee);
+                    kmFeeLine.classList.remove('hidden');
+                } else {
+                    kmFeeLine.classList.add('hidden');
+                }
+                
+                // Show breakdown container if any breakdown is visible
+                if (breakdown.base_fee > 0 || (breakdown.chargeable_km > 0 && breakdown.km_fee > 0)) {
+                    deliveryBreakdown.classList.remove('hidden');
+                } else {
+                    deliveryBreakdown.classList.add('hidden');
+                }
+            } else {
+                deliveryBreakdown.classList.add('hidden');
+                distanceDisplay.classList.add('hidden');
+            }
         } else {
-            deliveryFeeLine.style.display = 'none';
+            deliveryFeeSection.style.display = 'none';
+            deliveryBreakdown.classList.add('hidden');
+            distanceDisplay.classList.add('hidden');
             console.log('Hiding delivery fee (fee is 0)');
         }
     } else {

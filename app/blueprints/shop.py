@@ -948,9 +948,48 @@ def calculate_pricing():
         total_estimate += upsell_total
         current_app.logger.info(f'Calculate pricing - Upsell total: {upsell_total} DKK, Final total: {total_estimate} DKK')
         
+        # Get detailed delivery fee breakdown
+        delivery_breakdown = None
+        if delivery_fee > 0 and booking_items:
+            # Get delivery setting details
+            from app.models import DeliverySetting, CompanyLocation
+            delivery_setting = DeliverySetting.query.filter(
+                DeliverySetting.type == delivery_type_enum,
+                DeliverySetting.is_active == True
+            ).first()
+            
+            if delivery_setting:
+                # Calculate distance if we have customer address
+                distance_km = None
+                if customer_address and customer_zip and customer_city:
+                    company_location = CompanyLocation.query.filter(
+                        CompanyLocation.is_primary == True,
+                        CompanyLocation.is_active == True
+                    ).first()
+                    
+                    if company_location and company_location.latitude and company_location.longitude:
+                        from app.services.distance import DistanceService
+                        distance_km = DistanceService.calculate_delivery_distance(
+                            company_location.latitude,
+                            company_location.longitude,
+                            customer_address,
+                            customer_zip,
+                            customer_city
+                        )
+                
+                delivery_breakdown = {
+                    'base_fee': float(delivery_setting.base_fee_dkk),
+                    'per_km_fee': float(delivery_setting.per_km_fee_dkk),
+                    'free_delivery_km': delivery_setting.free_delivery_km,
+                    'distance_km': round(distance_km, 2) if distance_km else None,
+                    'chargeable_km': max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else None,
+                    'km_fee': float(delivery_setting.per_km_fee_dkk * max(0, (distance_km or 0) - delivery_setting.free_delivery_km)) if distance_km else 0
+                }
+        
         return jsonify({
             'total_estimate': float(total_estimate),
             'delivery_fee': float(delivery_fee),
+            'delivery_breakdown': delivery_breakdown,
             'total_rental': float(total_rental),
             'total_deposit': float(total_deposit),
             'upsell_total': float(upsell_total),
@@ -2089,6 +2128,51 @@ def debug_test_pricing():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/api/address-search', methods=['POST'])
+def address_search():
+    """Search for addresses using Danish address API."""
+    try:
+        data = request.get_json()
+        query = data.get('query', '').strip()
+        
+        if len(query) < 3:
+            return jsonify({'addresses': []})
+        
+        # Use Danish address API (DAWA - Danmarks Adressers Web API)
+        import requests
+        
+        # Search for addresses
+        search_url = "https://api.dataforsyningen.dk/adresser"
+        params = {
+            'q': query,
+            'limit': 10,
+            'struktur': 'mini'
+        }
+        
+        response = requests.get(search_url, params=params, timeout=5)
+        response.raise_for_status()
+        
+        addresses = response.json()
+        
+        # Format addresses for frontend
+        formatted_addresses = []
+        for addr in addresses:
+            formatted_addresses.append({
+                'text': f"{addr.get('adressebetegnelse', '')}, {addr.get('postnr', '')} {addr.get('postnrnavn', '')}",
+                'address': addr.get('adressebetegnelse', ''),
+                'zip_code': addr.get('postnr', ''),
+                'city': addr.get('postnrnavn', ''),
+                'latitude': addr.get('y', 0),
+                'longitude': addr.get('x', 0)
+            })
+        
+        return jsonify({'addresses': formatted_addresses})
+        
+    except Exception as e:
+        current_app.logger.error(f'Address search error: {e}')
+        return jsonify({'addresses': [], 'error': str(e)}), 500
+
 
 @bp.route('/debug-calculate-pricing')
 def debug_calculate_pricing():
