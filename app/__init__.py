@@ -33,7 +33,7 @@ def create_app(config_class=Config):
     @app.before_request
     def before_request():
         """Check database connection before each request."""
-        from flask import current_app
+        from flask import current_app, request
         import time
         
         # Skip health check for static files and health endpoint
