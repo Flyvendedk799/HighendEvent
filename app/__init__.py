@@ -34,20 +34,34 @@ def create_app(config_class=Config):
     def before_request():
         """Check database connection before each request."""
         from flask import current_app
-        try:
-            # Test database connection with a simple query
-            db.session.execute('SELECT 1')
-        except Exception as e:
-            current_app.logger.warning(f'⚠️ Database connection issue detected: {e}')
+        import time
+        
+        # Skip health check for static files and health endpoint
+        if request.endpoint in ['static', 'health_check']:
+            return
+            
+        max_retries = 3
+        for attempt in range(max_retries):
             try:
-                # Try to refresh the connection
-                db.session.close()
-                db.session.remove()
+                # Test database connection with a simple query
                 db.session.execute('SELECT 1')
-                current_app.logger.info('✅ Database connection restored')
-            except Exception as retry_error:
-                current_app.logger.error(f'🚨 Failed to restore database connection: {retry_error}')
-                # Don't fail the request, let it continue and handle errors in error handlers
+                break  # Connection successful, exit retry loop
+            except Exception as e:
+                current_app.logger.warning(f'⚠️ Database connection issue (attempt {attempt + 1}/{max_retries}): {e}')
+                
+                if attempt < max_retries - 1:
+                    # Try to refresh the connection
+                    try:
+                        db.session.close()
+                        db.session.remove()
+                        time.sleep(0.5)  # Brief pause before retry
+                        current_app.logger.info(f'🔄 Attempting to restore database connection (attempt {attempt + 2})')
+                    except Exception as refresh_error:
+                        current_app.logger.error(f'🚨 Failed to refresh database session: {refresh_error}')
+                else:
+                    # Final attempt failed
+                    current_app.logger.error(f'🚨 All database connection attempts failed after {max_retries} tries')
+                    # Don't fail the request, let it continue and handle errors in error handlers
     
     # Handle CSRF errors for webhook endpoints
     from flask_wtf.csrf import CSRFError
@@ -101,13 +115,15 @@ def create_app(config_class=Config):
         current_app.logger.error(f'🚨 Traceback: {traceback.format_exc()}')
         
         # Check if this is a database connection issue
-        if 'connection' in str(error).lower() or 'mysql' in str(error).lower():
+        if 'connection' in str(error).lower() or 'mysql' in str(error).lower() or 'lost connection' in str(error).lower():
             current_app.logger.error('🚨 Database connection issue detected')
             # Try to refresh database connection
             try:
                 db.session.close()
                 db.session.remove()
-                current_app.logger.info('🔄 Database session refreshed')
+                # Force engine disposal to clear all connections
+                db.engine.dispose()
+                current_app.logger.info('🔄 Database session and engine refreshed')
             except Exception as e:
                 current_app.logger.error(f'🚨 Failed to refresh database session: {e}')
         

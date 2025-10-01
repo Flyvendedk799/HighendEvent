@@ -21,17 +21,19 @@ class Config:
     
     # Database connection pooling configuration for production stability
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 5,  # Number of connections to maintain in the pool
-        'max_overflow': 10,  # Additional connections that can be created beyond pool_size
+        'pool_size': 3,  # Reduced pool size for PythonAnywhere
+        'max_overflow': 5,  # Reduced overflow for PythonAnywhere
         'pool_timeout': 30,  # Seconds to wait for a connection from the pool
-        'pool_recycle': 3600,  # Recycle connections after 1 hour to prevent stale connections
+        'pool_recycle': 1800,  # Recycle connections after 30 minutes to prevent stale connections
         'pool_pre_ping': True,  # Test connections before use to detect stale connections
+        'pool_reset_on_return': 'rollback',  # Rollback transactions on return
         'connect_args': {
             'connect_timeout': 10,  # MySQL connection timeout
-            'read_timeout': 30,  # MySQL read timeout
-            'write_timeout': 30,  # MySQL write timeout
+            'read_timeout': 20,  # Reduced read timeout
+            'write_timeout': 20,  # Reduced write timeout
             'charset': 'utf8mb4',  # Use utf8mb4 for full Unicode support
             'autocommit': False,  # Use transactions
+            'init_command': "SET SESSION wait_timeout=28800, interactive_timeout=28800",  # Set MySQL timeouts
         }
     }
     
