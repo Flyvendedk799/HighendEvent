@@ -146,6 +146,12 @@
         <div class="mt-6 bg-gray-50 rounded-lg p-4">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Betalingsinformation</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if booking.delivery_fee_dkk > 0 %}
+                <div>
+                    <div class="text-sm text-gray-600">Leveringsgebyr:</div>
+                    <div class="text-lg font-semibold text-orange-600">{{ booking.delivery_fee_dkk | currency }}</div>
+                </div>
+                {% endif %}
                 <div>
                     <div class="text-sm text-gray-600">Deposit + Levering (betalt):</div>
                     <div class="text-lg font-semibold text-green-600">{{ booking.upfront_payment_dkk | currency }}</div>
