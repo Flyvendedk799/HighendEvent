@@ -74,19 +74,32 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 {{ form.latitude.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                {{ form.latitude(class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500") }}
+                                {{ form.latitude(class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", readonly=true) }}
                                 {% if form.latitude.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.latitude.errors[0] }}</p>
                                 {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">Beregnes automatisk fra adresse</p>
                             </div>
                             
                             <div>
                                 {{ form.longitude.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                {{ form.longitude(class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500") }}
+                                {{ form.longitude(class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", readonly=true) }}
                                 {% if form.longitude.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.longitude.errors[0] }}</p>
                                 {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">Beregnes automatisk fra adresse</p>
                             </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="button" id="geocode-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Find GPS-koordinater automatisk
+                            </button>
+                            <div id="geocode-status" class="mt-2 text-sm text-gray-600 hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -124,4 +137,69 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const geocodeBtn = document.getElementById('geocode-btn');
+    const statusDiv = document.getElementById('geocode-status');
+    const addressField = document.querySelector('input[name="address"]');
+    const zipField = document.querySelector('input[name="zip_code"]');
+    const cityField = document.querySelector('input[name="city"]');
+    const latField = document.querySelector('input[name="latitude"]');
+    const lngField = document.querySelector('input[name="longitude"]');
+    
+    geocodeBtn.addEventListener('click', function() {
+        const address = addressField.value.trim();
+        const zip = zipField.value.trim();
+        const city = cityField.value.trim();
+        
+        if (!address || !zip || !city) {
+            showStatus('Udfyld venligst adresse, postnummer og by først', 'error');
+            return;
+        }
+        
+        geocodeBtn.disabled = true;
+        geocodeBtn.innerHTML = '<svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Søger...';
+        showStatus('Søger efter GPS-koordinater...', 'info');
+        
+        // Call the geocoding endpoint
+        fetch('/admin/api/geocode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({
+                address: address,
+                zip_code: zip,
+                city: city
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                latField.value = data.latitude;
+                lngField.value = data.longitude;
+                showStatus(`✅ GPS-koordinater fundet: ${data.latitude}, ${data.longitude}`, 'success');
+            } else {
+                showStatus(`❌ Kunne ikke finde GPS-koordinater: ${data.error}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Geocoding error:', error);
+            showStatus('❌ Fejl under søgning efter GPS-koordinater', 'error');
+        })
+        .finally(() => {
+            geocodeBtn.disabled = false;
+            geocodeBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>Find GPS-koordinater automatisk';
+        });
+    });
+    
+    function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = `mt-2 text-sm ${type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-gray-600'}`;
+        statusDiv.classList.remove('hidden');
+    }
+});
+</script>
 {% endblock %}
