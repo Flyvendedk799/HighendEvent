@@ -667,10 +667,13 @@ function updatePricingDisplay(data) {
                 
                 // Show distance
                 if (breakdown.distance_km !== null) {
-                    distanceValue.textContent = breakdown.distance_km;
-                    distanceDisplay.classList.remove('hidden');
+                    const distanceValue = document.getElementById('distance-value');
+                    const distanceDisplay = document.getElementById('distance-display');
+                    if (distanceValue) distanceValue.textContent = breakdown.distance_km;
+                    if (distanceDisplay) distanceDisplay.classList.remove('hidden');
                 } else {
-                    distanceDisplay.classList.add('hidden');
+                    const distanceDisplay = document.getElementById('distance-display');
+                    if (distanceDisplay) distanceDisplay.classList.add('hidden');
                 }
                 
                 // Show base fee
@@ -698,12 +701,14 @@ function updatePricingDisplay(data) {
                 }
             } else {
                 deliveryBreakdown.classList.add('hidden');
-                distanceDisplay.classList.add('hidden');
+                const distanceDisplay = document.getElementById('distance-display');
+                if (distanceDisplay) distanceDisplay.classList.add('hidden');
             }
         } else {
             deliveryFeeSection.style.display = 'none';
             deliveryBreakdown.classList.add('hidden');
-            distanceDisplay.classList.add('hidden');
+            const distanceDisplay = document.getElementById('distance-display');
+            if (distanceDisplay) distanceDisplay.classList.add('hidden');
             console.log('Hiding delivery fee (fee is 0)');
         }
     } else {
