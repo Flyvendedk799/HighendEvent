@@ -495,9 +495,10 @@ def checkout():
         pricing_service = PricingService(db_session, current_app.config['VAT_PERCENT'])
         
         # Get customer address for distance-based delivery pricing
-        customer_address = form.address.data if form else None
-        customer_zip = form.zip_code.data if form else None
-        customer_city = form.city.data if form else None
+        # For checkout page, we need to get the address from the form fields
+        customer_address = form.address.data if form and form.address.data else None
+        customer_zip = form.zip_code.data if form and form.zip_code.data else None
+        customer_city = form.city.data if form and form.city.data else None
         
         total_pricing = pricing_service.calculate_booking_pricing(
             booking_items, 
@@ -2154,18 +2155,22 @@ def address_search():
         response.raise_for_status()
         
         addresses = response.json()
+        current_app.logger.info(f'Address search for "{query}" returned {len(addresses)} results')
         
         # Format addresses for frontend
         formatted_addresses = []
         for addr in addresses:
+            # Danish API uses y=latitude, x=longitude
+            address_text = f"{addr.get('adressebetegnelse', '')}, {addr.get('postnr', '')} {addr.get('postnrnavn', '')}"
             formatted_addresses.append({
-                'text': f"{addr.get('adressebetegnelse', '')}, {addr.get('postnr', '')} {addr.get('postnrnavn', '')}",
+                'text': address_text,
                 'address': addr.get('adressebetegnelse', ''),
                 'zip_code': addr.get('postnr', ''),
                 'city': addr.get('postnrnavn', ''),
-                'latitude': addr.get('y', 0),
-                'longitude': addr.get('x', 0)
+                'latitude': addr.get('y', 0),  # y is latitude in Danish API
+                'longitude': addr.get('x', 0)  # x is longitude in Danish API
             })
+            current_app.logger.info(f'Formatted address: {address_text}')
         
         return jsonify({'addresses': formatted_addresses})
         
