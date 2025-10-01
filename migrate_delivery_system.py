@@ -29,19 +29,22 @@ def migrate_delivery_system():
             
             # Add new columns to delivery_settings if they don't exist
             try:
-                # Try to add the new columns
-                db.engine.execute("""
+                # Try to add the new columns using text() for SQLAlchemy 2.0 compatibility
+                from sqlalchemy import text
+                db.session.execute(text("""
                     ALTER TABLE delivery_settings 
                     ADD COLUMN free_delivery_km INT DEFAULT 0 NOT NULL,
                     ADD COLUMN max_delivery_km INT NULL,
                     ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-                """)
+                """))
+                db.session.commit()
                 print("✅ Added new columns to delivery_settings table")
             except Exception as e:
                 if "Duplicate column name" in str(e):
                     print("ℹ️  New columns already exist in delivery_settings table")
                 else:
                     print(f"⚠️  Warning adding columns to delivery_settings: {e}")
+                    db.session.rollback()
             
             # Create default company location if none exists
             existing_locations = CompanyLocation.query.count()
@@ -63,7 +66,10 @@ def migrate_delivery_system():
                 print(f"ℹ️  Found {existing_locations} existing company locations")
             
             # Create default delivery settings if none exist
-            existing_delivery_settings = DeliverySetting.query.count()
+            # Use raw SQL to check count to avoid model column issues
+            from sqlalchemy import text
+            result = db.session.execute(text("SELECT COUNT(*) FROM delivery_settings"))
+            existing_delivery_settings = result.scalar()
             if existing_delivery_settings == 0:
                 print("🚚 Creating default delivery settings...")
                 
@@ -101,20 +107,22 @@ def migrate_delivery_system():
             
             # Show summary
             locations = CompanyLocation.query.all()
-            delivery_settings = DeliverySetting.query.all()
             
             print("\n📊 Migration Summary:")
             print(f"   🏢 Company locations: {len(locations)}")
             for loc in locations:
                 print(f"      - {loc.name} ({loc.city}) {'[PRIMARY]' if loc.is_primary else ''}")
             
+            # Use raw SQL for delivery settings summary to avoid column issues
+            delivery_result = db.session.execute(text("SELECT type, base_fee_dkk, per_km_fee_dkk, free_delivery_km, max_delivery_km FROM delivery_settings"))
+            delivery_settings = delivery_result.fetchall()
             print(f"   🚚 Delivery settings: {len(delivery_settings)}")
             for setting in delivery_settings:
-                print(f"      - {setting.type.value}: {setting.base_fee_dkk} DKK + {setting.per_km_fee_dkk} DKK/km")
-                if setting.free_delivery_km > 0:
-                    print(f"        Gratis inden for {setting.free_delivery_km} km")
-                if setting.max_delivery_km:
-                    print(f"        Maksimal afstand: {setting.max_delivery_km} km")
+                print(f"      - {setting[0]}: {setting[1]} DKK + {setting[2]} DKK/km")
+                if setting[3] and setting[3] > 0:
+                    print(f"        Gratis inden for {setting[3]} km")
+                if setting[4]:
+                    print(f"        Maksimal afstand: {setting[4]} km")
             
         except Exception as e:
             print(f"❌ Migration failed: {e}")
