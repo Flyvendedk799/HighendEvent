@@ -493,7 +493,19 @@ def checkout():
     if booking_items:
         db_session = current_app.extensions['sqlalchemy'].session
         pricing_service = PricingService(db_session, current_app.config['VAT_PERCENT'])
-        total_pricing = pricing_service.calculate_booking_pricing(booking_items, delivery_type)
+        
+        # Get customer address for distance-based delivery pricing
+        customer_address = form.address.data if form else None
+        customer_zip = form.zip_code.data if form else None
+        customer_city = form.city.data if form else None
+        
+        total_pricing = pricing_service.calculate_booking_pricing(
+            booking_items, 
+            delivery_type,
+            customer_address,
+            customer_zip,
+            customer_city
+        )
         total_estimate = total_pricing.total
         delivery_fee = total_pricing.delivery_fee
     
@@ -706,7 +718,19 @@ def process_checkout():
         if booking_items:
             db_session = current_app.extensions['sqlalchemy'].session
             pricing_service = PricingService(db_session, current_app.config['VAT_PERCENT'])
-            total_pricing = pricing_service.calculate_booking_pricing(booking_items, delivery_type)
+            
+            # Get customer address for distance-based delivery pricing
+            customer_address = form.address.data if form else None
+            customer_zip = form.zip_code.data if form else None
+            customer_city = form.city.data if form else None
+            
+            total_pricing = pricing_service.calculate_booking_pricing(
+                booking_items, 
+                delivery_type,
+                customer_address,
+                customer_zip,
+                customer_city
+            )
             total_estimate = total_pricing.total
             delivery_fee = total_pricing.delivery_fee
             current_app.logger.info(f'Process checkout - Total pricing: {total_estimate} DKK, Delivery fee: {delivery_fee} DKK, Delivery type: {delivery_type}')
@@ -785,8 +809,11 @@ def calculate_pricing():
     try:
         data = request.get_json()
         delivery_type = data.get('delivery_type', 'pickup')
+        customer_address = data.get('address', '').strip()
+        customer_zip = data.get('zip_code', '').strip()
+        customer_city = data.get('city', '').strip()
         
-        current_app.logger.info(f'Calculate pricing request: delivery_type={delivery_type}, user_authenticated={current_user.is_authenticated}')
+        current_app.logger.info(f'Calculate pricing request: delivery_type={delivery_type}, address={customer_address}, zip={customer_zip}, city={customer_city}, user_authenticated={current_user.is_authenticated}')
         
         if current_user.is_authenticated and hasattr(current_user, 'cart_items'):
             # User-based cart
@@ -887,7 +914,15 @@ def calculate_pricing():
         if booking_items:
             db_session = current_app.extensions['sqlalchemy'].session
             pricing_service = PricingService(db_session, current_app.config['VAT_PERCENT'])
-            total_pricing = pricing_service.calculate_booking_pricing(booking_items, delivery_type_enum)
+            
+            # Use distance-based pricing if address is provided
+            total_pricing = pricing_service.calculate_booking_pricing(
+                booking_items, 
+                delivery_type_enum,
+                customer_address if customer_address else None,
+                customer_zip if customer_zip else None,
+                customer_city if customer_city else None
+            )
             total_estimate = total_pricing.total
             delivery_fee = total_pricing.delivery_fee
         

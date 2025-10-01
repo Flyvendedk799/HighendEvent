@@ -389,6 +389,25 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.log('Delivery type select not found!');
         }
+        
+        // Add event listeners to address fields for distance-based pricing
+        const addressFields = ['address', 'zip_code', 'city'];
+        addressFields.forEach(fieldName => {
+            const field = document.querySelector(`input[name="${fieldName}"]`);
+            if (field) {
+                field.addEventListener('input', function() {
+                    // Debounce the pricing update to avoid too many requests
+                    clearTimeout(window.pricingTimeout);
+                    window.pricingTimeout = setTimeout(() => {
+                        const deliveryType = document.querySelector('select[name="delivery_type"]').value;
+                        if (deliveryType === 'delivery') {
+                            console.log(`Address field ${fieldName} changed, updating pricing...`);
+                            updatePricingDynamically(deliveryType);
+                        }
+                    }, 1000); // Wait 1 second after user stops typing
+                });
+            }
+        });
     }, 100);
 });
 
@@ -402,8 +421,19 @@ async function updatePricingDynamically(deliveryType) {
             pricingSection.style.opacity = '0.6';
         }
         
+        // Get customer address for distance-based pricing
+        const address = document.querySelector('input[name="address"]').value;
+        const zipCode = document.querySelector('input[name="zip_code"]').value;
+        const city = document.querySelector('input[name="city"]').value;
+        
         console.log('Making AJAX request to /shop/api/calculate-pricing');
-        console.log('Request data:', { delivery_type: deliveryType });
+        console.log('Request data:', { 
+            delivery_type: deliveryType,
+            address: address,
+            zip_code: zipCode,
+            city: city
+        });
+        
         // Make AJAX request to calculate pricing
         const response = await fetch('/shop/api/calculate-pricing', {
             method: 'POST',
@@ -412,7 +442,10 @@ async function updatePricingDynamically(deliveryType) {
                 'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
             },
             body: JSON.stringify({
-                delivery_type: deliveryType
+                delivery_type: deliveryType,
+                address: address,
+                zip_code: zipCode,
+                city: city
             })
         });
         
