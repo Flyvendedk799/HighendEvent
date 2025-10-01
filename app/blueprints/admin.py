@@ -1020,47 +1020,6 @@ def get_bookings_calendar_data():
     
     return jsonify(events)
 
-
-@bp.route('/api/geocode', methods=['POST'])
-@login_required
-def geocode_address():
-    """Geocode an address to get GPS coordinates."""
-    try:
-        data = request.get_json()
-        address = data.get('address', '').strip()
-        zip_code = data.get('zip_code', '').strip()
-        city = data.get('city', '').strip()
-        
-        if not address or not zip_code or not city:
-            return jsonify({
-                'success': False,
-                'error': 'Adresse, postnummer og by er påkrævet'
-            }), 400
-        
-        # Use the DistanceService to geocode the address
-        coords = DistanceService.geocode_address(address, zip_code, city)
-        
-        if coords:
-            latitude, longitude = coords
-            return jsonify({
-                'success': True,
-                'latitude': latitude,
-                'longitude': longitude
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Kunne ikke finde GPS-koordinater for denne adresse'
-            }), 400
-            
-    except Exception as e:
-        current_app.logger.error(f'Geocoding error: {e}')
-        return jsonify({
-            'success': False,
-            'error': 'Der opstod en fejl under søgning efter GPS-koordinater'
-        }), 500
-
-
 def get_status_color(status: BookingStatus) -> str:
     """Get color for booking status."""
     colors = {
