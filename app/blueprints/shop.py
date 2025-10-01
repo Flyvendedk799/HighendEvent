@@ -815,6 +815,7 @@ def calculate_pricing():
         customer_city = data.get('city', '').strip()
         
         current_app.logger.info(f'Calculate pricing request: delivery_type={delivery_type}, address={customer_address}, zip={customer_zip}, city={customer_city}, user_authenticated={current_user.is_authenticated}')
+        current_app.logger.info(f'Full request data: {data}')
         
         if current_user.is_authenticated and hasattr(current_user, 'cart_items'):
             # User-based cart
@@ -861,6 +862,7 @@ def calculate_pricing():
         cart_products = []
         booking_items = []
         delivery_type_enum = DeliveryType.PICKUP if delivery_type == 'pickup' else DeliveryType.DELIVERY
+        current_app.logger.info(f'Delivery type enum: {delivery_type_enum}')
         
         for item in cart_data:
             product = Product.query.filter_by(id=item['product_id'], is_active=True).first()
@@ -951,6 +953,8 @@ def calculate_pricing():
         
         # Get detailed delivery fee breakdown
         delivery_breakdown = None
+        current_app.logger.info(f'Delivery fee calculation: fee={delivery_fee}, type={delivery_type_enum}, address={customer_address}, zip={customer_zip}, city={customer_city}')
+        
         if delivery_fee > 0 and booking_items:
             # Get delivery setting details
             from app.models import DeliverySetting, CompanyLocation
@@ -958,6 +962,8 @@ def calculate_pricing():
                 DeliverySetting.type == delivery_type_enum,
                 DeliverySetting.is_active == True
             ).first()
+            
+            current_app.logger.info(f'Delivery setting found: {delivery_setting}')
             
             if delivery_setting:
                 # Calculate distance if we have customer address
@@ -968,6 +974,8 @@ def calculate_pricing():
                         CompanyLocation.is_active == True
                     ).first()
                     
+                    current_app.logger.info(f'Company location: {company_location}')
+                    
                     if company_location and company_location.latitude and company_location.longitude:
                         from app.services.distance import DistanceService
                         distance_km = DistanceService.calculate_delivery_distance(
@@ -977,6 +985,7 @@ def calculate_pricing():
                             customer_zip,
                             customer_city
                         )
+                        current_app.logger.info(f'Calculated distance: {distance_km} km')
                 
                 delivery_breakdown = {
                     'base_fee': float(delivery_setting.base_fee_dkk),
@@ -986,6 +995,7 @@ def calculate_pricing():
                     'chargeable_km': max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else None,
                     'km_fee': float(delivery_setting.per_km_fee_dkk * max(0, (distance_km or 0) - delivery_setting.free_delivery_km)) if distance_km else 0
                 }
+                current_app.logger.info(f'Delivery breakdown: {delivery_breakdown}')
         
         return jsonify({
             'total_estimate': float(total_estimate),
@@ -2143,12 +2153,13 @@ def address_search():
         # Use Danish address API (DAWA - Danmarks Adressers Web API)
         import requests
         
-        # Search for addresses
+        # Search for addresses using a different approach
         search_url = "https://api.dataforsyningen.dk/adresser"
         params = {
             'q': query,
             'limit': 10,
-            'struktur': 'mini'
+            'struktur': 'mini',
+            'fuzzy': 'true'
         }
         
         response = requests.get(search_url, params=params, timeout=5)
@@ -2156,17 +2167,43 @@ def address_search():
         
         addresses = response.json()
         current_app.logger.info(f'Address search for "{query}" returned {len(addresses)} results')
+        current_app.logger.info(f'Raw API response: {addresses[:2] if addresses else "No results"}')
         
         # Format addresses for frontend
         formatted_addresses = []
+        seen_addresses = set()  # To avoid duplicates
+        
         for addr in addresses:
-            # Danish API uses y=latitude, x=longitude
-            address_text = f"{addr.get('adressebetegnelse', '')}, {addr.get('postnr', '')} {addr.get('postnrnavn', '')}"
+            # Extract address components
+            street_name = addr.get('vejnavn', '')
+            house_number = addr.get('husnr', '')
+            floor = addr.get('etage', '')
+            door = addr.get('dør', '')
+            zip_code = addr.get('postnr', '')
+            city = addr.get('postnrnavn', '')
+            
+            # Build full address
+            address_parts = [street_name]
+            if house_number:
+                address_parts.append(house_number)
+            if floor:
+                address_parts.append(f'{floor}.')
+            if door:
+                address_parts.append(f'{door}.')
+            
+            full_address = ' '.join(address_parts)
+            address_text = f"{full_address}, {zip_code} {city}"
+            
+            # Skip duplicates
+            if address_text in seen_addresses:
+                continue
+            seen_addresses.add(address_text)
+            
             formatted_addresses.append({
                 'text': address_text,
-                'address': addr.get('adressebetegnelse', ''),
-                'zip_code': addr.get('postnr', ''),
-                'city': addr.get('postnrnavn', ''),
+                'address': full_address,
+                'zip_code': zip_code,
+                'city': city,
                 'latitude': addr.get('y', 0),  # y is latitude in Danish API
                 'longitude': addr.get('x', 0)  # x is longitude in Danish API
             })
