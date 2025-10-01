@@ -7,7 +7,8 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from app.models import Product, PricingRule, PricingRuleType, DeliverySetting, DeliveryType
+from app.models import Product, PricingRule, PricingRuleType, DeliverySetting, DeliveryType, CompanyLocation
+from app.services.distance import DistanceService
 
 
 @dataclass
@@ -57,7 +58,10 @@ class PricingService:
     def calculate_booking_pricing(
         self, 
         booking_items: List[BookingItemDTO],
-        delivery_type: DeliveryType = DeliveryType.PICKUP
+        delivery_type: DeliveryType = DeliveryType.PICKUP,
+        customer_address: Optional[str] = None,
+        customer_zip: Optional[str] = None,
+        customer_city: Optional[str] = None
     ) -> PricingBreakdown:
         """
         Calculate complete pricing for a booking.
@@ -81,14 +85,16 @@ class PricingService:
             deposit_amount += item_pricing.deposit_amount
         
         # Calculate delivery fee
-        delivery_fee = self._calculate_delivery_fee(delivery_type)
+        delivery_fee, delivery_description = self._calculate_delivery_fee(
+            delivery_type, customer_address, customer_zip, customer_city
+        )
         if delivery_fee > 0:
             line_items.append(PricingLineItem(
                 name="Levering",
                 quantity=1,
                 unit_price=delivery_fee,
                 total_price=delivery_fee,
-                description="Leveringsgebyr"
+                description=delivery_description
             ))
         
         # No VAT calculations - all prices include VAT already
@@ -206,10 +212,16 @@ class PricingService:
         # For all other cases, use regular daily price
         return product.daily_price_dkk
     
-    def _calculate_delivery_fee(self, delivery_type: DeliveryType) -> Decimal:
-        """Calculate delivery fee based on delivery type."""
+    def _calculate_delivery_fee(
+        self, 
+        delivery_type: DeliveryType,
+        customer_address: Optional[str] = None,
+        customer_zip: Optional[str] = None,
+        customer_city: Optional[str] = None
+    ) -> Tuple[Decimal, str]:
+        """Calculate delivery fee based on delivery type and distance."""
         if delivery_type == DeliveryType.PICKUP:
-            return Decimal('0')
+            return Decimal('0'), "Afhentning"
         
         # Get delivery settings
         delivery_setting = self.db.query(DeliverySetting).filter(
@@ -218,10 +230,43 @@ class PricingService:
         ).first()
         
         if not delivery_setting:
-            return Decimal('0')
+            return Decimal('0'), "Ingen leveringsindstilling"
         
-        # For now, just return base fee (distance calculation would go here)
-        return delivery_setting.base_fee_dkk
+        # If no customer address provided, return base fee only
+        if not customer_address or not customer_zip or not customer_city:
+            return delivery_setting.base_fee_dkk, f"Basisgebyr: {delivery_setting.base_fee_dkk} DKK"
+        
+        # Get primary company location
+        company_location = self.db.query(CompanyLocation).filter(
+            CompanyLocation.is_primary == True,
+            CompanyLocation.is_active == True
+        ).first()
+        
+        if not company_location or not company_location.latitude or not company_location.longitude:
+            return delivery_setting.base_fee_dkk, f"Basisgebyr: {delivery_setting.base_fee_dkk} DKK (ingen lokationsdata)"
+        
+        # Calculate distance
+        distance = DistanceService.calculate_delivery_distance(
+            company_location.latitude,
+            company_location.longitude,
+            customer_address,
+            customer_zip,
+            customer_city
+        )
+        
+        if distance is None:
+            return delivery_setting.base_fee_dkk, f"Basisgebyr: {delivery_setting.base_fee_dkk} DKK (afstandsberegning fejlede)"
+        
+        # Calculate fee based on distance
+        fee, explanation = DistanceService.calculate_delivery_fee(
+            distance,
+            float(delivery_setting.base_fee_dkk),
+            float(delivery_setting.per_km_fee_dkk),
+            delivery_setting.free_delivery_km,
+            delivery_setting.max_delivery_km
+        )
+        
+        return Decimal(str(fee)), f"{explanation} (afstand: {distance} km)"
     
     def get_price_estimate(
         self, 

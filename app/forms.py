@@ -225,6 +225,38 @@ class CMSBlockForm(FlaskForm):
     is_active = BooleanField('Aktiv', default=True)
 
 
+class CompanyLocationForm(FlaskForm):
+    """Company location form for admin."""
+    name = StringField(
+        'Navn',
+        validators=[DataRequired(message='Navn er påkrævet'), Length(max=200)]
+    )
+    address = StringField(
+        'Adresse',
+        validators=[DataRequired(message='Adresse er påkrævet'), Length(max=300)]
+    )
+    zip_code = StringField(
+        'Postnummer',
+        validators=[DataRequired(message='Postnummer er påkrævet'), Length(max=10)]
+    )
+    city = StringField(
+        'By',
+        validators=[DataRequired(message='By er påkrævet'), Length(max=100)]
+    )
+    latitude = StringField(
+        'Breddegrad',
+        validators=[Optional()],
+        render_kw={'placeholder': '55.6761 (valgfrit - beregnes automatisk)'}
+    )
+    longitude = StringField(
+        'Længdegrad',
+        validators=[Optional()],
+        render_kw={'placeholder': '12.5683 (valgfrit - beregnes automatisk)'}
+    )
+    is_primary = BooleanField('Primær lokation', default=False)
+    is_active = BooleanField('Aktiv', default=True)
+
+
 class DeliverySettingForm(FlaskForm):
     """Delivery setting form for admin."""
     type = SelectField(
@@ -234,16 +266,29 @@ class DeliverySettingForm(FlaskForm):
     )
     base_fee_dkk = StringField(
         'Basisgebyr (DKK)',
-        validators=[DataRequired(message='Basisgebyr er påkrævet')]
+        validators=[DataRequired(message='Basisgebyr er påkrævet')],
+        render_kw={'placeholder': '0.00'}
     )
     per_km_fee_dkk = StringField(
         'Per km gebyr (DKK)',
-        validators=[DataRequired(message='Per km gebyr er påkrævet')]
+        validators=[DataRequired(message='Per km gebyr er påkrævet')],
+        render_kw={'placeholder': '0.00'}
+    )
+    free_delivery_km = IntegerField(
+        'Gratis levering inden for (km)',
+        validators=[DataRequired(message='Gratis levering km er påkrævet'), NumberRange(min=0)],
+        default=0,
+        render_kw={'placeholder': '0'}
+    )
+    max_delivery_km = IntegerField(
+        'Maksimal leveringsafstand (km)',
+        validators=[Optional(), NumberRange(min=1)],
+        render_kw={'placeholder': 'Ubegrænset (tom)'}
     )
     notes = TextAreaField(
         'Bemærkninger',
         validators=[Optional(), Length(max=500)],
-        render_kw={'rows': 3}
+        render_kw={'rows': 3, 'placeholder': 'F.eks. Levering kun i hovedstadsområdet'}
     )
     is_active = BooleanField('Aktiv', default=True)
 

@@ -462,6 +462,26 @@ class BookingUpsellItem(db.Model):
         return f'<BookingUpsellItem {self.name_snapshot} x{self.quantity}>'
 
 
+class CompanyLocation(db.Model):
+    """Company location for distance calculations."""
+    __tablename__ = 'company_locations'
+    
+    id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(db.String(200), nullable=False)
+    address: Mapped[str] = mapped_column(db.String(300), nullable=False)
+    zip_code: Mapped[str] = mapped_column(db.String(10), nullable=False)
+    city: Mapped[str] = mapped_column(db.String(100), nullable=False)
+    latitude: Mapped[Optional[float]] = mapped_column(db.Float)
+    longitude: Mapped[Optional[float]] = mapped_column(db.Float)
+    is_primary: Mapped[bool] = mapped_column(db.Boolean, default=False, nullable=False)
+    is_active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    def __repr__(self) -> str:
+        return f'<CompanyLocation {self.name}>'
+
+
 class DeliverySetting(db.Model):
     """Delivery settings model."""
     __tablename__ = 'delivery_settings'
@@ -470,14 +490,18 @@ class DeliverySetting(db.Model):
     type: Mapped[DeliveryType] = mapped_column(db.Enum(DeliveryType), nullable=False)
     base_fee_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
     per_km_fee_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
+    free_delivery_km: Mapped[int] = mapped_column(db.Integer, default=0, nullable=False)  # Free delivery within X km
+    max_delivery_km: Mapped[Optional[int]] = mapped_column(db.Integer)  # Maximum delivery distance
     notes: Mapped[Optional[str]] = mapped_column(db.Text)
     is_active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Constraints
     __table_args__ = (
         CheckConstraint('base_fee_dkk >= 0', name='check_base_fee_positive'),
         CheckConstraint('per_km_fee_dkk >= 0', name='check_per_km_fee_positive'),
+        CheckConstraint('free_delivery_km >= 0', name='check_free_delivery_km_positive'),
     )
     
     def __repr__(self) -> str:

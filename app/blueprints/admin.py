@@ -16,11 +16,11 @@ from app import db
 
 from app.models import (
     User, Product, Category, Booking, BookingItem, BookingStatus, 
-    BlackoutDate, DeliverySetting, CMSBlock, UserRole, UpsellProduct, ProductUpsell, NewsletterSubscription
+    BlackoutDate, DeliverySetting, CompanyLocation, CMSBlock, UserRole, UpsellProduct, ProductUpsell, NewsletterSubscription
 )
 from app.forms import (
     LoginForm, ProductForm, CategoryForm, BlackoutDateForm, 
-    CMSBlockForm, DeliverySettingForm, UpsellProductForm
+    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm
 )
 from app.services.availability import AvailabilityService
 from app.services.pricing import PricingService
@@ -1128,10 +1128,12 @@ def create_blackout_date():
 def settings():
     """Settings page."""
     delivery_settings = DeliverySetting.query.all()
+    company_locations = CompanyLocation.query.filter_by(is_active=True).order_by(CompanyLocation.is_primary.desc(), CompanyLocation.name).all()
     cms_blocks = CMSBlock.query.order_by(CMSBlock.key).all()
     
     return render_template('admin/settings.html',
                          delivery_settings=delivery_settings,
+                         company_locations=company_locations,
                          cms_blocks=cms_blocks)
 
 
@@ -1146,6 +1148,8 @@ def create_delivery_setting():
             type=form.type.data,
             base_fee_dkk=Decimal(str(form.base_fee_dkk.data)),
             per_km_fee_dkk=Decimal(str(form.per_km_fee_dkk.data)),
+            free_delivery_km=form.free_delivery_km.data,
+            max_delivery_km=form.max_delivery_km.data if form.max_delivery_km.data else None,
             notes=form.notes.data,
             is_active=form.is_active.data
         )
@@ -1158,6 +1162,110 @@ def create_delivery_setting():
         return redirect(url_for('admin.settings'))
     
     return render_template('admin/delivery_setting_form.html', form=form, title='Opret leveringsindstilling')
+
+
+@bp.route('/settings/delivery/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_delivery_setting(id):
+    """Edit delivery setting."""
+    delivery_setting = DeliverySetting.query.get_or_404(id)
+    form = DeliverySettingForm(obj=delivery_setting)
+    
+    if form.validate_on_submit():
+        delivery_setting.type = form.type.data
+        delivery_setting.base_fee_dkk = Decimal(str(form.base_fee_dkk.data))
+        delivery_setting.per_km_fee_dkk = Decimal(str(form.per_km_fee_dkk.data))
+        delivery_setting.free_delivery_km = form.free_delivery_km.data
+        delivery_setting.max_delivery_km = form.max_delivery_km.data if form.max_delivery_km.data else None
+        delivery_setting.notes = form.notes.data
+        delivery_setting.is_active = form.is_active.data
+        
+        db.session.commit()
+        flash('Leveringsindstilling opdateret', 'success')
+        return redirect(url_for('admin.settings'))
+    
+    return render_template('admin/delivery_setting_form.html', form=form, delivery_setting=delivery_setting, title='Rediger leveringsindstilling')
+
+
+@bp.route('/settings/delivery/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_delivery_setting(id):
+    """Delete delivery setting."""
+    delivery_setting = DeliverySetting.query.get_or_404(id)
+    db.session.delete(delivery_setting)
+    db.session.commit()
+    flash('Leveringsindstilling slettet', 'success')
+    return redirect(url_for('admin.settings'))
+
+
+@bp.route('/settings/location/create', methods=['GET', 'POST'])
+@login_required
+def create_company_location():
+    """Create company location."""
+    form = CompanyLocationForm()
+    
+    if form.validate_on_submit():
+        # If this is set as primary, unset other primary locations
+        if form.is_primary.data:
+            CompanyLocation.query.update({'is_primary': False})
+        
+        company_location = CompanyLocation(
+            name=form.name.data,
+            address=form.address.data,
+            zip_code=form.zip_code.data,
+            city=form.city.data,
+            latitude=float(form.latitude.data) if form.latitude.data else None,
+            longitude=float(form.longitude.data) if form.longitude.data else None,
+            is_primary=form.is_primary.data,
+            is_active=form.is_active.data
+        )
+        
+        db.session.add(company_location)
+        db.session.commit()
+        
+        flash('Virksomhedslokation oprettet', 'success')
+        return redirect(url_for('admin.settings'))
+    
+    return render_template('admin/company_location_form.html', form=form, title='Opret virksomhedslokation')
+
+
+@bp.route('/settings/location/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_company_location(id):
+    """Edit company location."""
+    company_location = CompanyLocation.query.get_or_404(id)
+    form = CompanyLocationForm(obj=company_location)
+    
+    if form.validate_on_submit():
+        # If this is set as primary, unset other primary locations
+        if form.is_primary.data:
+            CompanyLocation.query.filter(CompanyLocation.id != id).update({'is_primary': False})
+        
+        company_location.name = form.name.data
+        company_location.address = form.address.data
+        company_location.zip_code = form.zip_code.data
+        company_location.city = form.city.data
+        company_location.latitude = float(form.latitude.data) if form.latitude.data else None
+        company_location.longitude = float(form.longitude.data) if form.longitude.data else None
+        company_location.is_primary = form.is_primary.data
+        company_location.is_active = form.is_active.data
+        
+        db.session.commit()
+        flash('Virksomhedslokation opdateret', 'success')
+        return redirect(url_for('admin.settings'))
+    
+    return render_template('admin/company_location_form.html', form=form, company_location=company_location, title='Rediger virksomhedslokation')
+
+
+@bp.route('/settings/location/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_company_location(id):
+    """Delete company location."""
+    company_location = CompanyLocation.query.get_or_404(id)
+    db.session.delete(company_location)
+    db.session.commit()
+    flash('Virksomhedslokation slettet', 'success')
+    return redirect(url_for('admin.settings'))
 
 
 @bp.route('/settings/cms/create', methods=['GET', 'POST'])
