@@ -20,25 +20,48 @@ def get_cart_count():
 @bp.route('/')
 def index():
     """Homepage with featured products and CMS content."""
-    # Get featured products
-    featured_products = Product.query.filter(
-        Product.is_active == True
-    ).order_by(desc(Product.created_at)).limit(6).all()
+    try:
+        # Get featured products with error handling
+        try:
+            featured_products = Product.query.filter(
+                Product.is_active == True
+            ).order_by(desc(Product.created_at)).limit(6).all()
+        except Exception as e:
+            current_app.logger.warning(f'⚠️ Error loading featured products: {e}')
+            featured_products = []
+        
+        # Get categories with error handling
+        try:
+            categories = Category.query.filter(
+                Category.is_active == True
+            ).order_by(Category.sort_order, Category.name).all()
+        except Exception as e:
+            current_app.logger.warning(f'⚠️ Error loading categories: {e}')
+            categories = []
+        
+        # Get CMS blocks with error handling
+        try:
+            hero_block = CMSBlock.query.filter_by(key='homepage_hero', is_active=True).first()
+            about_block = CMSBlock.query.filter_by(key='about_us', is_active=True).first()
+        except Exception as e:
+            current_app.logger.warning(f'⚠️ Error loading CMS blocks: {e}')
+            hero_block = None
+            about_block = None
+        
+        return render_template('public/index.html',
+                             featured_products=featured_products,
+                             categories=categories,
+                             hero_block=hero_block,
+                             about_block=about_block)
     
-    # Get categories
-    categories = Category.query.filter(
-        Category.is_active == True
-    ).order_by(Category.sort_order, Category.name).all()
-    
-    # Get CMS blocks
-    hero_block = CMSBlock.query.filter_by(key='homepage_hero', is_active=True).first()
-    about_block = CMSBlock.query.filter_by(key='about_us', is_active=True).first()
-    
-    return render_template('public/index.html',
-                         featured_products=featured_products,
-                         categories=categories,
-                         hero_block=hero_block,
-                         about_block=about_block)
+    except Exception as e:
+        current_app.logger.error(f'🚨 Critical error in homepage: {e}')
+        # Return a minimal homepage even if there are errors
+        return render_template('public/index.html',
+                             featured_products=[],
+                             categories=[],
+                             hero_block=None,
+                             about_block=None)
 
 
 

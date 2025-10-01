@@ -29,6 +29,26 @@ def create_app(config_class=Config):
     mail.init_app(app)
     csrf.init_app(app)
     
+    # Add database health check and retry logic
+    @app.before_request
+    def before_request():
+        """Check database connection before each request."""
+        from flask import current_app
+        try:
+            # Test database connection with a simple query
+            db.session.execute('SELECT 1')
+        except Exception as e:
+            current_app.logger.warning(f'⚠️ Database connection issue detected: {e}')
+            try:
+                # Try to refresh the connection
+                db.session.close()
+                db.session.remove()
+                db.session.execute('SELECT 1')
+                current_app.logger.info('✅ Database connection restored')
+            except Exception as retry_error:
+                current_app.logger.error(f'🚨 Failed to restore database connection: {retry_error}')
+                # Don't fail the request, let it continue and handle errors in error handlers
+    
     # Handle CSRF errors for webhook endpoints
     from flask_wtf.csrf import CSRFError
     
@@ -62,6 +82,40 @@ def create_app(config_class=Config):
             
         # For all other 400 errors, return the original error
         return error
+    
+    @app.errorhandler(500)
+    def handle_500_error(error):
+        """Handle 500 internal server errors with comprehensive logging."""
+        from flask import request, current_app
+        import traceback
+        
+        # Log the full error details
+        current_app.logger.error(f'🚨 500 Internal Server Error on {request.path}')
+        current_app.logger.error(f'🚨 Error: {str(error)}')
+        current_app.logger.error(f'🚨 Request method: {request.method}')
+        current_app.logger.error(f'🚨 Request headers: {dict(request.headers)}')
+        current_app.logger.error(f'🚨 User agent: {request.headers.get("User-Agent", "Unknown")}')
+        current_app.logger.error(f'🚨 Remote address: {request.remote_addr}')
+        
+        # Log the full traceback
+        current_app.logger.error(f'🚨 Traceback: {traceback.format_exc()}')
+        
+        # Check if this is a database connection issue
+        if 'connection' in str(error).lower() or 'mysql' in str(error).lower():
+            current_app.logger.error('🚨 Database connection issue detected')
+            # Try to refresh database connection
+            try:
+                db.session.close()
+                db.session.remove()
+                current_app.logger.info('🔄 Database session refreshed')
+            except Exception as e:
+                current_app.logger.error(f'🚨 Failed to refresh database session: {e}')
+        
+        # Return user-friendly error page
+        if request.is_json:
+            return {'error': 'Der opstod en intern serverfejl. Prøv igen senere.'}, 500
+        from flask import render_template
+        return render_template('errors/500.html'), 500
 
     # Configure login manager
     login_manager.login_view = 'customer.login'  # Default to customer login
@@ -73,19 +127,25 @@ def create_app(config_class=Config):
         from app.models import User, Customer
         from flask import session
         
-        # Check if we have a user type in session to determine which table to query
-        user_type = session.get('user_type')
-        
-        if user_type == 'customer':
-            return Customer.query.get(int(user_id))
-        elif user_type == 'admin':
-            return User.query.get(int(user_id))
-        else:
-            # Fallback: try both, but prefer Customer for new logins
-            customer = Customer.query.get(int(user_id))
-            if customer:
-                return customer
-            return User.query.get(int(user_id))
+        try:
+            # Check if we have a user type in session to determine which table to query
+            user_type = session.get('user_type')
+            
+            if user_type == 'customer':
+                return Customer.query.get(int(user_id))
+            elif user_type == 'admin':
+                return User.query.get(int(user_id))
+            else:
+                # Fallback: try both, but prefer Customer for new logins
+                customer = Customer.query.get(int(user_id))
+                if customer:
+                    return customer
+                return User.query.get(int(user_id))
+        except Exception as e:
+            from flask import current_app
+            current_app.logger.error(f'🚨 Error loading user {user_id}: {e}')
+            # Return None to force re-login
+            return None
     
     @login_manager.unauthorized_handler
     def unauthorized():
@@ -96,6 +156,19 @@ def create_app(config_class=Config):
             return redirect(url_for('admin.login'))
         # Otherwise redirect to customer login
         return redirect(url_for('customer.login'))
+
+    # Add health check endpoint
+    @app.route('/health')
+    def health_check():
+        """Health check endpoint for monitoring."""
+        try:
+            # Test database connection
+            db.session.execute('SELECT 1')
+            return {'status': 'healthy', 'database': 'connected'}, 200
+        except Exception as e:
+            from flask import current_app
+            current_app.logger.error(f'🚨 Health check failed: {e}')
+            return {'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}, 500
 
     # Register blueprints
     from app.blueprints.public import bp as public_bp

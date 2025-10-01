@@ -19,6 +19,22 @@ class Config:
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Database connection pooling configuration for production stability
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 5,  # Number of connections to maintain in the pool
+        'max_overflow': 10,  # Additional connections that can be created beyond pool_size
+        'pool_timeout': 30,  # Seconds to wait for a connection from the pool
+        'pool_recycle': 3600,  # Recycle connections after 1 hour to prevent stale connections
+        'pool_pre_ping': True,  # Test connections before use to detect stale connections
+        'connect_args': {
+            'connect_timeout': 10,  # MySQL connection timeout
+            'read_timeout': 30,  # MySQL read timeout
+            'write_timeout': 30,  # MySQL write timeout
+            'charset': 'utf8mb4',  # Use utf8mb4 for full Unicode support
+            'autocommit': False,  # Use transactions
+        }
+    }
+    
     # Stripe configuration
     STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY') or 'pk_test_51S84RAGzFU37JYeIIaqmzVTz0OZhfNE5SCdjpmSTbjv2W2vGO5gnOwVrNxrmosrTXSMlXtKQNcYV0q9g0stITPCi00z7ryFXFE'
     STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY') or 'sk_test_51S84RAGzFU37JYeIgnouFRu0oVJfayA3c8zj0sdllCutGAaha6tAVniwemBrhNktkj37gwskdiG5QaAs5ZEJ3LWx00GW6jh4HX'
