@@ -106,6 +106,10 @@ app/
 - Upsell product management
 - Soft delete functionality for bookings
 - Modern responsive UI/UX
+- **Distance-based delivery pricing with real-time calculation and transparent breakdown**
+- **Address autocomplete integration with Danish Address API (DAWA)**
+- **Universal delivery fee breakdown across all pages (checkout, confirmation, PDF, admin, customer)**
+- **Company location management with geocoding and distance calculation**
 - **Dynamic delivery pricing system with real-time updates**
 - **Consistent pricing display across cart, checkout, and order confirmation**
 - **Improved admin panel with responsive design and proper modal functionality**
@@ -124,7 +128,15 @@ app/
 - **Email System**: Brevo SMTP configured and operational
 - **SEO Optimization**: XML sitemap, robots.txt, and meta tags implemented
 
-### 🔧 **Recent Improvements (Latest Session - September 2025)**
+### 🔧 **Recent Improvements (Latest Session - October 2025)**
+- **Distance-Based Delivery Pricing**: Complete implementation with real-time distance calculation and transparent fee breakdown
+- **Delivery Fee Breakdown**: Detailed pricing display showing base fee + per-km calculation + distance on all pages
+- **Address Autocomplete**: Danish Address API (DAWA) integration for accurate address selection and geocoding
+- **Universal Delivery Pricing**: Consistent delivery breakdown across checkout, order confirmation, PDF invoices, customer bookings, and admin panels
+- **Email Template Fixes**: Resolved order confirmation email issues with proper URL parameter handling
+- **Database Schema Updates**: Added `delivery_breakdown` JSON field to Booking model for storing detailed pricing information
+- **Company Location Management**: Admin interface for setting company locations with latitude/longitude coordinates
+- **Delivery Settings Configuration**: Admin panel for managing base fees, per-km rates, and free delivery distances
 - **Newsletter Subscription System**: Complete implementation with CSRF protection, email notifications, and smooth UX
 - **Guest Checkout Flow**: Automatic account creation for non-registered users with profile completion
 - **Bank Account Collection**: Added fields for customer bank details to facilitate deposit refunds
@@ -201,6 +213,12 @@ app/
 ## Technical Implementation Notes
 
 ### **Key Recent Fixes & Implementations**
+- **Distance-Based Delivery System**: Complete implementation with real-time distance calculation, transparent fee breakdown, and universal display across all pages
+- **Address Autocomplete**: Danish Address API (DAWA) integration providing accurate address selection and automatic geocoding
+- **Delivery Pricing Transparency**: Detailed breakdown showing base fee + per-km calculation + distance on checkout, confirmation, PDF, admin, and customer pages
+- **Company Location Management**: Admin interface for setting company locations with automatic geocoding and distance calculation
+- **Email Template Fixes**: Resolved order confirmation email issues with proper URL parameter handling and template rendering
+- **Database Schema Updates**: Added `delivery_breakdown` JSON field to Booking model for storing detailed pricing information
 - **Newsletter System**: Implemented with proper CSRF protection, Brevo SMTP integration, and client-side notifications
 - **Guest Checkout**: Seamless flow allowing non-registered users to place orders with automatic account creation
 - **Profile Completion**: Post-order flow for guests to set passwords and become registered users
@@ -214,12 +232,15 @@ app/
 - **Production Deployment**: Complete deployment to PythonAnywhere with MySQL database and Stripe webhooks
 
 ### **Database Schema Updates**
+- Added `delivery_breakdown` JSON field to `Booking` model for storing detailed delivery pricing information
+- Created `DeliverySetting` model for configurable delivery pricing with base fees, per-km rates, and free delivery distances
+- Added `CompanyLocation` model for managing company locations with latitude/longitude coordinates
+- Added `DistanceService` for calculating distances between company and customer locations
 - Added `account_number` and `registration_number` fields to `Booking` model
 - Created `CartUpsellItem` and `BookingUpsellItem` models for upsell product management
 - Added `NewsletterSubscription` model for email marketing
 - Implemented soft deletion with `is_active` flag for `Product` model
 - Added guest account support with `password_hash='GUEST_ACCOUNT_PENDING'` for `Customer` model
-- Created `DeliverySetting` model for configurable delivery pricing
 - Added `DeliveryType` enum for pickup/delivery options
 
 ### **SEO & Technical Infrastructure**
