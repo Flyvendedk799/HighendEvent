@@ -1747,7 +1747,7 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm) -> Book
             from app.models import DeliverySetting, CompanyLocation
             from app.services.distance import DistanceService
             
-            delivery_setting = DeliverySetting.query.filter_by(delivery_type=DeliveryType.DELIVERY).first()
+            delivery_setting = DeliverySetting.query.filter_by(type=DeliveryType.DELIVERY).first()
             if delivery_setting:
                 distance_km = None
                 if customer_address and customer_zip and customer_city:
