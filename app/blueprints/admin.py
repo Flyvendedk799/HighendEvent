@@ -1346,20 +1346,6 @@ def delete_blackout_date(id):
     return redirect(url_for('admin.blackout_dates'))
 
 
-@bp.route('/settings/delivery/<int:id>/delete', methods=['POST'])
-@login_required
-def delete_delivery_setting(id):
-    """Delete delivery setting."""
-    delivery_setting = DeliverySetting.query.get_or_404(id)
-    
-    from app import db
-    db.session.delete(delivery_setting)
-    db.session.commit()
-    
-    flash('Leveringsindstilling slettet', 'success')
-    return redirect(url_for('admin.settings'))
-
-
 @bp.route('/settings/cms/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_cms_block(id):
