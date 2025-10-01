@@ -56,8 +56,9 @@ def create_app(config_class=Config):
         
         if should_check:
             try:
-                # Quick database ping
-                db.session.execute('SELECT 1')
+                # Quick database ping with proper SQLAlchemy text() function
+                from sqlalchemy import text
+                db.session.execute(text('SELECT 1'))
                 current_app._last_db_check = time.time()
                 current_app._db_check_counter = 0  # Reset counter
             except Exception as e:
@@ -185,8 +186,9 @@ def create_app(config_class=Config):
     def health_check():
         """Health check endpoint for monitoring."""
         try:
-            # Test database connection
-            db.session.execute('SELECT 1')
+            # Test database connection with proper SQLAlchemy text() function
+            from sqlalchemy import text
+            db.session.execute(text('SELECT 1'))
             return {'status': 'healthy', 'database': 'connected'}, 200
         except Exception as e:
             from flask import current_app
