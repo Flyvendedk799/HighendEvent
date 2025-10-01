@@ -551,6 +551,10 @@ async function updatePricingDynamically(deliveryType) {
         }
         
         // Get customer address for distance-based pricing
+        const addressField = document.getElementById('address-field');
+        const zipField = document.getElementById('zip-field');
+        const cityField = document.getElementById('city-field');
+        
         const address = addressField ? addressField.value : '';
         const zipCode = zipField ? zipField.value : '';
         const city = cityField ? cityField.value : '';
