@@ -354,43 +354,54 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Address autocomplete functionality
     let addressSearchTimeout;
-    const addressSearchInput = document.getElementById('address-search');
-    const addressDropdown = document.getElementById('address-dropdown');
-    const addressField = document.getElementById('address-field');
-    const zipField = document.getElementById('zip-field');
-    const cityField = document.getElementById('city-field');
-    const distanceDisplay = document.getElementById('distance-display');
-    const distanceValue = document.getElementById('distance-value');
+    let addressSearchInput, addressDropdown, addressField, zipField, cityField, distanceDisplay, distanceValue;
+    
+    // Initialize address elements
+    function initializeAddressElements() {
+        addressSearchInput = document.getElementById('address-search');
+        addressDropdown = document.getElementById('address-dropdown');
+        addressField = document.getElementById('address-field');
+        zipField = document.getElementById('zip-field');
+        cityField = document.getElementById('city-field');
+        distanceDisplay = document.getElementById('distance-display');
+        distanceValue = document.getElementById('distance-value');
+    }
+    
+    // Initialize address elements
+    initializeAddressElements();
     
     // Initialize address search if form is pre-populated
-    if (addressField.value && zipField.value && cityField.value) {
+    if (addressField && addressField.value && zipField && zipField.value && cityField && cityField.value) {
         addressSearchInput.value = `${addressField.value}, ${zipField.value} ${cityField.value}`;
     }
     
-    addressSearchInput.addEventListener('input', function() {
-        const query = this.value.trim();
+    if (addressSearchInput) {
+        addressSearchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            clearTimeout(addressSearchTimeout);
+            
+            if (query.length < 3) {
+                if (addressDropdown) addressDropdown.classList.add('hidden');
+                return;
+            }
+            
+            addressSearchTimeout = setTimeout(() => {
+                searchAddresses(query);
+            }, 300);
+        });
         
-        clearTimeout(addressSearchTimeout);
-        
-        if (query.length < 3) {
-            addressDropdown.classList.add('hidden');
-            return;
-        }
-        
-        addressSearchTimeout = setTimeout(() => {
-            searchAddresses(query);
-        }, 300);
-    });
-    
-    addressSearchInput.addEventListener('focus', function() {
-        if (this.value.trim().length >= 3) {
-            addressDropdown.classList.remove('hidden');
-        }
-    });
+        addressSearchInput.addEventListener('focus', function() {
+            if (this.value.trim().length >= 3 && addressDropdown) {
+                addressDropdown.classList.remove('hidden');
+            }
+        });
+    }
     
     // Hide dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        if (!addressSearchInput.contains(e.target) && !addressDropdown.contains(e.target)) {
+        if (addressSearchInput && addressDropdown && 
+            !addressSearchInput.contains(e.target) && !addressDropdown.contains(e.target)) {
             addressDropdown.classList.add('hidden');
         }
     });
@@ -415,6 +426,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function displayAddressSuggestions(addresses) {
         console.log('Displaying address suggestions:', addresses);
+        if (!addressDropdown) return;
+        
         addressDropdown.innerHTML = '';
         
         if (addresses.length === 0) {
@@ -440,18 +453,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function selectAddress(address) {
         console.log('selectAddress called with:', address);
-        addressSearchInput.value = address.text;
-        addressField.value = address.address;
-        zipField.value = address.zip_code;
-        cityField.value = address.city;
+        if (addressSearchInput) addressSearchInput.value = address.text;
+        if (addressField) addressField.value = address.address;
+        if (zipField) zipField.value = address.zip_code;
+        if (cityField) cityField.value = address.city;
         
         console.log('Form fields updated:', {
-            address: addressField.value,
-            zip: zipField.value,
-            city: cityField.value
+            address: addressField ? addressField.value : 'N/A',
+            zip: zipField ? zipField.value : 'N/A',
+            city: cityField ? cityField.value : 'N/A'
         });
         
-        addressDropdown.classList.add('hidden');
+        if (addressDropdown) addressDropdown.classList.add('hidden');
         
         // Update pricing if delivery is selected
         const deliveryType = document.querySelector('select[name="delivery_type"]').value;
@@ -511,17 +524,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Address search input triggers pricing update
-        addressSearchInput.addEventListener('input', function() {
-            // Debounce the pricing update to avoid too many requests
-            clearTimeout(window.pricingTimeout);
-            window.pricingTimeout = setTimeout(() => {
-                const deliveryType = document.querySelector('select[name="delivery_type"]').value;
-                if (deliveryType === 'delivery' && addressField.value && zipField.value && cityField.value) {
-                    console.log('Address changed, updating pricing...');
-                    updatePricingDynamically(deliveryType);
-                }
-            }, 1000); // Wait 1 second after user stops typing
-        });
+        if (addressSearchInput) {
+            addressSearchInput.addEventListener('input', function() {
+                // Debounce the pricing update to avoid too many requests
+                clearTimeout(window.pricingTimeout);
+                window.pricingTimeout = setTimeout(() => {
+                    const deliveryType = document.querySelector('select[name="delivery_type"]').value;
+                    if (deliveryType === 'delivery' && addressField && addressField.value && zipField && zipField.value && cityField && cityField.value) {
+                        console.log('Address changed, updating pricing...');
+                        updatePricingDynamically(deliveryType);
+                    }
+                }, 1000); // Wait 1 second after user stops typing
+            });
+        }
     }, 100);
 });
 
@@ -536,9 +551,9 @@ async function updatePricingDynamically(deliveryType) {
         }
         
         // Get customer address for distance-based pricing
-        const address = addressField.value;
-        const zipCode = zipField.value;
-        const city = cityField.value;
+        const address = addressField ? addressField.value : '';
+        const zipCode = zipField ? zipField.value : '';
+        const city = cityField ? cityField.value : '';
         
         console.log('Pricing update with address:', { address, zipCode, city });
         
