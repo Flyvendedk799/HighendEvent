@@ -1637,16 +1637,17 @@ def analytics():
     
     # Get monthly revenue data for chart
     # Use database-specific date formatting
-    from sqlalchemy import text
+    from sqlalchemy import text, literal_column
     if current_app.config.get('SQLALCHEMY_DATABASE_URI', '').startswith('mysql'):
         # MySQL uses DATE_FORMAT
+        month_col = literal_column("DATE_FORMAT(created_at, '%Y-%m')").label('month')
         monthly_revenue = db.session.query(
-            text("DATE_FORMAT(created_at, '%Y-%m')").label('month'),
+            month_col,
             func.sum(Booking.total_dkk).label('revenue')
-        ).filter(
+        ).select_from(Booking).filter(
             Booking.status != BookingStatus.CANCELLED,
             Booking.is_deleted == False
-        ).group_by(text("DATE_FORMAT(created_at, '%Y-%m')")).order_by('month').all()
+        ).group_by(month_col).order_by(month_col).all()
     else:
         # SQLite uses strftime
         monthly_revenue = db.session.query(
