@@ -78,8 +78,12 @@
                 {% if product.hero_image_url %}
                 <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="hero">
                     <!-- Image -->
-                    <div class="bg-gray-100 overflow-hidden">
-                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover" onerror="console.log('Hero image failed to load:', this.src)">
+                    <div class="bg-gray-100 overflow-hidden" style="height: 200px;">
+                        <img src="{{ product.hero_image_url | image_url }}" 
+                             alt="{{ product.name }}" 
+                             class="w-full h-full object-cover" 
+                             style="width: 100%; height: 200px; object-fit: cover; display: block;"
+                             onerror="console.log('Hero image failed to load:', this.src); this.style.display='none';">
                     </div>
                     
                     <!-- Image Info -->
@@ -110,8 +114,12 @@
                 {% for image in images %}
                 <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="{{ image.id }}">
                     <!-- Image -->
-                    <div class="bg-gray-100 overflow-hidden">
-                        <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover" onerror="console.log('Image failed to load:', this.src)">
+                    <div class="bg-gray-100 overflow-hidden" style="height: 200px;">
+                        <img src="{{ image.url | image_url }}" 
+                             alt="{{ image.alt }}" 
+                             class="w-full h-full object-cover" 
+                             style="width: 100%; height: 200px; object-fit: cover; display: block;"
+                             onerror="console.log('Image failed to load:', this.src); this.style.display='none';">
                     </div>
                     
                     <!-- Image Info -->
@@ -224,48 +232,48 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (container) {
         const sortable = Sortable.create(container, {
-            animation: 200,
+            animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
-            forceFallback: false,
-            fallbackOnBody: false,
+            forceFallback: true,
+            fallbackOnBody: true,
             swapThreshold: 0.65,
             invertSwap: false,
             direction: 'horizontal',
             onStart: function(evt) {
-                // Store the original HTML content
-                const item = evt.item;
-                item.dataset.originalHTML = item.innerHTML;
-                
                 // Visual feedback
-                item.style.cursor = 'grabbing';
-                item.style.zIndex = '1000';
+                evt.item.style.cursor = 'grabbing';
+                evt.item.style.zIndex = '1000';
             },
             onEnd: function(evt) {
                 hasChanges = true;
                 saveBtn.classList.remove('hidden');
                 
                 // Reset styles
-                const item = evt.item;
-                item.style.cursor = 'grab';
-                item.style.zIndex = 'auto';
-                item.style.transform = '';
-                item.style.width = '';
-                item.style.height = '';
+                evt.item.style.cursor = 'grab';
+                evt.item.style.zIndex = 'auto';
+                evt.item.style.transform = '';
+                evt.item.style.width = '';
+                evt.item.style.height = '';
                 
-                // Restore original HTML content to prevent corruption
-                if (item.dataset.originalHTML) {
-                    item.innerHTML = item.dataset.originalHTML;
-                }
-                
-                // Update the sort order numbers in the UI
-                container.querySelectorAll('.image-item').forEach((item, index) => {
-                    const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
-                    if (badge) {
-                        badge.textContent = `#${index + 1}`;
-                    }
-                });
+                // Force refresh of all images
+                setTimeout(() => {
+                    // Refresh all images by forcing a reload
+                    container.querySelectorAll('img').forEach(img => {
+                        const originalSrc = img.src;
+                        img.src = '';
+                        img.src = originalSrc;
+                    });
+                    
+                    // Update the sort order numbers in the UI
+                    container.querySelectorAll('.image-item').forEach((item, index) => {
+                        const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
+                        if (badge) {
+                            badge.textContent = `#${index + 1}`;
+                        }
+                    });
+                }, 100);
             }
         });
         
