@@ -503,8 +503,25 @@ def delete_product_image(product_id, image_id):
 def reorder_product_images(product_id):
     """Reorder product images."""
     try:
-        validate_csrf(request.form.get('csrf_token'))
-    except BadRequest:
+        # Validate CSRF token from JSON data
+        csrf_token = request.json.get('csrf_token')
+        if not csrf_token:
+            return jsonify({'success': False, 'message': 'CSRF token mangler'})
+        
+        # For JSON requests, we need to validate differently
+        from flask_wtf.csrf import validate_csrf
+        from werkzeug.exceptions import BadRequest
+        
+        # Create a form-like object for CSRF validation
+        class CSRFData:
+            def __init__(self, token):
+                self.csrf_token = token
+        
+        csrf_data = CSRFData(csrf_token)
+        validate_csrf(csrf_data.csrf_token)
+        
+    except Exception as e:
+        print(f"CSRF validation error: {e}")
         return jsonify({'success': False, 'message': 'Ugyldig anmodning'})
     
     product = Product.query.get_or_404(product_id)
