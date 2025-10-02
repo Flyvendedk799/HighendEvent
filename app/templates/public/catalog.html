@@ -205,7 +205,11 @@
                                 {{ product.daily_price_dkk | currency }}
                                 <span class="text-sm font-normal text-gray-500">/dag</span>
                             </div>
-                            {% if product.weekend_price_dkk %}
+                            {% if product.weekend_discount_dkk %}
+                            <div class="text-sm text-accent-600 font-semibold">
+                                Weekend-rabat: {{ product.weekend_discount_dkk | currency }} (fre-søn)
+                            </div>
+                            {% elif product.weekend_price_dkk %}
                             <div class="text-sm text-gray-500">
                                 Weekend: {{ product.weekend_price_dkk | currency }}/dag
                             </div>

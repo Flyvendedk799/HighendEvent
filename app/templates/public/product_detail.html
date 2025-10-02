@@ -93,9 +93,9 @@
                             </svg>
                             Tilgængelig
                         </div>
-                        {% if product.weekend_price_dkk %}
+                        {% if product.weekend_discount_dkk %}
                         <div class="bg-accent-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                            Weekend-special
+                            Weekend-rabat
                         </div>
                         {% endif %}
                     </div>
@@ -369,18 +369,35 @@
                         </div>
                     </div>
                     
-                    <!-- Weekend Pricing -->
-                    {% if product.weekend_price_dkk %}
+                    <!-- Full Weekend Discount (Special Offer) -->
+                    {% if product.weekend_discount_dkk %}
                     <div class="bg-gradient-to-r from-accent-50 to-primary-50 rounded-xl p-4 mb-4 border border-accent-200">
                         <div class="flex items-center justify-between">
                             <div>
                                 <div class="text-lg font-bold text-accent-700">
-                                    {{ product.weekend_price_dkk | currency }}/dag
+                                    {{ product.weekend_discount_dkk | currency }} for hele weekenden
                                 </div>
-                                <div class="text-sm text-accent-600">Weekend pris (lør-søn)</div>
+                                <div class="text-sm text-accent-600">Special pris (fre-søn)</div>
                             </div>
                             <div class="bg-accent-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                                Special
+                                Rabat
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Weekend Day Pricing (Additional Info) -->
+                    {% if product.weekend_price_dkk %}
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-lg font-bold text-gray-700">
+                                    {{ product.weekend_price_dkk | currency }}/dag
+                                </div>
+                                <div class="text-sm text-gray-600">Weekend dage (lør/søn)</div>
+                            </div>
+                            <div class="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                Weekend
                             </div>
                         </div>
                     </div>
