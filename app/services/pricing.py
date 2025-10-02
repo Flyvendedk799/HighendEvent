@@ -196,20 +196,40 @@ class PricingService:
         start_date: date, 
         end_date: date
     ) -> Decimal:
-        """Get effective daily price considering weekend pricing."""
-        if not product.weekend_price_dkk:
-            return product.daily_price_dkk
-        
-        # Weekend pricing only applies if the range is EXACTLY Saturday + Sunday
+        """Get effective daily price considering weekend pricing and full weekend discount."""
         total_days = (end_date - start_date).days + 1
         
-        # Check if this is exactly a weekend rental (Saturday + Sunday only)
-        if total_days == 2:
-            # Check if it's Saturday and Sunday
-            if (start_date.weekday() == 5 and end_date.weekday() == 6):  # Sat=5, Sun=6
-                return product.weekend_price_dkk
+        # Check for full weekend discount (Friday-Sunday)
+        if product.weekend_discount_dkk and total_days == 3:
+            # Check if it's Friday to Sunday
+            if start_date.weekday() == 4 and end_date.weekday() == 6:  # Fri=4, Sun=6
+                # Return the full weekend price divided by 3 days for display purposes
+                return product.weekend_discount_dkk / 3
         
-        # For all other cases, use regular daily price
+        # Check for weekend day pricing (Saturday or Sunday)
+        if product.weekend_price_dkk:
+            # If rental includes any weekend days, check if we should use weekend pricing
+            weekend_days = 0
+            weekday_days = 0
+            
+            current_date = start_date
+            while current_date <= end_date:
+                if current_date.weekday() in [5, 6]:  # Saturday or Sunday
+                    weekend_days += 1
+                else:
+                    weekday_days += 1
+                current_date += timedelta(days=1)
+            
+            # If rental is ONLY weekend days (all Sat/Sun), use weekend price
+            if weekend_days > 0 and weekday_days == 0:
+                return product.weekend_price_dkk
+            
+            # If it's a mix, calculate weighted average
+            if weekend_days > 0 and weekday_days > 0:
+                total_cost = (weekend_days * product.weekend_price_dkk) + (weekday_days * product.daily_price_dkk)
+                return total_cost / total_days
+        
+        # Default to regular daily price
         return product.daily_price_dkk
     
     def _calculate_delivery_fee(

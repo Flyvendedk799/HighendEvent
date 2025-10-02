@@ -93,7 +93,11 @@ class ProductForm(FlaskForm):
         validators=[DataRequired(message='Daglig pris er påkrævet')]
     )
     weekend_price_dkk = StringField(
-        'Weekend pris (DKK)',
+        'Weekend pris pr. dag (Lør/Søn) (DKK)',
+        validators=[Optional()]
+    )
+    weekend_discount_dkk = StringField(
+        'Fuld weekend pris (Fre-Søn) (DKK)',
         validators=[Optional()]
     )
     deposit_dkk = StringField(

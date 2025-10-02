@@ -254,7 +254,8 @@ class Product(db.Model):
     slug: Mapped[str] = mapped_column(db.String(200), unique=True, nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(db.Text)
     daily_price_dkk: Mapped[Decimal] = mapped_column(db.Numeric(10, 2), nullable=False)
-    weekend_price_dkk: Mapped[Optional[Decimal]] = mapped_column(db.Numeric(10, 2))
+    weekend_price_dkk: Mapped[Optional[Decimal]] = mapped_column(db.Numeric(10, 2))  # Price per day for Sat/Sun
+    weekend_discount_dkk: Mapped[Optional[Decimal]] = mapped_column(db.Numeric(10, 2))  # Special price for full Fri-Sun weekend
     deposit_dkk: Mapped[Optional[Decimal]] = mapped_column(db.Numeric(10, 2))
     stock_qty: Mapped[int] = mapped_column(db.Integer, nullable=False, default=1)
     prep_buffer_days: Mapped[int] = mapped_column(db.Integer, default=0, nullable=False)
@@ -268,6 +269,7 @@ class Product(db.Model):
     __table_args__ = (
         CheckConstraint('daily_price_dkk >= 0', name='check_daily_price_positive'),
         CheckConstraint('weekend_price_dkk >= 0', name='check_weekend_price_positive'),
+        CheckConstraint('weekend_discount_dkk >= 0', name='check_weekend_discount_positive'),
         CheckConstraint('deposit_dkk >= 0', name='check_deposit_positive'),
         CheckConstraint('stock_qty > 0', name='check_stock_positive'),
         CheckConstraint('prep_buffer_days >= 0', name='check_prep_buffer_positive'),

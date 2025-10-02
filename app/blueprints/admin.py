@@ -236,6 +236,7 @@ def create_product():
             description=form.description.data,
             daily_price_dkk=Decimal(str(form.daily_price_dkk.data)),
             weekend_price_dkk=Decimal(str(form.weekend_price_dkk.data)) if form.weekend_price_dkk.data else None,
+            weekend_discount_dkk=Decimal(str(form.weekend_discount_dkk.data)) if form.weekend_discount_dkk.data else None,
             deposit_dkk=Decimal(str(form.deposit_dkk.data)) if form.deposit_dkk.data else None,
             stock_qty=form.stock_qty.data,
             prep_buffer_days=form.prep_buffer_days.data,
@@ -308,6 +309,7 @@ def edit_product(id):
         product.description = form.description.data
         product.daily_price_dkk = Decimal(str(form.daily_price_dkk.data))
         product.weekend_price_dkk = Decimal(str(form.weekend_price_dkk.data)) if form.weekend_price_dkk.data else None
+        product.weekend_discount_dkk = Decimal(str(form.weekend_discount_dkk.data)) if form.weekend_discount_dkk.data else None
         product.deposit_dkk = Decimal(str(form.deposit_dkk.data)) if form.deposit_dkk.data else None
         product.stock_qty = form.stock_qty.data
         product.prep_buffer_days = form.prep_buffer_days.data
