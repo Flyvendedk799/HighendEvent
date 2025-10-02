@@ -49,7 +49,7 @@
     </div>
 
     <!-- Images Grid -->
-    {% if images %}
+    {% if images or product.hero_image_url %}
     <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Produktbilleder</h3>
@@ -58,8 +58,41 @@
         
         <div id="images-container" class="p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="sortable-images">
+                <!-- Hero Image (if exists) -->
+                {% if product.hero_image_url %}
+                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 relative" data-image-id="hero">
+                    <!-- Image -->
+                    <div class="aspect-w-16 aspect-h-12 bg-gray-100">
+                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                    </div>
+                    
+                    <!-- Image Info -->
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                #1 (Hovedbillede)
+                            </span>
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('admin.edit_product', id=product.id) }}" 
+                                   class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                    Rediger
+                                </a>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 truncate">{{ product.name }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Hovedbillede (redigeres i produktformular)</p>
+                    </div>
+                    
+                    <!-- Hero Badge -->
+                    <div class="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
+                        HOVEDBILEDE
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Other Images -->
                 {% for image in images %}
-                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200" data-image-id="{{ image.id }}">
+                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 relative" data-image-id="{{ image.id }}">
                     <!-- Image -->
                     <div class="aspect-w-16 aspect-h-12 bg-gray-100">
                         <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover">
@@ -68,8 +101,8 @@
                     <!-- Image Info -->
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                #{{ image.sort_order }}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                #{{ image.sort_order + 1 }}
                             </span>
                             <div class="flex space-x-2">
                                 <a href="{{ url_for('admin.edit_product_image', product_id=product.id, image_id=image.id) }}" 

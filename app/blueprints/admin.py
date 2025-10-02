@@ -246,6 +246,18 @@ def create_product():
         
         from app import db
         db.session.add(product)
+        db.session.flush()  # Get the product ID
+        
+        # Create ProductImage entry for hero image if provided
+        if hero_image_url:
+            hero_image = ProductImage(
+                product_id=product.id,
+                url=hero_image_url,
+                alt=product.name,
+                sort_order=1  # Hero image is always #1
+            )
+            db.session.add(hero_image)
+        
         db.session.commit()
         
         flash('Produkt oprettet', 'success')
@@ -264,12 +276,31 @@ def edit_product(id):
     
     if form.validate_on_submit():
         # Handle image upload
+        new_hero_image_url = None
         if form.hero_image_file.data:
             uploaded_file = save_uploaded_file(form.hero_image_file.data)
             if uploaded_file:
-                product.hero_image_url = uploaded_file
+                new_hero_image_url = uploaded_file
         elif form.hero_image_url.data:
-            product.hero_image_url = form.hero_image_url.data
+            new_hero_image_url = form.hero_image_url.data
+        
+        # Update hero image if changed
+        if new_hero_image_url and new_hero_image_url != product.hero_image_url:
+            product.hero_image_url = new_hero_image_url
+            
+            # Update or create ProductImage entry for hero image
+            hero_image = ProductImage.query.filter_by(product_id=product.id, sort_order=1).first()
+            if hero_image:
+                hero_image.url = new_hero_image_url
+                hero_image.alt = form.name.data
+            else:
+                hero_image = ProductImage(
+                    product_id=product.id,
+                    url=new_hero_image_url,
+                    alt=form.name.data,
+                    sort_order=1
+                )
+                db.session.add(hero_image)
         
         product.name = form.name.data
         product.slug = form.slug.data
