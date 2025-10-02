@@ -78,7 +78,7 @@
                 {% if product.hero_image_url %}
                 <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="hero">
                     <!-- Image -->
-                    <div class="aspect-w-16 aspect-h-12 bg-gray-100">
+                    <div class="bg-gray-100 overflow-hidden">
                         <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
                     </div>
                     
@@ -110,7 +110,7 @@
                 {% for image in images %}
                 <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="{{ image.id }}">
                     <!-- Image -->
-                    <div class="aspect-w-16 aspect-h-12 bg-gray-100">
+                    <div class="bg-gray-100 overflow-hidden">
                         <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover">
                     </div>
                     
@@ -183,26 +183,36 @@
     cursor: grab;
     position: relative;
     z-index: 1;
+    height: auto;
+    min-height: 300px;
 }
 
 .image-item:active {
     cursor: grabbing;
 }
 
+.image-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
 .image-item.sortable-ghost {
     opacity: 0.4;
-    transform: rotate(5deg);
+    transform: rotate(2deg);
 }
 
 .image-item.sortable-chosen {
-    transform: scale(1.05) rotate(2deg);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     z-index: 1000;
 }
 
 .image-item.sortable-drag {
-    opacity: 0.8;
-    transform: rotate(3deg);
+    opacity: 0.9;
+    transform: scale(1.02);
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -214,24 +224,48 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (container) {
         const sortable = Sortable.create(container, {
-            animation: 150,
+            animation: 200,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
             forceFallback: false,
-            fallbackOnBody: true,
+            fallbackOnBody: false,
+            swapThreshold: 0.65,
+            invertSwap: false,
+            direction: 'horizontal',
             onStart: function(evt) {
-                // Visual feedback when starting drag
-                evt.item.style.cursor = 'grabbing';
-                evt.item.style.zIndex = '1000';
+                // Store original dimensions
+                const item = evt.item;
+                const img = item.querySelector('img');
+                if (img) {
+                    item.dataset.originalWidth = img.style.width || '100%';
+                    item.dataset.originalHeight = img.style.height || '200px';
+                }
+                
+                // Visual feedback
+                item.style.cursor = 'grabbing';
+                item.style.zIndex = '1000';
             },
             onEnd: function(evt) {
                 hasChanges = true;
                 saveBtn.classList.remove('hidden');
                 
-                // Reset cursor and z-index
-                evt.item.style.cursor = 'grab';
-                evt.item.style.zIndex = 'auto';
+                // Reset styles
+                const item = evt.item;
+                item.style.cursor = 'grab';
+                item.style.zIndex = 'auto';
+                item.style.transform = '';
+                item.style.width = '';
+                item.style.height = '';
+                
+                // Reset image dimensions
+                const img = item.querySelector('img');
+                if (img) {
+                    img.style.width = item.dataset.originalWidth || '100%';
+                    img.style.height = item.dataset.originalHeight || '200px';
+                    img.style.objectFit = 'cover';
+                    img.style.objectPosition = 'center';
+                }
                 
                 // Update the sort order numbers in the UI
                 container.querySelectorAll('.image-item').forEach((item, index) => {
