@@ -169,6 +169,30 @@
                             </p>
                         </div>
                         
+                        <!-- Terms Agreement -->
+                        <div class="pt-4">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    {{ form.accept_terms(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" + (" border-red-300" if form.accept_terms.errors else "")) }}
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="{{ form.accept_terms.id }}" class="text-gray-700">
+                                        {{ form.accept_terms.label.text }}
+                                        <a href="{{ url_for('public.terms') }}" target="_blank" class="text-indigo-600 hover:text-indigo-500 underline">
+                                            (læs lejebetingelserne)
+                                        </a>
+                                    </label>
+                                    {% if form.accept_terms.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.accept_terms.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Submit Button -->
                         <div class="pt-6">
                             <button type="submit" 

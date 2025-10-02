@@ -53,6 +53,10 @@ class CheckoutForm(FlaskForm):
         validators=[Optional(), Length(max=10)],
         render_kw={'placeholder': '1234'}
     )
+    accept_terms = BooleanField(
+        'Jeg accepterer lejebetingelserne',
+        validators=[DataRequired(message='Du skal acceptere lejebetingelserne for at fortsætte')]
+    )
 
 
 class LoginForm(FlaskForm):

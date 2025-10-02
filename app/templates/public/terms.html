@@ -1,56 +1,124 @@
 {% extends "base.html" %}
 
-{% block title %}Lejebetingelser - Festudlej{% endblock %}
+{% block title %}Lejebetingelser - HighendEvent{% endblock %}
 
 {% block content %}
-<div class="bg-white">
+<div class="bg-gradient-to-br from-slate-50 via-white to-blue-50 min-h-screen">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">Lejebetingelser</h1>
-            <p class="text-lg text-gray-600">Generelle vilkår for udlejning af udstyr</p>
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Lejebetingelser</h1>
+            <p class="text-xl text-gray-600">Generelle Lejebetingelser – HighendEvent</p>
         </div>
-        
-        <!-- Content -->
-        <div class="prose max-w-none">
-            {% if terms_block %}
-                {{ terms_block.content_md | safe }}
-            {% else %}
-                <h2>1. Generelt</h2>
-                <p>Disse lejebetingelser gælder for alle udlejninger fra Festudlej ApS.</p>
-                
-                <h2>2. Booking og betaling</h2>
-                <ul>
-                    <li>Booking bekræftes ved betaling</li>
-                    <li>Fuld betaling skal ske før levering/afhentning</li>
-                    <li>Depositum kræves for alle udlejninger</li>
-                </ul>
-                
-                <h2>3. Levering og afhentning</h2>
-                <ul>
-                    <li>Levering og afhentning sker i aftalt tidsrum</li>
-                    <li>Kunde skal være til stede ved levering/afhentning</li>
-                    <li>Forsinkelser kan medføre ekstra gebyr</li>
-                </ul>
-                
-                <h2>4. Ansvarsforhold</h2>
-                <ul>
-                    <li>Kunde er ansvarlig for udstyr under lejeperioden</li>
-                    <li>Skader på udstyr debiteres kunden</li>
-                    <li>Depositum tilbagebetales efter returnering i god stand</li>
-                </ul>
-                
-                <h2>5. Annullering</h2>
-                <ul>
-                    <li>Annullering mere end 48 timer før levering: 100% refusion</li>
-                    <li>Annullering 24-48 timer før levering: 50% refusion</li>
-                    <li>Annullering mindre end 24 timer før levering: Ingen refusion</li>
-                </ul>
-            {% endif %}
+
+        <!-- Terms Content -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 lg:p-12">
+            <div class="prose prose-lg max-w-none">
+                <p class="text-gray-700 mb-8">
+                    Ved booking og betaling på webshoppen accepterer lejer nedenstående vilkår:
+                </p>
+
+                <div class="space-y-8">
+                    <!-- Section 1 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">1. Lejeperiode</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Lejeaftalen gælder for den periode, der er valgt ved booking.</li>
+                            <li>Udstyret skal afleveres/afhentes til den aftalte tid.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 2 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">2. Betaling og depositum</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Lejeprisen fremgår ved booking og betales senest ved afhentning/levering, medmindre andet er aftalt.</li>
+                            <li>Eventuelt depositum tilbagebetales efter returnering, såfremt udstyret er i samme stand og rengjort.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 3 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">3. Levering og afhentning</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Levering og afhentning sker efter aftale.</li>
+                            <li>Eventuel fragtgebyr tillægges.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 4 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">4. Anvendelse</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Udstyret må kun anvendes til det formål, det er beregnet til, jf. udlejers anvisninger.</li>
+                            <li>Lejer er ansvarlig for korrekt brug af udstyret.</li>
+                            <li>Lejer må ikke udleje udstyret videre til tredjemand.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 5 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">5. Rengøring</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Udstyret skal returneres rengjort.</li>
+                            <li>Hvis rengøring ikke er udført tilfredsstillende, tilbagebetales depositum ikke.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 6 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">6. Ansvar og skader</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Lejer bærer det fulde ansvar for udstyret i lejeperioden.</li>
+                            <li>Eventuelle skader, bortkomst eller misligholdelse erstattes af lejer.</li>
+                            <li>Udlejer kan ikke holdes ansvarlig for driftstop, strømsvigt eller forkert brug.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 7 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">7. Afbestilling</h2>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Afbestilling skal ske senest 24 timer før lejeperiodens start.</li>
+                            <li>Ved senere afbestilling betales den fulde lejepris.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Section 8 -->
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">8. Øvrige vilkår</h2>
+                        <p class="text-gray-700">
+                            Ved afgivelse af ordre og markering af check-box "Jeg accepterer lejebetingelserne" anses betingelserne for accepteret og juridisk bindende.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="mt-12 p-6 bg-gray-50 rounded-xl">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Kontaktoplysninger</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+                        <div>
+                            <p><strong>Email:</strong> <a href="mailto:kontakt@highendevent.dk" class="text-primary-600 hover:text-primary-700">kontakt@highendevent.dk</a></p>
+                            <p><strong>Telefon:</strong> <a href="tel:+4552113418" class="text-primary-600 hover:text-primary-700">52 11 34 18</a></p>
+                        </div>
+                        <div>
+                            <p><strong>Adresse:</strong> Valbyvej 57, 3200 Helsinge, rum 37</p>
+                            <p><strong>Virksomhed:</strong> HighendEvent</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-8">
+            <a href="{{ url_for('public.index') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Tilbage til forsiden
+            </a>
         </div>
     </div>
 </div>
 {% endblock %}
-
-
-

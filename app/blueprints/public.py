@@ -166,8 +166,7 @@ def contact():
 @bp.route('/lejebetingelser')
 def terms():
     """Terms and conditions page."""
-    terms_block = CMSBlock.query.filter_by(key='terms_conditions', is_active=True).first()
-    return render_template('public/terms.html', terms_block=terms_block)
+    return render_template('public/terms.html')
 
 
 @bp.route('/faq')
