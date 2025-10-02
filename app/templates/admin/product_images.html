@@ -80,13 +80,6 @@
                     <!-- Image -->
                     <div class="bg-gray-100 overflow-hidden">
                         <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover" onerror="console.log('Hero image failed to load:', this.src)">
-                        <!-- Debug info -->
-                        <div class="text-xs text-gray-500 p-2 bg-yellow-100 border border-yellow-300 rounded p-2">
-                            <strong>Debug Hero Image:</strong><br>
-                            Original: {{ product.hero_image_url }}<br>
-                            Processed: {{ product.hero_image_url | image_url }}<br>
-                            <a href="{{ product.hero_image_url | image_url }}" target="_blank" class="text-blue-600 underline">Test URL</a>
-                        </div>
                     </div>
                     
                     <!-- Image Info -->
@@ -119,13 +112,6 @@
                     <!-- Image -->
                     <div class="bg-gray-100 overflow-hidden">
                         <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover" onerror="console.log('Image failed to load:', this.src)">
-                        <!-- Debug info -->
-                        <div class="text-xs text-gray-500 p-2 bg-yellow-100 border border-yellow-300 rounded p-2">
-                            <strong>Debug Image {{ image.id }}:</strong><br>
-                            Original: {{ image.url }}<br>
-                            Processed: {{ image.url | image_url }}<br>
-                            <a href="{{ image.url | image_url }}" target="_blank" class="text-blue-600 underline">Test URL</a>
-                        </div>
                     </div>
                     
                     <!-- Image Info -->
@@ -248,13 +234,9 @@ document.addEventListener('DOMContentLoaded', function() {
             invertSwap: false,
             direction: 'horizontal',
             onStart: function(evt) {
-                // Store original dimensions
+                // Store the original HTML content
                 const item = evt.item;
-                const img = item.querySelector('img');
-                if (img) {
-                    item.dataset.originalWidth = img.style.width || '100%';
-                    item.dataset.originalHeight = img.style.height || '200px';
-                }
+                item.dataset.originalHTML = item.innerHTML;
                 
                 // Visual feedback
                 item.style.cursor = 'grabbing';
@@ -272,13 +254,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.style.width = '';
                 item.style.height = '';
                 
-                // Reset image dimensions
-                const img = item.querySelector('img');
-                if (img) {
-                    img.style.width = item.dataset.originalWidth || '100%';
-                    img.style.height = item.dataset.originalHeight || '200px';
-                    img.style.objectFit = 'cover';
-                    img.style.objectPosition = 'center';
+                // Restore original HTML content to prevent corruption
+                if (item.dataset.originalHTML) {
+                    item.innerHTML = item.dataset.originalHTML;
                 }
                 
                 // Update the sort order numbers in the UI

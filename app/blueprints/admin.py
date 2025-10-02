@@ -371,13 +371,6 @@ def product_images(product_id):
     product = Product.query.get_or_404(product_id)
     images = ProductImage.query.filter_by(product_id=product_id).order_by(ProductImage.sort_order.asc()).all()
     
-    print(f"🖼️ Product images debug for product {product_id}:")
-    print(f"   Product: {product.name}")
-    print(f"   Hero image URL: {product.hero_image_url}")
-    print(f"   Number of images: {len(images)}")
-    for img in images:
-        print(f"   Image {img.id}: {img.url} (sort_order: {img.sort_order})")
-    
     return render_template('admin/product_images.html', product=product, images=images)
 
 
