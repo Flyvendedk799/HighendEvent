@@ -27,7 +27,11 @@ class Config:
         'pool_recycle': 1800,  # Recycle connections after 30 minutes to prevent stale connections
         'pool_pre_ping': True,  # Test connections before use to detect stale connections
         'pool_reset_on_return': 'rollback',  # Rollback transactions on return
-        'connect_args': {
+    }
+    
+    # Add MySQL-specific connection args only for MySQL databases
+    if database_url.startswith('mysql'):
+        SQLALCHEMY_ENGINE_OPTIONS['connect_args'] = {
             'connect_timeout': 10,  # MySQL connection timeout
             'read_timeout': 20,  # Reduced read timeout
             'write_timeout': 20,  # Reduced write timeout
@@ -35,7 +39,6 @@ class Config:
             'autocommit': False,  # Use transactions
             'init_command': "SET SESSION wait_timeout=28800, interactive_timeout=28800",  # Set MySQL timeouts
         }
-    }
     
     # Stripe configuration
     STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY') or 'pk_test_51S84RAGzFU37JYeIIaqmzVTz0OZhfNE5SCdjpmSTbjv2W2vGO5gnOwVrNxrmosrTXSMlXtKQNcYV0q9g0stITPCi00z7ryFXFE'

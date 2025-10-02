@@ -503,7 +503,6 @@ def delete_product_image(product_id, image_id):
 
 @bp.route('/products/<int:product_id>/images/reorder', methods=['POST'])
 @login_required
-@csrf.exempt
 def reorder_product_images(product_id):
     """Reorder product images."""
     print(f"🔄 Reorder endpoint called for product {product_id}")

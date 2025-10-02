@@ -122,7 +122,13 @@ def calendar_feed():
         
     except Exception as e:
         print(f"Error generating calendar feed: {e}")
-        return jsonify({'error': 'Failed to generate calendar feed'}), 500
+        import traceback
+        traceback.print_exc()
+        return Response(
+            "Error generating calendar feed",
+            status=500,
+            mimetype='text/plain'
+        )
 
 def _generate_event_description(booking):
     """Generate detailed event description."""
