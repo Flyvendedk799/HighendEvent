@@ -81,8 +81,11 @@
                     <div class="bg-gray-100 overflow-hidden">
                         <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover" onerror="console.log('Hero image failed to load:', this.src)">
                         <!-- Debug info -->
-                        <div class="text-xs text-gray-500 p-2">
-                            Debug: {{ product.hero_image_url }} -> {{ product.hero_image_url | image_url }}
+                        <div class="text-xs text-gray-500 p-2 bg-yellow-100 border border-yellow-300 rounded p-2">
+                            <strong>Debug Hero Image:</strong><br>
+                            Original: {{ product.hero_image_url }}<br>
+                            Processed: {{ product.hero_image_url | image_url }}<br>
+                            <a href="{{ product.hero_image_url | image_url }}" target="_blank" class="text-blue-600 underline">Test URL</a>
                         </div>
                     </div>
                     
@@ -117,8 +120,11 @@
                     <div class="bg-gray-100 overflow-hidden">
                         <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover" onerror="console.log('Image failed to load:', this.src)">
                         <!-- Debug info -->
-                        <div class="text-xs text-gray-500 p-2">
-                            Debug: {{ image.url }} -> {{ image.url | image_url }}
+                        <div class="text-xs text-gray-500 p-2 bg-yellow-100 border border-yellow-300 rounded p-2">
+                            <strong>Debug Image {{ image.id }}:</strong><br>
+                            Original: {{ image.url }}<br>
+                            Processed: {{ image.url | image_url }}<br>
+                            <a href="{{ image.url | image_url }}" target="_blank" class="text-blue-600 underline">Test URL</a>
                         </div>
                     </div>
                     
