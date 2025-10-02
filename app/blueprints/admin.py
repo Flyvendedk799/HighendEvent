@@ -222,6 +222,22 @@ def create_product():
     form.category_id.choices = [(c.id, c.name) for c in Category.query.filter(Category.is_active == True).order_by(Category.name).all()]
     
     if form.validate_on_submit():
+        # Slugify the slug field
+        import re
+        slug = form.slug.data.lower()
+        slug = re.sub(r'[æ]', 'ae', slug)
+        slug = re.sub(r'[ø]', 'oe', slug)
+        slug = re.sub(r'[å]', 'aa', slug)
+        slug = re.sub(r'[^a-z0-9]+', '-', slug)
+        slug = slug.strip('-')
+        
+        # Check if slug already exists (including inactive products)
+        base_slug = slug
+        counter = 1
+        while Product.query.filter_by(slug=slug).first() is not None:
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        
         # Handle image upload
         hero_image_url = form.hero_image_url.data
         if form.hero_image_file.data:
@@ -231,7 +247,7 @@ def create_product():
         
         product = Product(
             name=form.name.data,
-            slug=form.slug.data,
+            slug=slug,  # Use the slugified and unique slug
             category_id=form.category_id.data,
             description=form.description.data,
             daily_price_dkk=Decimal(str(form.daily_price_dkk.data)),
@@ -303,8 +319,25 @@ def edit_product(id):
                 )
                 db.session.add(hero_image)
         
+        # Slugify the slug field if it changed
+        import re
+        new_slug = form.slug.data.lower()
+        new_slug = re.sub(r'[æ]', 'ae', new_slug)
+        new_slug = re.sub(r'[ø]', 'oe', new_slug)
+        new_slug = re.sub(r'[å]', 'aa', new_slug)
+        new_slug = re.sub(r'[^a-z0-9]+', '-', new_slug)
+        new_slug = new_slug.strip('-')
+        
+        # Check if slug changed and if new slug already exists
+        if new_slug != product.slug:
+            base_slug = new_slug
+            counter = 1
+            while Product.query.filter(Product.slug == new_slug, Product.id != product.id).first() is not None:
+                new_slug = f"{base_slug}-{counter}"
+                counter += 1
+        
         product.name = form.name.data
-        product.slug = form.slug.data
+        product.slug = new_slug  # Use the slugified and unique slug
         product.category_id = form.category_id.data
         product.description = form.description.data
         product.daily_price_dkk = Decimal(str(form.daily_price_dkk.data))
