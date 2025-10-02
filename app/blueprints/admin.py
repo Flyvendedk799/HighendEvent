@@ -1636,13 +1636,26 @@ def analytics():
     active_products = Product.query.filter(Product.is_active == True).count()
     
     # Get monthly revenue data for chart
-    monthly_revenue = db.session.query(
-        func.strftime('%Y-%m', Booking.created_at).label('month'),
-        func.sum(Booking.total_dkk).label('revenue')
-    ).filter(
-        Booking.status != BookingStatus.CANCELLED,
-        Booking.is_deleted == False
-    ).group_by(func.strftime('%Y-%m', Booking.created_at)).order_by('month').all()
+    # Use database-specific date formatting
+    from sqlalchemy import text
+    if current_app.config.get('SQLALCHEMY_DATABASE_URI', '').startswith('mysql'):
+        # MySQL uses DATE_FORMAT
+        monthly_revenue = db.session.query(
+            text("DATE_FORMAT(created_at, '%Y-%m')").label('month'),
+            func.sum(Booking.total_dkk).label('revenue')
+        ).filter(
+            Booking.status != BookingStatus.CANCELLED,
+            Booking.is_deleted == False
+        ).group_by(text("DATE_FORMAT(created_at, '%Y-%m')")).order_by('month').all()
+    else:
+        # SQLite uses strftime
+        monthly_revenue = db.session.query(
+            func.strftime('%Y-%m', Booking.created_at).label('month'),
+            func.sum(Booking.total_dkk).label('revenue')
+        ).filter(
+            Booking.status != BookingStatus.CANCELLED,
+            Booking.is_deleted == False
+        ).group_by(func.strftime('%Y-%m', Booking.created_at)).order_by('month').all()
     
     # Get top products
     top_products = db.session.query(
