@@ -1,67 +1,66 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Billeder - {{ product.name }} - Admin{% endblock %}
+{% block title %}Billeder for {{ product.name }}{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Billeder for {{ product.name }}</h1>
-                <p class="text-lg text-gray-600">Administrer produktbilleder og deres rækkefølge</p>
-            </div>
-            <div class="flex space-x-4">
-                <a href="{{ url_for('admin.products') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                    Tilbage til produkter
-                </a>
-                <a href="{{ url_for('admin.bulk_upload_images', product_id=product.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Tilføj flere billeder
-                </a>
-                <a href="{{ url_for('admin.add_product_image', product_id=product.id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Tilføj ét billede
-                </a>
-            </div>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Billeder for {{ product.name }}</h1>
+            <p class="text-lg text-gray-600">Administrer produktbilleder og deres rækkefølge</p>
+        </div>
+        <div class="flex space-x-4">
+            <a href="{{ url_for('admin.products') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Tilbage til produkter
+            </a>
+            <a href="{{ url_for('admin.bulk_upload_images', product_id=product.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Tilføj flere billeder
+            </a>
+            <a href="{{ url_for('admin.add_product_image', product_id=product.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Tilføj ét billede
+            </a>
         </div>
     </div>
 
     <!-- Product Info -->
-    <div class="bg-white shadow rounded-lg p-6 mb-8">
-        <div class="flex items-center space-x-6">
-            {% if product.hero_image_url %}
-            <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-20 h-20 object-cover rounded-lg">
-            {% else %}
-            <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
+    <div class="mt-6 bg-white shadow rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                {% if product.hero_image_url %}
+                <img class="h-16 w-16 rounded-lg object-cover" src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}">
+                {% else %}
+                <div class="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
-            <div>
+            <div class="ml-4">
                 <h3 class="text-lg font-medium text-gray-900">{{ product.name }}</h3>
-                <p class="text-sm text-gray-500">{{ product.category.name }}</p>
-                <p class="text-sm text-gray-500">{{ (images|length + (1 if product.hero_image_url else 0)) }} billeder</p>
+                <p class="text-sm text-gray-500">{{ product.category.name if product.category else 'Ingen kategori' }}</p>
+                <p class="text-sm text-gray-500">{{ (images|length + 1) if product.hero_image_url else images|length }} billeder</p>
             </div>
         </div>
     </div>
 
-    <!-- Images Grid -->
-    {% if images or product.hero_image_url %}
-    <div class="bg-white shadow rounded-lg">
+    <!-- Images Management -->
+    <div class="mt-8 bg-white shadow rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-medium text-gray-900">Produktbilleder</h3>
-                    <p class="text-sm text-gray-500">Træk og slip for at ændre rækkefølgen. Billede #1 er hovedbilledet.</p>
+                    <p class="text-sm text-gray-500">Klik på pilene for at ændre rækkefølgen. Billede #1 er hovedbilledet.</p>
                 </div>
                 <button id="save-order-btn" class="hidden inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,210 +71,199 @@
             </div>
         </div>
         
-        <div id="images-container" class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="sortable-images">
+        <div class="p-6">
+            <div class="space-y-4" id="images-list">
                 <!-- Hero Image (if exists) -->
                 {% if product.hero_image_url %}
-                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="hero">
-                    <!-- Image -->
-                    <div class="bg-gray-100 overflow-hidden">
-                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
-                    </div>
-                    
-                    <!-- Image Info -->
-                    <div class="p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                #1 (Hovedbillede)
-                            </span>
-                            <div class="flex space-x-2">
-                                <a href="{{ url_for('admin.edit_product', id=product.id) }}" 
-                                   class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                                    Rediger
-                                </a>
-                            </div>
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                    <div class="flex">
+                        <!-- Image -->
+                        <div class="w-32 h-32 bg-gray-100 overflow-hidden flex-shrink-0">
+                            <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
                         </div>
-                        <p class="text-sm text-gray-600 truncate">{{ product.name }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Hovedbillede (redigeres i produktformular)</p>
-                    </div>
-                    
-                    <!-- Hero Badge -->
-                    <div class="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
-                        HOVEDBILEDE
+                        
+                        <!-- Image Info -->
+                        <div class="p-4 flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    #1 (Hovedbillede)
+                                </span>
+                                <div class="flex space-x-2">
+                                    <a href="{{ url_for('admin.edit_product', id=product.id) }}" 
+                                       class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                        Rediger
+                                    </a>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 truncate">{{ product.name }}</p>
+                            <p class="text-xs text-gray-400 mt-1">Hovedbillede (redigeres i produktformular)</p>
+                        </div>
+                        
+                        <!-- Move buttons -->
+                        <div class="p-4 flex flex-col justify-center space-y-2">
+                            <button type="button" class="text-gray-400 cursor-not-allowed" disabled>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                </svg>
+                            </button>
+                            <button type="button" class="text-gray-400 cursor-not-allowed" disabled>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
                 
                 <!-- Other Images -->
                 {% for image in images %}
-                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="{{ image.id }}">
-                    <!-- Image -->
-                    <div class="bg-gray-100 overflow-hidden">
-                        <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover">
-                    </div>
-                    
-                    <!-- Image Info -->
-                    <div class="p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                #{{ image.sort_order + 1 }}
-                            </span>
-                            <div class="flex space-x-2">
-                                <a href="{{ url_for('admin.edit_product_image', product_id=product.id, image_id=image.id) }}" 
-                                   class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                                    Rediger
-                                </a>
-                                <form method="POST" action="{{ url_for('admin.delete_product_image', product_id=product.id, image_id=image.id) }}" 
-                                      class="inline" onsubmit="return confirm('Er du sikker på, at du vil slette dette billede?')">
-                                    {{ csrf_token() }}
-                                    <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
-                                        Slet
-                                    </button>
-                                </form>
-                            </div>
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm" data-image-id="{{ image.id }}">
+                    <div class="flex">
+                        <!-- Image -->
+                        <div class="w-32 h-32 bg-gray-100 overflow-hidden flex-shrink-0">
+                            <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-full object-cover">
                         </div>
-                        <p class="text-sm text-gray-600 truncate">{{ image.alt }}</p>
-                        <p class="text-xs text-gray-400 mt-1">{{ image.url.split('/')[-1] if image.url else 'N/A' }}</p>
-                    </div>
-                    
-                    <!-- Drag Handle -->
-                    <div class="absolute top-2 right-2 bg-white bg-opacity-90 rounded-full p-1 cursor-move opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                        </svg>
+                        
+                        <!-- Image Info -->
+                        <div class="p-4 flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    #{{ image.sort_order + 1 }}
+                                </span>
+                                <div class="flex space-x-2">
+                                    <a href="{{ url_for('admin.edit_product_image', product_id=product.id, image_id=image.id) }}" 
+                                       class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                        Rediger
+                                    </a>
+                                    <form method="POST" action="{{ url_for('admin.delete_product_image', product_id=product.id, image_id=image.id) }}" 
+                                          class="inline" onsubmit="return confirm('Er du sikker på, at du vil slette dette billede?')">
+                                        {{ csrf_token() }}
+                                        <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                            Slet
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 truncate">{{ image.alt }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ image.url.split('/')[-1] if image.url else 'N/A' }}</p>
+                        </div>
+                        
+                        <!-- Move buttons -->
+                        <div class="p-4 flex flex-col justify-center space-y-2">
+                            <button type="button" class="move-up-btn text-gray-400 hover:text-gray-600" data-image-id="{{ image.id }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                </svg>
+                            </button>
+                            <button type="button" class="move-down-btn text-gray-400 hover:text-gray-600" data-image-id="{{ image.id }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
-    {% else %}
-    <!-- Empty State -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">Ingen billeder</h3>
-            <p class="mt-1 text-sm text-gray-500">Dette produkt har ingen billeder endnu.</p>
-            <div class="mt-6">
-                <a href="{{ url_for('admin.add_product_image', product_id=product.id) }}" 
-                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Tilføj første billede
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<style>
-    .image-item {
-        cursor: grab;
-    }
-
-    .image-item:active {
-        cursor: grabbing;
-    }
-
-    .image-item.sortable-ghost {
-        opacity: 0.4;
-    }
-
-    .image-item.sortable-chosen {
-        transform: scale(1.02);
-    }
-
-    .image-item.sortable-drag {
-        opacity: 0.9;
-    }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('sortable-images');
+    const container = document.getElementById('images-list');
     const saveBtn = document.getElementById('save-order-btn');
     let hasChanges = false;
     
-    if (container) {
-        const sortable = Sortable.create(container, {
-            animation: 200,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
-            onStart: function(evt) {
-                evt.item.style.cursor = 'grabbing';
-            },
-            onEnd: function(evt) {
+    // Move up functionality
+    document.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const imageDiv = this.closest('[data-image-id]');
+            const prevDiv = imageDiv.previousElementSibling;
+            
+            if (prevDiv && prevDiv.hasAttribute('data-image-id')) {
+                container.insertBefore(imageDiv, prevDiv);
                 hasChanges = true;
                 saveBtn.classList.remove('hidden');
-                evt.item.style.cursor = 'grab';
-                
-                // Update the sort order numbers in the UI
-                container.querySelectorAll('.image-item').forEach((item, index) => {
-                    const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
-                    if (badge) {
-                        badge.textContent = `#${index + 1}`;
-                    }
-                });
+                updateNumbers();
             }
         });
-        
-        // Save button functionality
-        saveBtn.addEventListener('click', function() {
-            if (!hasChanges) return;
+    });
+    
+    // Move down functionality
+    document.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const imageDiv = this.closest('[data-image-id]');
+            const nextDiv = imageDiv.nextElementSibling;
             
-            // Get the new order of image IDs (excluding hero image)
-            const imageIds = Array.from(container.children)
-                .filter(item => item.dataset.imageId && item.dataset.imageId !== 'hero')
-                .map(item => item.dataset.imageId);
-            
-            if (imageIds.length === 0) {
-                saveBtn.classList.add('hidden');
-                hasChanges = false;
-                return;
+            if (nextDiv && nextDiv.hasAttribute('data-image-id')) {
+                container.insertBefore(nextDiv, imageDiv);
+                hasChanges = true;
+                saveBtn.classList.remove('hidden');
+                updateNumbers();
             }
-            
-            // Send AJAX request to update order
-            fetch('{{ url_for("admin.reorder_product_images", product_id=product.id) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    image_ids: imageIds
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Show success message
-                    const flash = document.createElement('div');
-                    flash.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                    flash.textContent = 'Rækkefølge gemt';
-                    document.body.appendChild(flash);
-                    
-                    setTimeout(() => {
-                        flash.remove();
-                    }, 3000);
-                    
-                    saveBtn.classList.add('hidden');
-                    hasChanges = false;
-                } else {
-                    alert('Fejl ved opdatering af rækkefølge: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Fejl ved opdatering af rækkefølge');
-            });
+        });
+    });
+    
+    // Update number badges
+    function updateNumbers() {
+        const imageDivs = container.querySelectorAll('[data-image-id]');
+        imageDivs.forEach((div, index) => {
+            const badge = div.querySelector('.bg-gray-100');
+            if (badge) {
+                badge.textContent = `#${index + 2}`; // +2 because hero image is #1
+            }
         });
     }
+    
+    // Save order functionality
+    saveBtn.addEventListener('click', function() {
+        if (!hasChanges) return;
+        
+        const imageIds = Array.from(container.querySelectorAll('[data-image-id]'))
+            .map(div => div.dataset.imageId);
+        
+        if (imageIds.length === 0) {
+            saveBtn.classList.add('hidden');
+            hasChanges = false;
+            return;
+        }
+        
+        fetch('{{ url_for("admin.reorder_product_images", product_id=product.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                image_ids: imageIds
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const flash = document.createElement('div');
+                flash.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+                flash.textContent = 'Rækkefølge gemt';
+                document.body.appendChild(flash);
+                
+                setTimeout(() => {
+                    flash.remove();
+                }, 3000);
+                
+                saveBtn.classList.add('hidden');
+                hasChanges = false;
+            } else {
+                alert('Fejl ved opdatering af rækkefølge: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Fejl ved opdatering af rækkefølge');
+        });
+    });
 });
 </script>
 {% endblock %}
