@@ -22,11 +22,11 @@ def calendar_feed():
         
         # Create calendar
         cal = Calendar()
-        cal.add('prodid', '-//Festudlej//Rental Calendar//EN')
+        cal.add('prodid', '-//HighendEvent//Rental Calendar//EN')
         cal.add('version', '2.0')
         cal.add('calscale', 'GREGORIAN')
         cal.add('method', 'PUBLISH')
-        cal.add('x-wr-calname', 'Festudlej Bookings')
+        cal.add('x-wr-calname', 'HighendEvent Bookings')
         cal.add('x-wr-caldesc', 'Rental equipment bookings and deliveries')
         cal.add('x-wr-timezone', 'Europe/Copenhagen')
         
@@ -38,7 +38,7 @@ def calendar_feed():
             event = Event()
             
             # Event details
-            event.add('uid', f'festudlej-booking-{booking.id}@festudlej.dk')
+            event.add('uid', f'highendevent-booking-{booking.id}@highendevent.dk')
             product_name = booking.items[0].name_snapshot if booking.items else "Rental"
             event.add('summary', f'📦 {product_name} - {booking.customer_name}')
             event.add('description', _generate_event_description(booking))
@@ -71,8 +71,8 @@ def calendar_feed():
             
             # Add organizer
             from icalendar import vCalAddress
-            organizer = vCalAddress('MAILTO:noreply@festudlej.dk')
-            organizer.params['cn'] = vText('Festudlej')
+            organizer = vCalAddress('MAILTO:noreply@highendevent.dk')
+            organizer.params['cn'] = vText('HighendEvent')
             event.add('organizer', organizer)
             
             # Add attendee (customer)
@@ -83,7 +83,7 @@ def calendar_feed():
             event.add('attendee', attendee)
             
             # Add categories
-            event.add('categories', ['Rental', 'Equipment', 'Festudlej'])
+            event.add('categories', ['Rental', 'Equipment', 'HighendEvent'])
             
             # Add priority (high for urgent bookings)
             if booking.delivery_type == 'delivery':
@@ -113,7 +113,7 @@ def calendar_feed():
             ics_content,
             mimetype='text/calendar',
             headers={
-                'Content-Disposition': 'attachment; filename="festudlej-bookings.ics"',
+                'Content-Disposition': 'attachment; filename="highendevent-bookings.ics"',
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
                 'Expires': '0'
