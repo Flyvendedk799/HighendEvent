@@ -337,26 +337,27 @@ def delete_product(id):
     
     product = Product.query.get_or_404(id)
     
-    # Check if product has active bookings
+    # Only check for ACTIVE/PENDING bookings (not finished ones)
     has_active_bookings = BookingItem.query.join(Booking).filter(
         BookingItem.product_id == id,
-        Booking.is_deleted == False
+        Booking.is_deleted == False,
+        Booking.status.in_([BookingStatus.PENDING, BookingStatus.DEPOSIT_PAID, BookingStatus.OUT_FOR_DELIVERY])
     ).first() is not None
     
     if has_active_bookings:
         flash('Kan ikke slette produkt med aktive bookinger', 'error')
         return redirect(url_for('admin.products'))
     
-    # Check if product has any booking items (even from deleted bookings)
-    has_booking_items = BookingItem.query.filter_by(product_id=id).first() is not None
+    # Check if product has any booking items from any booking (for historical tracking)
+    has_booking_history = BookingItem.query.filter_by(product_id=id).first() is not None
     
     from app import db, csrf
-    if has_booking_items:
-        # If product has been used in bookings, mark as inactive instead of deleting
+    if has_booking_history:
+        # If product has booking history, mark as inactive instead of deleting
         product.is_active = False
         product.name = f"[SLETTET] {product.name}"
         db.session.commit()
-        flash('Produkt er markeret som inaktivt (kan ikke slettes pga. booking historik)', 'warning')
+        flash('Produkt er markeret som inaktivt (har booking historik)', 'warning')
     else:
         # If product has never been used, we can safely delete it
         db.session.delete(product)
@@ -1811,12 +1812,10 @@ def delete_upsell_product(upsell_product_id):
     
     upsell_product = UpsellProduct.query.get_or_404(upsell_product_id)
     
-    # Check if upsell product is linked to any products
-    linked_products = ProductUpsell.query.filter_by(upsell_product_id=upsell_product_id).count()
-    if linked_products > 0:
-        flash(f'Kan ikke slette "{upsell_product.name}" da det er tilknyttet {linked_products} produkt(er)', 'error')
-        return redirect(url_for('admin.upsell_products'))
+    # Delete all product links first (cascade will handle this, but let's be explicit)
+    ProductUpsell.query.filter_by(upsell_product_id=upsell_product_id).delete()
     
+    # Now delete the upsell product
     db.session.delete(upsell_product)
     db.session.commit()
     
