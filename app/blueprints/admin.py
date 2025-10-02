@@ -1575,8 +1575,48 @@ def delete_cms_block(id):
 @login_required
 def customers():
     """Customers management page."""
-    customers = User.query.filter(User.role == 'customer').order_by(User.created_at.desc()).all()
-    return render_template('admin/customers.html', customers=customers)
+    from app.models import Customer
+    from sqlalchemy import func
+    
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    
+    query = Customer.query
+    
+    # Search filter
+    if search:
+        query = query.filter(
+            Customer.first_name.contains(search) |
+            Customer.last_name.contains(search) |
+            Customer.email.contains(search) |
+            Customer.phone.contains(search)
+        )
+    
+    # Status filter
+    if status == 'active':
+        query = query.filter(Customer.is_active == True)
+    elif status == 'inactive':
+        query = query.filter(Customer.is_active == False)
+    
+    # Order by creation date
+    query = query.order_by(Customer.created_at.desc())
+    
+    # Paginate
+    customers = query.paginate(
+        page=page, per_page=20, error_out=False
+    )
+    
+    # Calculate stats
+    total_customers = Customer.query.count()
+    active_customers = Customer.query.filter(Customer.is_active == True).count()
+    
+    return render_template('admin/customers.html', 
+                         customers=customers,
+                         search=search,
+                         status=status,
+                         total_customers=total_customers,
+                         active_customers=active_customers)
 
 
 @bp.route('/analytics')

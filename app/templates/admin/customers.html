@@ -35,7 +35,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Total kunder</p>
-                    <p class="text-2xl font-semibold text-gray-900">{{ customers|length }}</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_customers }}</p>
                 </div>
             </div>
         </div>
@@ -51,7 +51,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Aktive kunder</p>
-                    <p class="text-2xl font-semibold text-gray-900">{{ customers|selectattr('is_active')|list|length }}</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ active_customers }}</p>
                 </div>
             </div>
         </div>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Nye denne måned</p>
-                    <p class="text-2xl font-semibold text-gray-900">{{ customers|selectattr('created_at')|list|length }}</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ customers.total }}</p>
                 </div>
             </div>
         </div>
@@ -101,7 +101,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <input type="text" id="search" name="search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Søg efter navn, e-mail eller telefon...">
+                    <input type="text" id="search" name="search" value="{{ search }}" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Søg efter navn, e-mail eller telefon...">
                 </div>
             </div>
 
@@ -110,8 +110,8 @@
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select id="status" name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
                     <option value="">Alle statuser</option>
-                    <option value="active">Aktive</option>
-                    <option value="inactive">Inaktive</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Aktive</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inaktive</option>
                 </select>
             </div>
 
@@ -138,7 +138,7 @@
                 </button>
             </div>
             <div class="text-sm text-gray-500">
-                {{ customers|length }} kunder fundet
+                {{ customers.total }} kunder fundet
             </div>
         </div>
     </div>
@@ -165,10 +165,10 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                                    <span class="text-sm font-medium text-indigo-600">{{ customer.name[0].upper() }}</span>
+                                    <span class="text-sm font-medium text-indigo-600">{{ customer.first_name[0].upper() }}</span>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ customer.name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ customer.first_name }} {{ customer.last_name }}</div>
                                     <div class="text-sm text-gray-500">ID: {{ customer.id }}</div>
                                 </div>
                             </div>
@@ -240,6 +240,47 @@
         </div>
         {% endif %}
     </div>
+    
+    <!-- Pagination -->
+    {% if customers.pages > 1 %}
+    <div class="mt-6 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Viser {{ customers.per_page * (customers.page - 1) + 1 }} til {{ customers.per_page * customers.page if customers.page < customers.pages else customers.total }} af {{ customers.total }} kunder
+        </div>
+        <div class="flex items-center space-x-2">
+            {% if customers.has_prev %}
+                <a href="{{ url_for('admin.customers', page=customers.prev_num, search=search, status=status) }}" 
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Forrige
+                </a>
+            {% endif %}
+            
+            {% for page_num in customers.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != customers.page %}
+                        <a href="{{ url_for('admin.customers', page=page_num, search=search, status=status) }}" 
+                           class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                            {{ page_num }}
+                        </a>
+                    {% else %}
+                        <span class="px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md">
+                            {{ page_num }}
+                        </span>
+                    {% endif %}
+                {% else %}
+                    <span class="px-3 py-2 text-sm font-medium text-gray-400">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if customers.has_next %}
+                <a href="{{ url_for('admin.customers', page=customers.next_num, search=search, status=status) }}" 
+                   class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Næste
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>
