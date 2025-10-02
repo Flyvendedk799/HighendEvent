@@ -78,12 +78,8 @@
                 {% if product.hero_image_url %}
                 <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="hero">
                     <!-- Image -->
-                    <div class="bg-gray-100 overflow-hidden" style="height: 200px;">
-                        <img src="{{ product.hero_image_url | image_url }}" 
-                             alt="{{ product.name }}" 
-                             class="w-full h-full object-cover" 
-                             style="width: 100%; height: 200px; object-fit: cover; display: block;"
-                             onerror="console.log('Hero image failed to load:', this.src); this.style.display='none';">
+                    <div class="bg-gray-100 overflow-hidden">
+                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
                     </div>
                     
                     <!-- Image Info -->
@@ -114,12 +110,8 @@
                 {% for image in images %}
                 <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="{{ image.id }}">
                     <!-- Image -->
-                    <div class="bg-gray-100 overflow-hidden" style="height: 200px;">
-                        <img src="{{ image.url | image_url }}" 
-                             alt="{{ image.alt }}" 
-                             class="w-full h-full object-cover" 
-                             style="width: 100%; height: 200px; object-fit: cover; display: block;"
-                             onerror="console.log('Image failed to load:', this.src); this.style.display='none';">
+                    <div class="bg-gray-100 overflow-hidden">
+                        <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover">
                     </div>
                     
                     <!-- Image Info -->
@@ -183,45 +175,25 @@
 
 {% block extra_js %}
 <style>
-.image-item {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    cursor: grab;
-    position: relative;
-    z-index: 1;
-    height: auto;
-    min-height: 300px;
-}
+    .image-item {
+        cursor: grab;
+    }
 
-.image-item:active {
-    cursor: grabbing;
-}
+    .image-item:active {
+        cursor: grabbing;
+    }
 
-.image-item img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    object-position: center;
-    display: block;
-}
+    .image-item.sortable-ghost {
+        opacity: 0.4;
+    }
 
-.image-item.sortable-ghost {
-    opacity: 0.4;
-    transform: rotate(2deg);
-}
+    .image-item.sortable-chosen {
+        transform: scale(1.02);
+    }
 
-.image-item.sortable-chosen {
-    transform: scale(1.02);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-}
-
-.image-item.sortable-drag {
-    opacity: 0.9;
-    transform: scale(1.02);
-}
+    .image-item.sortable-drag {
+        opacity: 0.9;
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
@@ -232,48 +204,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (container) {
         const sortable = Sortable.create(container, {
-            animation: 150,
+            animation: 200,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
-            forceFallback: true,
-            fallbackOnBody: true,
-            swapThreshold: 0.65,
-            invertSwap: false,
-            direction: 'horizontal',
             onStart: function(evt) {
-                // Visual feedback
                 evt.item.style.cursor = 'grabbing';
-                evt.item.style.zIndex = '1000';
             },
             onEnd: function(evt) {
                 hasChanges = true;
                 saveBtn.classList.remove('hidden');
-                
-                // Reset styles
                 evt.item.style.cursor = 'grab';
-                evt.item.style.zIndex = 'auto';
-                evt.item.style.transform = '';
-                evt.item.style.width = '';
-                evt.item.style.height = '';
                 
-                // Force refresh of all images
-                setTimeout(() => {
-                    // Refresh all images by forcing a reload
-                    container.querySelectorAll('img').forEach(img => {
-                        const originalSrc = img.src;
-                        img.src = '';
-                        img.src = originalSrc;
-                    });
-                    
-                    // Update the sort order numbers in the UI
-                    container.querySelectorAll('.image-item').forEach((item, index) => {
-                        const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
-                        if (badge) {
-                            badge.textContent = `#${index + 1}`;
-                        }
-                    });
-                }, 100);
+                // Update the sort order numbers in the UI
+                container.querySelectorAll('.image-item').forEach((item, index) => {
+                    const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
+                    if (badge) {
+                        badge.textContent = `#${index + 1}`;
+                    }
+                });
             }
         });
         
