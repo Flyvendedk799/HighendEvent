@@ -265,8 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    image_ids: imageIds,
-                    csrf_token: '{{ csrf_token() }}'
+                    image_ids: imageIds
                 })
             })
             .then(response => response.json())

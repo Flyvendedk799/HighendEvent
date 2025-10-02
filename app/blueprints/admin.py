@@ -503,42 +503,27 @@ def delete_product_image(product_id, image_id):
 def reorder_product_images(product_id):
     """Reorder product images."""
     try:
-        # Validate CSRF token from JSON data
-        csrf_token = request.json.get('csrf_token')
-        if not csrf_token:
-            return jsonify({'success': False, 'message': 'CSRF token mangler'})
+        data = request.get_json()
+        image_ids = data.get('image_ids', [])
         
-        # For JSON requests, we need to validate differently
-        from flask_wtf.csrf import validate_csrf
-        from werkzeug.exceptions import BadRequest
+        if not image_ids:
+            return jsonify({'success': False, 'message': 'Ingen billeder at sortere'})
         
-        # Create a form-like object for CSRF validation
-        class CSRFData:
-            def __init__(self, token):
-                self.csrf_token = token
+        product = Product.query.get_or_404(product_id)
         
-        csrf_data = CSRFData(csrf_token)
-        validate_csrf(csrf_data.csrf_token)
+        # Update sort order for each image
+        for index, image_id in enumerate(image_ids, 1):
+            image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first()
+            if image:
+                image.sort_order = index
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Billeder sorteret'})
         
     except Exception as e:
-        print(f"CSRF validation error: {e}")
-        return jsonify({'success': False, 'message': 'Ugyldig anmodning'})
-    
-    product = Product.query.get_or_404(product_id)
-    image_ids = request.json.get('image_ids', [])
-    
-    if not image_ids:
-        return jsonify({'success': False, 'message': 'Ingen billeder at sortere'})
-    
-    # Update sort order for each image
-    for index, image_id in enumerate(image_ids, 1):
-        image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first()
-        if image:
-            image.sort_order = index
-    
-    db.session.commit()
-    
-    return jsonify({'success': True, 'message': 'Billeder sorteret'})
+        print(f"Error in reorder_product_images: {e}")
+        return jsonify({'success': False, 'message': f'Fejl ved sortering: {str(e)}'}), 500
 
 
 @bp.route('/bookings')
