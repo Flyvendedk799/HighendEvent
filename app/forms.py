@@ -338,6 +338,12 @@ class UpsellProductForm(FlaskForm):
         'Lager antal',
         validators=[DataRequired(message='Lager antal er påkrævet'), NumberRange(min=0)]
     )
+    category_id = SelectField(
+        'Kategori',
+        coerce=int,
+        validators=[Optional()],
+        choices=[]
+    )
     image = FileField(
         'Billede',
         validators=[Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Kun billeder tilladt')]

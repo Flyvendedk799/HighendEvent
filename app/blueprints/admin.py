@@ -1663,6 +1663,10 @@ def create_upsell_product():
     """Create new upsell product."""
     form = UpsellProductForm()
     
+    # Populate category choices
+    categories = Category.query.filter_by(is_active=True).order_by(Category.name).all()
+    form.category_id.choices = [(0, 'Ingen kategori')] + [(cat.id, cat.name) for cat in categories]
+    
     if form.validate_on_submit():
         # Handle image upload
         image_url = None
@@ -1676,6 +1680,7 @@ def create_upsell_product():
             price_dkk=float(form.price_dkk.data),
             stock_qty=form.stock_qty.data,
             image_url=image_url,
+            category_id=form.category_id.data if form.category_id.data != 0 else None,
             is_active=form.is_active.data
         )
         
@@ -1695,9 +1700,14 @@ def edit_upsell_product(upsell_product_id):
     upsell_product = UpsellProduct.query.get_or_404(upsell_product_id)
     form = UpsellProductForm(obj=upsell_product)
     
-    # Convert price to string for form
+    # Populate category choices
+    categories = Category.query.filter_by(is_active=True).order_by(Category.name).all()
+    form.category_id.choices = [(0, 'Ingen kategori')] + [(cat.id, cat.name) for cat in categories]
+    
+    # Convert price to string for form and set category
     if request.method == 'GET':
         form.price_dkk.data = str(upsell_product.price_dkk)
+        form.category_id.data = upsell_product.category_id or 0
     
     if form.validate_on_submit():
         # Handle image upload
@@ -1711,6 +1721,7 @@ def edit_upsell_product(upsell_product_id):
         upsell_product.description = form.description.data
         upsell_product.price_dkk = float(form.price_dkk.data)
         upsell_product.stock_qty = form.stock_qty.data
+        upsell_product.category_id = form.category_id.data if form.category_id.data != 0 else None
         upsell_product.is_active = form.is_active.data
         
         db.session.commit()

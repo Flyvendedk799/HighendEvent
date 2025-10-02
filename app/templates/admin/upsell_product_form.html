@@ -81,6 +81,19 @@
                             <p class="mt-1 text-sm text-gray-500">Beskriv mersalgs produktet og dets fordele.</p>
                         </div>
 
+                        <div class="mb-6">
+                            {{ form.category_id.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.category_id(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.category_id.errors else "")) }}
+                            {% if form.category_id.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.category_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Vælg kategori for at vise produktet i kategorilisten (valgfrit).</p>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <div class="mb-6">

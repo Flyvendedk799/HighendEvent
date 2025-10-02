@@ -103,6 +103,15 @@ def catalog():
         page=page, per_page=12, error_out=False
     )
     
+    # Get upsell products for the same category if filtering by category
+    upsell_products = []
+    if category_id:
+        upsell_products = UpsellProduct.query.filter(
+            UpsellProduct.category_id == category_id,
+            UpsellProduct.is_active == True,
+            UpsellProduct.stock_qty > 0
+        ).order_by(UpsellProduct.name).all()
+    
     # Get categories for filter
     categories = Category.query.filter(
         Category.is_active == True
@@ -110,6 +119,7 @@ def catalog():
     
     return render_template('public/catalog.html',
                          products=products,
+                         upsell_products=upsell_products,
                          categories=categories,
                          current_category=category_id,
                          search=search,

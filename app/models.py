@@ -188,6 +188,7 @@ class Category(db.Model):
     
     # Relationships
     products: Mapped[List["Product"]] = relationship("Product", back_populates="category", lazy="dynamic")
+    upsell_products: Mapped[List["UpsellProduct"]] = relationship("UpsellProduct", back_populates="category", lazy="dynamic")
     
     def __repr__(self) -> str:
         return f'<Category {self.name}>'
@@ -204,6 +205,7 @@ class UpsellProduct(db.Model):
     stock_qty: Mapped[int] = mapped_column(db.Integer, nullable=False, default=1)
     is_active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
     image_url: Mapped[Optional[str]] = mapped_column(db.String(500))
+    category_id: Mapped[Optional[int]] = mapped_column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     created_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
@@ -214,6 +216,7 @@ class UpsellProduct(db.Model):
     )
     
     # Relationships
+    category: Mapped[Optional["Category"]] = relationship("Category", back_populates="upsell_products")
     product_upsells: Mapped[List["ProductUpsell"]] = relationship("ProductUpsell", back_populates="upsell_product", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
