@@ -60,7 +60,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-medium text-gray-900">Produktbilleder</h3>
-                    <p class="text-sm text-gray-500">Klik på pilene for at ændre rækkefølgen. Billede #1 er hovedbilledet.</p>
+                    <p class="text-sm text-gray-500">Træk og slip for at ændre rækkefølgen. Billede #1 er hovedbilledet.</p>
                 </div>
                 <button id="save-order-btn" class="hidden inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,97 +71,65 @@
             </div>
         </div>
         
-        <div class="p-6">
-            <div class="space-y-4" id="images-list">
+        <div id="images-container" class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="sortable-images">
                 <!-- Hero Image (if exists) -->
                 {% if product.hero_image_url %}
-                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                    <div class="flex">
-                        <!-- Image -->
-                        <div class="w-32 h-32 bg-gray-100 overflow-hidden flex-shrink-0">
-                            <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-                        </div>
-                        
-                        <!-- Image Info -->
-                        <div class="p-4 flex-1">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    #1 (Hovedbillede)
-                                </span>
-                                <div class="flex space-x-2">
-                                    <a href="{{ url_for('admin.edit_product', id=product.id) }}" 
-                                       class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                                        Rediger
-                                    </a>
-                                </div>
+                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="hero">
+                    <div class="aspect-w-16 aspect-h-9 bg-gray-100">
+                        <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                #1 (Hovedbillede)
+                            </span>
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('admin.edit_product', id=product.id) }}" 
+                                   class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                    Rediger
+                                </a>
                             </div>
-                            <p class="text-sm text-gray-600 truncate">{{ product.name }}</p>
-                            <p class="text-xs text-gray-400 mt-1">Hovedbillede (redigeres i produktformular)</p>
                         </div>
-                        
-                        <!-- Move buttons -->
-                        <div class="p-4 flex flex-col justify-center space-y-2">
-                            <button type="button" class="text-gray-400 cursor-not-allowed" disabled>
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                </svg>
-                            </button>
-                            <button type="button" class="text-gray-400 cursor-not-allowed" disabled>
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
-                        </div>
+                        <p class="text-sm text-gray-600 truncate">{{ product.name }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Hovedbillede</p>
+                    </div>
+                    
+                    <div class="absolute top-2 left-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
+                        HOVEDBILLEDE
                     </div>
                 </div>
                 {% endif %}
                 
                 <!-- Other Images -->
                 {% for image in images %}
-                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm" data-image-id="{{ image.id }}">
-                    <div class="flex">
-                        <!-- Image -->
-                        <div class="w-32 h-32 bg-gray-100 overflow-hidden flex-shrink-0">
-                            <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-full object-cover">
-                        </div>
-                        
-                        <!-- Image Info -->
-                        <div class="p-4 flex-1">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    #{{ image.sort_order + 1 }}
-                                </span>
-                                <div class="flex space-x-2">
-                                    <a href="{{ url_for('admin.edit_product_image', product_id=product.id, image_id=image.id) }}" 
-                                       class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                                        Rediger
-                                    </a>
-                                    <form method="POST" action="{{ url_for('admin.delete_product_image', product_id=product.id, image_id=image.id) }}" 
-                                          class="inline" onsubmit="return confirm('Er du sikker på, at du vil slette dette billede?')">
-                                        {{ csrf_token() }}
-                                        <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
-                                            Slet
-                                        </button>
-                                    </form>
-                                </div>
+                <div class="image-item bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 relative" data-image-id="{{ image.id }}">
+                    <div class="aspect-w-16 aspect-h-9 bg-gray-100">
+                        <img src="{{ image.url | image_url }}" alt="{{ image.alt }}" class="w-full h-48 object-cover">
+                    </div>
+                    
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                #{{ image.sort_order + 1 }}
+                            </span>
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('admin.edit_product_image', product_id=product.id, image_id=image.id) }}" 
+                                   class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                    Rediger
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.delete_product_image', product_id=product.id, image_id=image.id) }}" 
+                                      class="inline" onsubmit="return confirm('Er du sikker på, at du vil slette dette billede?')">
+                                    {{ csrf_token() }}
+                                    <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                                        Slet
+                                    </button>
+                                </form>
                             </div>
-                            <p class="text-sm text-gray-600 truncate">{{ image.alt }}</p>
-                            <p class="text-xs text-gray-400 mt-1">{{ image.url.split('/')[-1] if image.url else 'N/A' }}</p>
                         </div>
-                        
-                        <!-- Move buttons -->
-                        <div class="p-4 flex flex-col justify-center space-y-2">
-                            <button type="button" class="move-up-btn text-gray-400 hover:text-gray-600" data-image-id="{{ image.id }}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                </svg>
-                            </button>
-                            <button type="button" class="move-down-btn text-gray-400 hover:text-gray-600" data-image-id="{{ image.id }}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
-                            </button>
-                        </div>
+                        <p class="text-sm text-gray-600 truncate">{{ image.alt }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ image.url.split('/')[-1] if image.url else 'N/A' }}</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -172,98 +140,97 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+    .image-item {
+        cursor: grab;
+    }
+
+    .image-item:active {
+        cursor: grabbing;
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+    }
+
+    .sortable-chosen {
+        transform: scale(1.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('images-list');
+    const container = document.getElementById('sortable-images');
     const saveBtn = document.getElementById('save-order-btn');
     let hasChanges = false;
     
-    // Move up functionality
-    document.querySelectorAll('.move-up-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const imageDiv = this.closest('[data-image-id]');
-            const prevDiv = imageDiv.previousElementSibling;
-            
-            if (prevDiv && prevDiv.hasAttribute('data-image-id')) {
-                container.insertBefore(imageDiv, prevDiv);
+    if (container) {
+        const sortable = Sortable.create(container, {
+            animation: 200,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function(evt) {
                 hasChanges = true;
                 saveBtn.classList.remove('hidden');
-                updateNumbers();
+                
+                // Update the sort order numbers in the UI
+                const items = container.querySelectorAll('.image-item');
+                items.forEach((item, index) => {
+                    const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
+                    if (badge && item.dataset.imageId !== 'hero') {
+                        badge.textContent = `#${index + 1}`;
+                    }
+                });
             }
         });
-    });
-    
-    // Move down functionality
-    document.querySelectorAll('.move-down-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const imageDiv = this.closest('[data-image-id]');
-            const nextDiv = imageDiv.nextElementSibling;
+        
+        // Save button functionality
+        saveBtn.addEventListener('click', function() {
+            if (!hasChanges) return;
             
-            if (nextDiv && nextDiv.hasAttribute('data-image-id')) {
-                container.insertBefore(nextDiv, imageDiv);
-                hasChanges = true;
-                saveBtn.classList.remove('hidden');
-                updateNumbers();
-            }
-        });
-    });
-    
-    // Update number badges
-    function updateNumbers() {
-        const imageDivs = container.querySelectorAll('[data-image-id]');
-        imageDivs.forEach((div, index) => {
-            const badge = div.querySelector('.bg-gray-100');
-            if (badge) {
-                badge.textContent = `#${index + 2}`; // +2 because hero image is #1
-            }
-        });
-    }
-    
-    // Save order functionality
-    saveBtn.addEventListener('click', function() {
-        if (!hasChanges) return;
-        
-        const imageIds = Array.from(container.querySelectorAll('[data-image-id]'))
-            .map(div => div.dataset.imageId);
-        
-        if (imageIds.length === 0) {
-            saveBtn.classList.add('hidden');
-            hasChanges = false;
-            return;
-        }
-        
-        fetch('{{ url_for("admin.reorder_product_images", product_id=product.id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                image_ids: imageIds
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const flash = document.createElement('div');
-                flash.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                flash.textContent = 'Rækkefølge gemt';
-                document.body.appendChild(flash);
-                
-                setTimeout(() => {
-                    flash.remove();
-                }, 3000);
-                
+            const imageIds = Array.from(container.children)
+                .filter(item => item.dataset.imageId && item.dataset.imageId !== 'hero')
+                .map(item => item.dataset.imageId);
+            
+            if (imageIds.length === 0) {
                 saveBtn.classList.add('hidden');
                 hasChanges = false;
-            } else {
-                alert('Fejl ved opdatering af rækkefølge: ' + data.message);
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Fejl ved opdatering af rækkefølge');
+            
+            // Show loading state
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Gemmer...';
+            
+            fetch('{{ url_for("admin.reorder_product_images", product_id=product.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image_ids: imageIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to get fresh HTML without corruption
+                    window.location.reload();
+                } else {
+                    alert('Fejl ved opdatering af rækkefølge: ' + data.message);
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Gem rækkefølge';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Fejl ved opdatering af rækkefølge');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Gem rækkefølge';
+            });
         });
-    });
+    }
 });
 </script>
 {% endblock %}
