@@ -49,7 +49,7 @@
             <div>
                 <h3 class="text-lg font-medium text-gray-900">{{ product.name }}</h3>
                 <p class="text-sm text-gray-500">{{ product.category.name }}</p>
-                <p class="text-sm text-gray-500">{{ images|length }} billeder</p>
+                <p class="text-sm text-gray-500">{{ (images|length + (1 if product.hero_image_url else 0)) }} billeder</p>
             </div>
         </div>
     </div>
@@ -58,8 +58,18 @@
     {% if images or product.hero_image_url %}
     <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Produktbilleder</h3>
-            <p class="text-sm text-gray-500">Træk og slip for at ændre rækkefølgen. Billede #1 er hovedbilledet.</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Produktbilleder</h3>
+                    <p class="text-sm text-gray-500">Træk og slip for at ændre rækkefølgen. Billede #1 er hovedbilledet.</p>
+                </div>
+                <button id="save-order-btn" class="hidden inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Gem rækkefølge
+                </button>
+            </div>
         </div>
         
         <div id="images-container" class="p-6">
@@ -168,56 +178,83 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('sortable-images');
+    const saveBtn = document.getElementById('save-order-btn');
+    let hasChanges = false;
     
     if (container) {
         const sortable = Sortable.create(container, {
             animation: 150,
             ghostClass: 'opacity-50',
             chosenClass: 'shadow-lg',
+            onStart: function(evt) {
+                // Make all images draggable
+                container.querySelectorAll('.image-item').forEach(item => {
+                    item.style.cursor = 'move';
+                });
+            },
             onEnd: function(evt) {
-                // Get the new order of image IDs
-                const imageIds = Array.from(container.children).map(item => item.dataset.imageId);
+                hasChanges = true;
+                saveBtn.classList.remove('hidden');
                 
-                // Send AJAX request to update order
-                fetch('{{ url_for("admin.reorder_product_images", product_id=product.id) }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
-                    },
-                    body: JSON.stringify({
-                        image_ids: imageIds
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update the sort order numbers in the UI
-                        container.querySelectorAll('.image-item').forEach((item, index) => {
-                            const badge = item.querySelector('.bg-indigo-100');
-                            if (badge) {
-                                badge.textContent = `#${index + 1}`;
-                            }
-                        });
-                        
-                        // Show success message
-                        const flash = document.createElement('div');
-                        flash.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-                        flash.textContent = 'Rækkefølge opdateret';
-                        document.body.appendChild(flash);
-                        
-                        setTimeout(() => {
-                            flash.remove();
-                        }, 3000);
-                    } else {
-                        alert('Fejl ved opdatering af rækkefølge: ' + data.message);
+                // Update the sort order numbers in the UI
+                container.querySelectorAll('.image-item').forEach((item, index) => {
+                    const badge = item.querySelector('.bg-indigo-100, .bg-gray-100');
+                    if (badge) {
+                        badge.textContent = `#${index + 1}`;
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Fejl ved opdatering af rækkefølge');
                 });
             }
+        });
+        
+        // Save button functionality
+        saveBtn.addEventListener('click', function() {
+            if (!hasChanges) return;
+            
+            // Get the new order of image IDs (excluding hero image)
+            const imageIds = Array.from(container.children)
+                .filter(item => item.dataset.imageId && item.dataset.imageId !== 'hero')
+                .map(item => item.dataset.imageId);
+            
+            if (imageIds.length === 0) {
+                saveBtn.classList.add('hidden');
+                hasChanges = false;
+                return;
+            }
+            
+            // Send AJAX request to update order
+            fetch('{{ url_for("admin.reorder_product_images", product_id=product.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    image_ids: imageIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const flash = document.createElement('div');
+                    flash.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+                    flash.textContent = 'Rækkefølge gemt';
+                    document.body.appendChild(flash);
+                    
+                    setTimeout(() => {
+                        flash.remove();
+                    }, 3000);
+                    
+                    saveBtn.classList.add('hidden');
+                    hasChanges = false;
+                } else {
+                    alert('Fejl ved opdatering af rækkefølge: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Fejl ved opdatering af rækkefølge');
+            });
         });
     }
 });
