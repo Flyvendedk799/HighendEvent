@@ -12,7 +12,7 @@ from decimal import Decimal
 import os
 import uuid
 
-from app import db
+from app import db, csrf
 
 from app.models import (
     User, Product, Category, Booking, BookingItem, BookingStatus, 
@@ -244,7 +244,7 @@ def create_product():
             hero_image_url=hero_image_url
         )
         
-        from app import db
+        from app import db, csrf
         db.session.add(product)
         db.session.flush()  # Get the product ID
         
@@ -314,7 +314,7 @@ def edit_product(id):
         product.cleanup_buffer_days = form.cleanup_buffer_days.data
         product.is_active = form.is_active.data
         
-        from app import db
+        from app import db, csrf
         db.session.commit()
         
         flash('Produkt opdateret', 'success')
@@ -348,7 +348,7 @@ def delete_product(id):
     # Check if product has any booking items (even from deleted bookings)
     has_booking_items = BookingItem.query.filter_by(product_id=id).first() is not None
     
-    from app import db
+    from app import db, csrf
     if has_booking_items:
         # If product has been used in bookings, mark as inactive instead of deleting
         product.is_active = False
@@ -500,6 +500,7 @@ def delete_product_image(product_id, image_id):
 
 @bp.route('/products/<int:product_id>/images/reorder', methods=['POST'])
 @login_required
+@csrf.exempt
 def reorder_product_images(product_id):
     """Reorder product images."""
     print(f"🔄 Reorder endpoint called for product {product_id}")
@@ -972,7 +973,7 @@ def update_booking_status(id):
         # After deposit is refunded, the booking is completed
         # No need to change status again as deposit_refunded IS the completed status
     
-    from app import db
+    from app import db, csrf
     db.session.commit()
     
     # Send email notification to customer
@@ -1025,7 +1026,7 @@ def sync_payment_status(id):
             booking.status = BookingStatus.DEPOSIT_PAID
             booking.stripe_payment_intent_id = session.payment_intent
             
-            from app import db
+            from app import db, csrf
             db.session.commit()
             
             return jsonify({'success': True, 'message': 'Status opdateret til betalt'})
@@ -1073,7 +1074,7 @@ def update_return_condition(id):
     elif return_condition in ['damaged', 'lost'] and booking.status == BookingStatus.OUT_FOR_DELIVERY:
         booking.status = BookingStatus.RETURNED_DAMAGED
     
-    from app import db
+    from app import db, csrf
     db.session.commit()
     
     return jsonify({'success': True, 'message': 'Returneringsstand opdateret'})
@@ -1177,7 +1178,7 @@ def refund_deposit(id):
     
     booking.deposit_refunded = True
     
-    from app import db
+    from app import db, csrf
     db.session.commit()
     
     return jsonify({'success': True, 'message': 'Depositum markeret som refunderet'})
@@ -1265,7 +1266,7 @@ def create_category():
             is_active=form.is_active.data
         )
         
-        from app import db
+        from app import db, csrf
         db.session.add(category)
         db.session.commit()
         
@@ -1289,7 +1290,7 @@ def edit_category(id):
         category.sort_order = form.sort_order.data
         category.is_active = form.is_active.data
         
-        from app import db
+        from app import db, csrf
         db.session.commit()
         
         flash('Kategori opdateret', 'success')
@@ -1321,7 +1322,7 @@ def create_blackout_date():
             reason=form.reason.data
         )
         
-        from app import db
+        from app import db, csrf
         db.session.add(blackout_date)
         db.session.commit()
         
@@ -1362,7 +1363,7 @@ def create_delivery_setting():
             is_active=form.is_active.data
         )
         
-        from app import db
+        from app import db, csrf
         db.session.add(delivery_setting)
         db.session.commit()
         
@@ -1490,7 +1491,7 @@ def create_cms_block():
             is_active=form.is_active.data
         )
         
-        from app import db
+        from app import db, csrf
         db.session.add(cms_block)
         db.session.commit()
         
@@ -1511,7 +1512,7 @@ def delete_category(id):
         flash('Kan ikke slette kategori der har produkter', 'error')
         return redirect(url_for('admin.categories'))
     
-    from app import db
+    from app import db, csrf
     db.session.delete(category)
     db.session.commit()
     
@@ -1531,7 +1532,7 @@ def edit_blackout_date(id):
         blackout_date.description = form.description.data
         blackout_date.is_active = form.is_active.data
         
-        from app import db
+        from app import db, csrf
         db.session.commit()
         
         flash('Sortdato opdateret', 'success')
@@ -1546,7 +1547,7 @@ def delete_blackout_date(id):
     """Delete blackout date."""
     blackout_date = BlackoutDate.query.get_or_404(id)
     
-    from app import db
+    from app import db, csrf
     db.session.delete(blackout_date)
     db.session.commit()
     
@@ -1560,7 +1561,7 @@ def delete_cms_block(id):
     """Delete CMS block."""
     cms_block = CMSBlock.query.get_or_404(id)
     
-    from app import db
+    from app import db, csrf
     db.session.delete(cms_block)
     db.session.commit()
     
