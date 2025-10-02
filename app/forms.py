@@ -432,12 +432,13 @@ class ProductImageForm(FlaskForm):
 
 class BulkImageUploadForm(FlaskForm):
     """Bulk image upload form for products."""
-    image_files = MultipleFileField(
+    image_files = FileField(
         'Upload billeder',
         validators=[
             Optional(),
             FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Kun billedfiler er tilladt (JPG, PNG, GIF, WebP)')
-        ]
+        ],
+        render_kw={'multiple': True}
     )
     alt_prefix = StringField(
         'Alt tekst præfiks',

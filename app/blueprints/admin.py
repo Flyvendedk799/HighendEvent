@@ -381,7 +381,7 @@ def bulk_upload_images(product_id):
     form = BulkImageUploadForm()
     
     if form.validate_on_submit():
-        uploaded_files = form.image_files.data
+        uploaded_files = request.files.getlist('image_files')
         alt_prefix = form.alt_prefix.data or 'Produktbillede'
         
         if uploaded_files and any(f.filename for f in uploaded_files):
