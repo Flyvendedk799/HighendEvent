@@ -406,6 +406,30 @@ class ProfileCompletionForm(FlaskForm):
     )
 
 
+class ProductImageForm(FlaskForm):
+    """Product image form for admin."""
+    url = StringField(
+        'Billede URL',
+        validators=[DataRequired(message='Billede URL er påkrævet'), Length(max=500)]
+    )
+    alt = StringField(
+        'Alt tekst',
+        validators=[DataRequired(message='Alt tekst er påkrævet'), Length(max=200)]
+    )
+    sort_order = IntegerField(
+        'Sorteringsrækkefølge',
+        validators=[DataRequired(message='Sorteringsrækkefølge er påkrævet'), NumberRange(min=1, message='Sorteringsrækkefølge skal være mindst 1')],
+        default=1
+    )
+    image_file = FileField(
+        'Upload billede',
+        validators=[
+            Optional(),
+            FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Kun billedfiler er tilladt (JPG, PNG, GIF, WebP)')
+        ]
+    )
+
+
 class CustomerLoginForm(FlaskForm):
     """Customer login form."""
     email = StringField(

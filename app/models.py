@@ -276,7 +276,7 @@ class Product(db.Model):
     
     # Relationships
     category: Mapped["Category"] = relationship("Category", back_populates="products")
-    images: Mapped[List["ProductImage"]] = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    images: Mapped[List["ProductImage"]] = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan", order_by="ProductImage.sort_order")
     pricing_rules: Mapped[List["PricingRule"]] = relationship("PricingRule", back_populates="product", cascade="all, delete-orphan")
     blackout_dates: Mapped[List["BlackoutDate"]] = relationship("BlackoutDate", back_populates="product", cascade="all, delete-orphan")
     booking_items: Mapped[List["BookingItem"]] = relationship("BookingItem", back_populates="product")

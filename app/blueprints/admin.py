@@ -16,11 +16,11 @@ from app import db
 
 from app.models import (
     User, Product, Category, Booking, BookingItem, BookingStatus, 
-    BlackoutDate, DeliverySetting, CompanyLocation, CMSBlock, UserRole, UpsellProduct, ProductUpsell, NewsletterSubscription
+    BlackoutDate, DeliverySetting, CompanyLocation, CMSBlock, UserRole, UpsellProduct, ProductUpsell, NewsletterSubscription, ProductImage
 )
 from app.forms import (
     LoginForm, ProductForm, CategoryForm, BlackoutDateForm, 
-    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm
+    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm, ProductImageForm
 )
 from app.services.availability import AvailabilityService
 from app.services.pricing import PricingService
@@ -331,6 +331,123 @@ def delete_product(id):
         flash('Produkt slettet', 'success')
     
     return redirect(url_for('admin.products'))
+
+
+@bp.route('/products/<int:product_id>/images')
+@login_required
+def product_images(product_id):
+    """Manage product images."""
+    product = Product.query.get_or_404(product_id)
+    images = ProductImage.query.filter_by(product_id=product_id).order_by(ProductImage.sort_order.asc()).all()
+    return render_template('admin/product_images.html', product=product, images=images)
+
+
+@bp.route('/products/<int:product_id>/images/add', methods=['GET', 'POST'])
+@login_required
+def add_product_image(product_id):
+    """Add new product image."""
+    product = Product.query.get_or_404(product_id)
+    form = ProductImageForm()
+    
+    if form.validate_on_submit():
+        # Handle image upload
+        image_url = form.url.data
+        if form.image_file.data:
+            uploaded_file = save_uploaded_file(form.image_file.data)
+            if uploaded_file:
+                image_url = uploaded_file
+        
+        # Get the next sort order
+        max_sort_order = db.session.query(func.max(ProductImage.sort_order)).filter_by(product_id=product_id).scalar() or 0
+        next_sort_order = max_sort_order + 1
+        
+        image = ProductImage(
+            product_id=product_id,
+            url=image_url,
+            alt=form.alt.data,
+            sort_order=form.sort_order.data or next_sort_order
+        )
+        
+        db.session.add(image)
+        db.session.commit()
+        
+        flash('Billede tilføjet', 'success')
+        return redirect(url_for('admin.product_images', product_id=product_id))
+    
+    return render_template('admin/product_image_form.html', form=form, product=product, title='Tilføj billede')
+
+
+@bp.route('/products/<int:product_id>/images/<int:image_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_product_image(product_id, image_id):
+    """Edit product image."""
+    product = Product.query.get_or_404(product_id)
+    image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first_or_404()
+    form = ProductImageForm(obj=image)
+    
+    if form.validate_on_submit():
+        # Handle image upload
+        if form.image_file.data:
+            uploaded_file = save_uploaded_file(form.image_file.data)
+            if uploaded_file:
+                image.url = uploaded_file
+        elif form.url.data:
+            image.url = form.url.data
+        
+        image.alt = form.alt.data
+        image.sort_order = form.sort_order.data
+        
+        db.session.commit()
+        
+        flash('Billede opdateret', 'success')
+        return redirect(url_for('admin.product_images', product_id=product_id))
+    
+    return render_template('admin/product_image_form.html', form=form, product=product, image=image, title='Rediger billede')
+
+
+@bp.route('/products/<int:product_id>/images/<int:image_id>/delete', methods=['POST'])
+@login_required
+def delete_product_image(product_id, image_id):
+    """Delete product image."""
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except BadRequest:
+        flash('Ugyldig anmodning', 'error')
+        return redirect(url_for('admin.product_images', product_id=product_id))
+    
+    image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first_or_404()
+    
+    db.session.delete(image)
+    db.session.commit()
+    
+    flash('Billede slettet', 'success')
+    return redirect(url_for('admin.product_images', product_id=product_id))
+
+
+@bp.route('/products/<int:product_id>/images/reorder', methods=['POST'])
+@login_required
+def reorder_product_images(product_id):
+    """Reorder product images."""
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except BadRequest:
+        return jsonify({'success': False, 'message': 'Ugyldig anmodning'})
+    
+    product = Product.query.get_or_404(product_id)
+    image_ids = request.json.get('image_ids', [])
+    
+    if not image_ids:
+        return jsonify({'success': False, 'message': 'Ingen billeder at sortere'})
+    
+    # Update sort order for each image
+    for index, image_id in enumerate(image_ids, 1):
+        image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first()
+        if image:
+            image.sort_order = index
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Billeder sorteret'})
 
 
 @bp.route('/bookings')
