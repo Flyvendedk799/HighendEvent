@@ -1624,8 +1624,14 @@ def customers():
 def analytics():
     """Analytics dashboard."""
     # Get basic stats
-    total_bookings = Booking.query.count()
-    total_revenue = db.session.query(func.sum(Booking.total_dkk)).scalar() or 0
+    total_bookings = Booking.query.filter(
+        Booking.status != BookingStatus.CANCELLED,
+        Booking.is_deleted == False
+    ).count()
+    total_revenue = db.session.query(func.sum(Booking.total_dkk)).filter(
+        Booking.status != BookingStatus.CANCELLED,
+        Booking.is_deleted == False
+    ).scalar() or 0
     total_products = Product.query.count()
     active_products = Product.query.filter(Product.is_active == True).count()
     
@@ -1633,13 +1639,21 @@ def analytics():
     monthly_revenue = db.session.query(
         func.strftime('%Y-%m', Booking.created_at).label('month'),
         func.sum(Booking.total_dkk).label('revenue')
-    ).group_by(func.strftime('%Y-%m', Booking.created_at)).all()
+    ).filter(
+        Booking.status != BookingStatus.CANCELLED,
+        Booking.is_deleted == False
+    ).group_by(func.strftime('%Y-%m', Booking.created_at)).order_by('month').all()
     
     # Get top products
     top_products = db.session.query(
         Product.name,
         func.count(BookingItem.id).label('bookings_count')
-    ).join(BookingItem, Product.id == BookingItem.product_id).group_by(Product.id).order_by(func.count(BookingItem.id).desc()).limit(5).all()
+    ).join(BookingItem, Product.id == BookingItem.product_id
+    ).join(Booking, BookingItem.booking_id == Booking.id
+    ).filter(
+        Booking.status != BookingStatus.CANCELLED,
+        Booking.is_deleted == False
+    ).group_by(Product.id).order_by(func.count(BookingItem.id).desc()).limit(5).all()
     
     return render_template('admin/analytics.html', 
                          total_bookings=total_bookings,
