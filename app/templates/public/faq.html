@@ -1,45 +1,109 @@
 {% extends "base.html" %}
 
-{% block title %}FAQ - Festudlej{% endblock %}
+{% block title %}FAQ - HighendEvent{% endblock %}
 
 {% block content %}
-<div class="bg-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">Ofte stillede spørgsmål</h1>
-            <p class="text-lg text-gray-600">Find svar på de mest almindelige spørgsmål</p>
-        </div>
-        
-        <!-- Content -->
-        <div class="prose max-w-none">
-            {% if faq_block %}
-                {{ faq_block.content_md | safe }}
-            {% else %}
-                <h2>Hvordan booker jeg udstyr?</h2>
-                <ol>
-                    <li>Vælg det udstyr du ønsker at leje</li>
-                    <li>Vælg datoer og antal</li>
-                    <li>Gennemfør checkout</li>
-                    <li>Modtag bekræftelse på e-mail</li>
-                </ol>
-                
-                <h2>Hvornår leveres udstyr?</h2>
-                <p>Vi leverer normalt mellem 09:00-18:00 på hverdage og 10:00-16:00 på lørdage.</p>
-                
-                <h2>Hvad koster levering?</h2>
-                <p>Levering koster 150 DKK + 5 DKK per km inden for 20 km radius.</p>
-                
-                <h2>Hvad hvis udstyret går i stykker?</h2>
-                <p>Kontakt os straks. Vi har erstatningsudstyr klar til hurtig levering.</p>
-                
-                <h2>Kan jeg annullere min booking?</h2>
-                <p>Ja, se vores annulleringspolitik i lejebetingelserne.</p>
-            {% endif %}
-        </div>
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Ofte stillede spørgsmål</h1>
+        <p class="text-xl text-primary-100 max-w-2xl mx-auto">Find svar på de mest almindelige spørgsmål om vores udlejning</p>
     </div>
 </div>
+
+<!-- FAQ Content -->
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+    {% if faq_block %}
+        <div class="prose prose-lg max-w-none">
+            {{ faq_block.content_md | safe }}
+        </div>
+    {% else %}
+        <div class="space-y-4">
+            <!-- FAQ 1 -->
+            <details class="group bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <summary class="cursor-pointer px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">Hvordan booker jeg udstyr?</h3>
+                    <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </summary>
+                <div class="px-6 pb-4 text-gray-700">
+                    <ol class="list-decimal list-inside space-y-2 mt-2">
+                        <li>Vælg det udstyr du ønsker at leje</li>
+                        <li>Vælg datoer og antal</li>
+                        <li>Gennemfør checkout</li>
+                        <li>Modtag bekræftelse på e-mail</li>
+                    </ol>
+                </div>
+            </details>
+
+            <!-- FAQ 2 -->
+            <details class="group bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <summary class="cursor-pointer px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">Hvornår leveres udstyr?</h3>
+                    <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </summary>
+                <div class="px-6 pb-4 text-gray-700 mt-2">
+                    <p><strong>Hverdage:</strong> 09:00-18:00</p>
+                    <p><strong>Lørdage:</strong> 10:00-16:00</p>
+                </div>
+            </details>
+
+            <!-- FAQ 3 -->
+            <details class="group bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <summary class="cursor-pointer px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">Hvad koster levering?</h3>
+                    <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </summary>
+                <div class="px-6 pb-4 text-gray-700 mt-2">
+                    <p>Leveringsprisen beregnes dynamisk baseret på afstand. Du ser den præcise pris når du indtaster din adresse ved checkout.</p>
+                </div>
+            </details>
+
+            <!-- FAQ 4 -->
+            <details class="group bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <summary class="cursor-pointer px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">Hvad hvis udstyret går i stykker?</h3>
+                    <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </summary>
+                <div class="px-6 pb-4 text-gray-700 mt-2">
+                    <p>Kontakt os straks på <a href="tel:52113418" class="text-primary-600 font-medium">52 11 34 18</a>. Vi har erstatningsudstyr klar til hurtig levering.</p>
+                </div>
+            </details>
+
+            <!-- FAQ 5 -->
+            <details class="group bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <summary class="cursor-pointer px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-900">Kan jeg annullere min booking?</h3>
+                    <svg class="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </summary>
+                <div class="px-6 pb-4 text-gray-700 mt-2">
+                    <p>Ja, se vores annulleringspolitik i <a href="{{ url_for('public.terms') }}" class="text-primary-600 underline">lejebetingelserne</a>.</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="mt-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-xl p-8 text-center text-white">
+            <h3 class="text-2xl font-bold mb-4">Har du flere spørgsmål?</h3>
+            <p class="text-primary-100 mb-6">Kontakt os gerne - vi er her for at hjælpe dig</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="tel:52113418" class="inline-flex items-center justify-center px-6 py-3 bg-white text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors">
+                    Ring til os
+                </a>
+                <a href="mailto:kontakt@highendevent.dk" class="inline-flex items-center justify-center px-6 py-3 bg-primary-800 text-white rounded-lg font-semibold hover:bg-primary-900 transition-colors">
+                    Send en email
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
-
-
-
