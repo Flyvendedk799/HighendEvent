@@ -502,27 +502,42 @@ def delete_product_image(product_id, image_id):
 @login_required
 def reorder_product_images(product_id):
     """Reorder product images."""
+    print(f"🔄 Reorder endpoint called for product {product_id}")
     try:
         data = request.get_json()
+        print(f"📦 Received data: {data}")
+        
+        if not data:
+            print("❌ No JSON data received")
+            return jsonify({'success': False, 'message': 'Ingen data modtaget'}), 400
+        
         image_ids = data.get('image_ids', [])
+        print(f"🖼️ Image IDs: {image_ids}")
         
         if not image_ids:
             return jsonify({'success': False, 'message': 'Ingen billeder at sortere'})
         
         product = Product.query.get_or_404(product_id)
+        print(f"✅ Product found: {product.name}")
         
         # Update sort order for each image
         for index, image_id in enumerate(image_ids, 1):
             image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first()
             if image:
+                print(f"📝 Updating image {image_id} to sort order {index}")
                 image.sort_order = index
+            else:
+                print(f"⚠️ Image {image_id} not found for product {product_id}")
         
         db.session.commit()
+        print("✅ Changes committed to database")
         
         return jsonify({'success': True, 'message': 'Billeder sorteret'})
         
     except Exception as e:
-        print(f"Error in reorder_product_images: {e}")
+        print(f"❌ Error in reorder_product_images: {e}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'message': f'Fejl ved sortering: {str(e)}'}), 500
 
 
