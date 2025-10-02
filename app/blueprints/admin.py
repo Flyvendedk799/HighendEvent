@@ -1812,14 +1812,27 @@ def delete_upsell_product(upsell_product_id):
     
     upsell_product = UpsellProduct.query.get_or_404(upsell_product_id)
     
-    # Delete all product links first (cascade will handle this, but let's be explicit)
-    ProductUpsell.query.filter_by(upsell_product_id=upsell_product_id).delete()
+    try:
+        # Delete all related records first to avoid foreign key constraints
+        # 1. Delete from booking_upsell_items (items in confirmed bookings)
+        from app.models import BookingUpsellItem, CartUpsellItem
+        BookingUpsellItem.query.filter_by(upsell_product_id=upsell_product_id).delete()
+        
+        # 2. Delete from cart_upsell_items (items in shopping carts)
+        CartUpsellItem.query.filter_by(upsell_product_id=upsell_product_id).delete()
+        
+        # 3. Delete all product links (product_upsells table)
+        ProductUpsell.query.filter_by(upsell_product_id=upsell_product_id).delete()
+        
+        # Now delete the upsell product itself
+        db.session.delete(upsell_product)
+        db.session.commit()
+        
+        flash(f'Mersalgs produkt "{upsell_product.name}" er slettet', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Fejl ved sletning: {str(e)}', 'error')
     
-    # Now delete the upsell product
-    db.session.delete(upsell_product)
-    db.session.commit()
-    
-    flash(f'Mersalgs produkt "{upsell_product.name}" er slettet', 'success')
     return redirect(url_for('admin.upsell_products'))
 
 
