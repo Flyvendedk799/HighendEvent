@@ -410,7 +410,7 @@ class ProductImageForm(FlaskForm):
     """Product image form for admin."""
     url = StringField(
         'Billede URL',
-        validators=[DataRequired(message='Billede URL er påkrævet'), Length(max=500)]
+        validators=[Optional(), Length(max=500)]
     )
     alt = StringField(
         'Alt tekst',
@@ -427,6 +427,22 @@ class ProductImageForm(FlaskForm):
             Optional(),
             FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Kun billedfiler er tilladt (JPG, PNG, GIF, WebP)')
         ]
+    )
+
+
+class BulkImageUploadForm(FlaskForm):
+    """Bulk image upload form for products."""
+    image_files = MultipleFileField(
+        'Upload billeder',
+        validators=[
+            Optional(),
+            FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Kun billedfiler er tilladt (JPG, PNG, GIF, WebP)')
+        ]
+    )
+    alt_prefix = StringField(
+        'Alt tekst præfiks',
+        validators=[Optional(), Length(max=100)],
+        default='Produktbillede'
     )
 
 

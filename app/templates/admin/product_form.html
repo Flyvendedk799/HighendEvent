@@ -222,6 +222,16 @@
                                             For at tilføje flere billeder og ændre rækkefølgen, 
                                             <a href="{{ url_for('admin.product_images', product_id=product.id) if product else '#' }}" class="font-medium underline hover:text-blue-600">klik her for at administrere alle billeder</a>.
                                         </p>
+                                        {% if product %}
+                                        <div class="mt-2 flex space-x-2">
+                                            <a href="{{ url_for('admin.bulk_upload_images', product_id=product.id) }}" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200">
+                                                Upload flere billeder
+                                            </a>
+                                            <a href="{{ url_for('admin.product_images', product_id=product.id) }}" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200">
+                                                Administrer alle billeder
+                                            </a>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

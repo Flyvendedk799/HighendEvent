@@ -1,0 +1,207 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                <p class="text-lg text-gray-600">
+                    Upload flere billeder til {{ product.name }} på én gang
+                </p>
+            </div>
+            <a href="{{ url_for('admin.product_images', product_id=product.id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Tilbage til billeder
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white shadow-lg rounded-lg">
+        <form method="POST" enctype="multipart/form-data" class="p-8">
+            {{ form.hidden_tag() }}
+            
+            <div class="space-y-6">
+                <!-- File Upload -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Upload billeder</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700 mb-2">Vælg flere billeder</p>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="image_files" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                            <span>Vælg billeder</span>
+                                            {{ form.image_files(id="image_files", class="sr-only", multiple=true) }}
+                                        </label>
+                                        <p class="pl-1">eller træk og slip</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF, WebP op til 10MB hver</p>
+                                </div>
+                            </div>
+                            {% if form.image_files.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.image_files.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Alt Text Prefix -->
+                        <div>
+                            {{ form.alt_prefix.label(class="block text-sm font-medium text-gray-700 mb-2") }}
+                            {{ form.alt_prefix(class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500") }}
+                            {% if form.alt_prefix.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.alt_prefix.errors[0] }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Dette præfiks bruges til alle billeder (f.eks. "Produktbillede" bliver til "Produktbillede 1", "Produktbillede 2", osv.)</p>
+                        </div>
+                        
+                        <!-- Preview Area -->
+                        <div id="preview-area" class="hidden">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Forhåndsvisning af valgte billeder</h4>
+                            <div id="preview-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <!-- Preview images will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Produkt</h3>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center space-x-4">
+                            {% if product.hero_image_url %}
+                            <img src="{{ product.hero_image_url | image_url }}" alt="{{ product.name }}" class="w-16 h-16 object-cover rounded-lg">
+                            {% else %}
+                            <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">{{ product.name }}</h4>
+                                <p class="text-sm text-gray-500">{{ product.category.name }}</p>
+                                <p class="text-sm text-gray-500">{{ product.images|length }} eksisterende billeder</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <div class="flex justify-end space-x-4">
+                    <a href="{{ url_for('admin.product_images', product_id=product.id) }}" class="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Annuller
+                    </a>
+                    <button type="submit" class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Upload billeder
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('image_files');
+    const dropZone = fileInput.closest('.border-dashed');
+    const previewArea = document.getElementById('preview-area');
+    const previewGrid = document.getElementById('preview-grid');
+    
+    // Handle file selection
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            showFilePreviews(files);
+        }
+    });
+    
+    // Handle drag and drop
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-400', 'bg-indigo-50');
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-400', 'bg-indigo-50');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-400', 'bg-indigo-50');
+        
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            showFilePreviews(files);
+        }
+    });
+    
+    function showFilePreviews(files) {
+        // Clear existing previews
+        previewGrid.innerHTML = '';
+        
+        // Validate files
+        const validFiles = files.filter(file => {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert(`Filen "${file.name}" er ikke et gyldigt billede format`);
+                return false;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`Filen "${file.name}" er for stor (maksimal størrelse er 10MB)`);
+                return false;
+            }
+            return true;
+        });
+        
+        if (validFiles.length === 0) {
+            previewArea.classList.add('hidden');
+            return;
+        }
+        
+        // Show previews
+        validFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'relative bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm';
+                preview.innerHTML = `
+                    <div class="aspect-w-16 aspect-h-12 bg-gray-100">
+                        <img src="${e.target.result}" alt="Preview" class="w-full h-32 object-cover">
+                    </div>
+                    <div class="p-2">
+                        <p class="text-xs text-gray-600 truncate">${file.name}</p>
+                        <p class="text-xs text-gray-400">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <div class="absolute top-1 left-1 bg-indigo-600 text-white text-xs px-1.5 py-0.5 rounded">
+                        #${index + 1}
+                    </div>
+                `;
+                previewGrid.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        previewArea.classList.remove('hidden');
+    }
+});
+</script>
+{% endblock %}

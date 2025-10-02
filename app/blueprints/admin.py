@@ -20,7 +20,7 @@ from app.models import (
 )
 from app.forms import (
     LoginForm, ProductForm, CategoryForm, BlackoutDateForm, 
-    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm, ProductImageForm
+    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm, ProductImageForm, BulkImageUploadForm
 )
 from app.services.availability import AvailabilityService
 from app.services.pricing import PricingService
@@ -373,6 +373,45 @@ def product_images(product_id):
     return render_template('admin/product_images.html', product=product, images=images)
 
 
+@bp.route('/products/<int:product_id>/images/bulk-upload', methods=['GET', 'POST'])
+@login_required
+def bulk_upload_images(product_id):
+    """Bulk upload multiple images for a product."""
+    product = Product.query.get_or_404(product_id)
+    form = BulkImageUploadForm()
+    
+    if form.validate_on_submit():
+        uploaded_files = form.image_files.data
+        alt_prefix = form.alt_prefix.data or 'Produktbillede'
+        
+        if uploaded_files and any(f.filename for f in uploaded_files):
+            # Get the next sort order
+            max_sort_order = db.session.query(func.max(ProductImage.sort_order)).filter_by(product_id=product_id).scalar() or 0
+            next_sort_order = max_sort_order + 1
+            
+            uploaded_count = 0
+            for i, file in enumerate(uploaded_files):
+                if file and file.filename:
+                    uploaded_file = save_uploaded_file(file)
+                    if uploaded_file:
+                        image = ProductImage(
+                            product_id=product_id,
+                            url=uploaded_file,
+                            alt=f"{alt_prefix} {next_sort_order + i}",
+                            sort_order=next_sort_order + i
+                        )
+                        db.session.add(image)
+                        uploaded_count += 1
+            
+            db.session.commit()
+            flash(f'{uploaded_count} billeder tilføjet', 'success')
+            return redirect(url_for('admin.product_images', product_id=product_id))
+        else:
+            flash('Ingen billeder valgt', 'error')
+    
+    return render_template('admin/bulk_image_upload.html', form=form, product=product, title='Tilføj flere billeder')
+
+
 @bp.route('/products/<int:product_id>/images/add', methods=['GET', 'POST'])
 @login_required
 def add_product_image(product_id):
@@ -387,6 +426,10 @@ def add_product_image(product_id):
             uploaded_file = save_uploaded_file(form.image_file.data)
             if uploaded_file:
                 image_url = uploaded_file
+        
+        if not image_url:
+            flash('Enten billede fil eller URL skal være udfyldt', 'error')
+            return render_template('admin/product_image_form.html', form=form, product=product, title='Tilføj billede')
         
         # Get the next sort order
         max_sort_order = db.session.query(func.max(ProductImage.sort_order)).filter_by(product_id=product_id).scalar() or 0
