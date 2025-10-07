@@ -1413,7 +1413,9 @@ def order_confirmation(booking_no=None):
                         
                         # Create booking from cart data with standalone upsells
                         standalone_upsells = checkout_data.get('standalone_upsells', {})
+                        current_app.logger.info(f'Creating booking with cart_data: {checkout_data["cart_data"]}, standalone_upsells: {standalone_upsells}')
                         booking = create_booking_from_cart(checkout_data['cart_data'], form, standalone_upsells)
+                        current_app.logger.info(f'Booking creation result: {booking}')
                         
                         if booking:
                             # Update booking with Stripe session info
@@ -1472,11 +1474,15 @@ def order_confirmation(booking_no=None):
                             except Exception as e:
                                 current_app.logger.error(f'Failed to send order confirmation email: {str(e)}')
                         else:
-                            current_app.logger.error('Development mode: Failed to create booking from session data')
+                            current_app.logger.error('Failed to create booking from session data')
+                            current_app.logger.error(f'Cart data was: {checkout_data.get("cart_data")}')
+                            current_app.logger.error(f'Standalone upsells were: {checkout_data.get("standalone_upsells")}')
                     else:
-                        current_app.logger.error('Development mode: No checkout data found in session')
+                        current_app.logger.error('No checkout data found in session')
                 except Exception as e:
-                    current_app.logger.error(f'Development mode: Error creating booking: {str(e)}')
+                    import traceback
+                    current_app.logger.error(f'Error creating booking: {str(e)}')
+                    current_app.logger.error(f'Traceback: {traceback.format_exc()}')
             
             # Check again if booking was created
             booking = Booking.query.filter_by(stripe_session_id=session_id).first()
