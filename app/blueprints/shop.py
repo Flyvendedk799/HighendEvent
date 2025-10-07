@@ -1408,8 +1408,9 @@ def order_confirmation(booking_no=None):
                         form.account_number.data = checkout_data['form_data'].get('account_number', '')
                         form.registration_number.data = checkout_data['form_data'].get('registration_number', '')
                         
-                        # Create booking from cart data
-                        booking = create_booking_from_cart(checkout_data['cart_data'], form)
+                        # Create booking from cart data with standalone upsells
+                        standalone_upsells = checkout_data.get('standalone_upsells', {})
+                        booking = create_booking_from_cart(checkout_data['cart_data'], form, standalone_upsells)
                         
                         if booking:
                             # Update booking with Stripe session info
@@ -1519,8 +1520,9 @@ def order_confirmation(booking_no=None):
                     current_app.logger.info(f'Development mode: Cart data: {checkout_data["cart_data"]}')
                     current_app.logger.info(f'Development mode: Form data: {checkout_data["form_data"]}')
                     
-                    # Create booking from cart data
-                    booking = create_booking_from_cart(checkout_data['cart_data'], form)
+                    # Create booking from cart data with standalone upsells
+                    standalone_upsells = checkout_data.get('standalone_upsells', {})
+                    booking = create_booking_from_cart(checkout_data['cart_data'], form, standalone_upsells)
                     
                     debug_info += f"<h3>Booking Creation Result:</h3><pre>{booking}</pre>"
                     
@@ -1763,17 +1765,18 @@ def render_checkout_with_cart_data(form, cart_data):
                          upsell_total=upsell_total)
 
 
-def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm) -> Booking:
-    """Create booking from cart items."""
+def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standalone_upsells: Dict = None) -> Booking:
+    """Create booking from cart items and standalone upsells."""
     from app.models import db, Customer
     from app.utils.booking import generate_booking_number
     from flask_login import current_user
     
     try:
-        current_app.logger.info(f'Starting booking creation with {len(cart_items)} cart items')
+        standalone_upsells = standalone_upsells or {}
+        current_app.logger.info(f'Starting booking creation with {len(cart_items)} cart items and {len(standalone_upsells)} standalone upsells')
         
-        if not cart_items:
-            current_app.logger.error('No cart items provided')
+        if not cart_items and not standalone_upsells:
+            current_app.logger.error('No cart items or standalone upsells provided')
             return None
         
         # Generate booking number
@@ -2002,12 +2005,32 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm) -> Book
                         db.session.add(booking_upsell)
                         current_app.logger.info(f'Added upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
         
+        # Add standalone upsells (not tied to a specific rental item)
+        # For standalone upsells, we need to create a placeholder booking item or store them separately
+        # Let's create them tied to the first booking item if it exists, or create a virtual item
+        if standalone_upsells and booking_items_dto:
+            first_booking_item = BookingItem.query.filter_by(booking_id=booking.id).first()
+            if first_booking_item:
+                for upsell_id, quantity in standalone_upsells.items():
+                    upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+                    if upsell_product:
+                        standalone_booking_upsell = BookingUpsellItem(
+                            booking_item_id=first_booking_item.id,  # Attach to first item
+                            upsell_product_id=int(upsell_id),
+                            quantity=int(quantity),
+                            unit_price_dkk=upsell_product.price_dkk,
+                            name_snapshot=upsell_product.name
+                        )
+                        db.session.add(standalone_booking_upsell)
+                        current_app.logger.info(f'Added standalone upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
+        
         current_app.logger.info('Committing booking to database...')
         db.session.commit()
         current_app.logger.info('Booking successfully committed to database')
         
-        # Clear cart
+        # Clear cart and standalone upsells
         session.pop('cart', None)
+        session.pop('standalone_upsells', None)
         
         # Store customer info for future use
         session['customer_email'] = form.email.data
