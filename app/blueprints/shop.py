@@ -321,6 +321,10 @@ def get_cart_count():
         cart = session.get('cart', [])
         total_count = sum(item.get('quantity', 1) for item in cart)
     
+    # Add standalone upsells count
+    standalone_upsells = session.get('standalone_upsells', {})
+    total_count += sum(standalone_upsells.values())
+    
     return jsonify({'cart_count': total_count})
 
 
@@ -498,7 +502,10 @@ def checkout():
         # Fallback to session-based cart for non-authenticated users
         cart_data = session.get('cart', [])
     
-    if not cart_data:
+    # Check for standalone upsells
+    standalone_upsells = session.get('standalone_upsells', {})
+    
+    if not cart_data and not standalone_upsells:
         flash('Din kurv er tom', 'warning')
         return redirect(url_for('shop.cart'))
 
@@ -610,14 +617,30 @@ def checkout():
             if upsell_product:
                 upsell_total += upsell_product.price_dkk * int(quantity)
     
+    # Add standalone upsells pricing
+    standalone_upsell_products = []
+    standalone_upsell_total = Decimal('0')
+    for upsell_id, quantity in standalone_upsells.items():
+        upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+        if upsell_product:
+            standalone_upsell_products.append({
+                'upsell': upsell_product,
+                'quantity': quantity,
+                'subtotal': upsell_product.price_dkk * quantity
+            })
+            standalone_upsell_total += upsell_product.price_dkk * quantity
+    
     total_estimate += upsell_total
+    total_estimate += standalone_upsell_total
 
     return render_template('shop/checkout.html',
                          form=form,
                          cart_products=cart_products,
                          total_estimate=total_estimate,
                          delivery_fee=delivery_fee,
-                         upsell_total=upsell_total)
+                         upsell_total=upsell_total,
+                         standalone_upsell_products=standalone_upsell_products,
+                         standalone_upsell_total=standalone_upsell_total)
 
 
 @bp.route('/process-checkout', methods=['POST'])
@@ -838,12 +861,22 @@ def process_checkout():
                 if upsell_product:
                     upsell_total += upsell_product.price_dkk * int(quantity)
         
+        # Add standalone upsells pricing
+        standalone_upsells = session.get('standalone_upsells', {})
+        standalone_upsell_total = Decimal('0')
+        for upsell_id, quantity in standalone_upsells.items():
+            upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+            if upsell_product:
+                standalone_upsell_total += upsell_product.price_dkk * quantity
+        
         total_estimate += upsell_total
-        current_app.logger.info(f'Process checkout - Added upsells: {upsell_total} DKK, Final total: {total_estimate} DKK')
+        total_estimate += standalone_upsell_total
+        current_app.logger.info(f'Process checkout - Added upsells: {upsell_total} DKK, Standalone upsells: {standalone_upsell_total} DKK, Final total: {total_estimate} DKK')
         
         # Store checkout data in session for webhook
         session['checkout_data'] = {
             'cart_data': cart_data,
+            'standalone_upsells': standalone_upsells,
             'form_data': {
                 'customer_name': form.customer_name.data,
                 'email': form.email.data,
