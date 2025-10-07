@@ -26,6 +26,15 @@
     <meta name="twitter:description" content="{% block twitter_description %}{{ self.meta_description() }}{% endblock %}">
     <meta name="twitter:image" content="{{ url_for('static', filename='images/logo1.png', _external=True) }}">
     
+    <!-- Theme Color (affects browser UI and iPhone link previews) -->
+    <meta name="theme-color" content="#0284c7">
+    <meta name="msapplication-TileColor" content="#0284c7">
+    
+    <!-- Apple-specific Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HighendEvent">
+    
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ request.url }}">
     
