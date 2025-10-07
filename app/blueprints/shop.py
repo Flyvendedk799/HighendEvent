@@ -305,6 +305,44 @@ def get_cart_count():
     return jsonify({'cart_count': total_count})
 
 
+@bp.route('/add-upsell-standalone', methods=['POST'])
+def add_upsell_standalone():
+    """Add standalone upsell product to cart (without rental item)."""
+    upsell_id = request.form.get('upsell_id', type=int)
+    quantity = request.form.get('quantity', 1, type=int)
+    
+    if not upsell_id:
+        return jsonify({'success': False, 'message': 'Upsell ID mangler'}), 400
+    
+    # Check if upsell product exists and has stock
+    upsell_product = UpsellProduct.query.filter_by(id=upsell_id, is_active=True).first()
+    if not upsell_product:
+        return jsonify({'success': False, 'message': 'Produkt findes ikke'}), 404
+    
+    if upsell_product.stock_qty < quantity:
+        return jsonify({'success': False, 'message': 'Ikke nok på lager'}), 400
+    
+    # Add to session cart as standalone upsell
+    if 'standalone_upsells' not in session:
+        session['standalone_upsells'] = {}
+    
+    # Store or update quantity
+    current_qty = session['standalone_upsells'].get(str(upsell_id), 0)
+    session['standalone_upsells'][str(upsell_id)] = current_qty + quantity
+    session.modified = True
+    
+    # Calculate cart count
+    cart = session.get('cart', [])
+    cart_count = sum(item.get('quantity', 1) for item in cart)
+    cart_count += sum(session['standalone_upsells'].values())
+    
+    return jsonify({
+        'success': True,
+        'message': f'{upsell_product.name} tilføjet til kurv',
+        'cart_count': cart_count
+    })
+
+
 @bp.route('/remove-from-cart', methods=['POST'])
 def remove_from_cart():
     """Remove item from cart."""

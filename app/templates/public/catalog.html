@@ -320,20 +320,31 @@
                             </div>
                         </div>
                         
-                        <!-- Button -->
-                        <div class="space-y-2 mt-auto">
-                            <p class="text-xs text-gray-600 text-center">
-                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Tilkøb til andre produkter
-                            </p>
-                            <a href="{{ url_for('public.catalog') }}" class="w-full bg-gradient-to-r from-accent-600 to-primary-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:from-accent-700 hover:to-primary-700 transition-all duration-200 flex items-center justify-center space-x-2 group-hover:scale-105">
+                        <!-- Quantity and Add to Cart -->
+                        <div class="space-y-3 mt-auto">
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                                <span class="text-sm font-medium text-gray-700">Antal:</span>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" onclick="updateUpsellQty({{ upsell.id }}, -1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:border-primary-500 hover:text-primary-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                        </svg>
+                                    </button>
+                                    <input type="number" id="upsell-qty-{{ upsell.id }}" min="0" max="{{ upsell.stock_qty }}" value="1" class="w-14 h-8 text-center border border-gray-300 rounded-lg font-bold text-gray-900">
+                                    <button type="button" onclick="updateUpsellQty({{ upsell.id }}, 1)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button onclick="addUpsellToCart({{ upsell.id }}, '{{ upsell.name }}')" class="w-full bg-gradient-to-r from-accent-600 to-primary-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:from-accent-700 hover:to-primary-700 transition-all duration-200 flex items-center justify-center space-x-2 group-hover:scale-105">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                                 </svg>
-                                <span>Se produkter</span>
-                            </a>
+                                <span>Tilføj til kurv</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -432,4 +443,66 @@
     -webkit-line-clamp: 2;
 }
 </style>
+
+<script>
+// Upsell product cart functions
+function updateUpsellQty(upsellId, change) {
+    const input = document.getElementById('upsell-qty-' + upsellId);
+    const currentValue = parseInt(input.value) || 0;
+    const newValue = Math.max(0, Math.min(parseInt(input.max), currentValue + change));
+    input.value = newValue;
+}
+
+function addUpsellToCart(upsellId, upsellName) {
+    const qtyInput = document.getElementById('upsell-qty-' + upsellId);
+    const quantity = parseInt(qtyInput.value) || 1;
+    
+    if (quantity === 0) {
+        alert('Vælg mindst 1 styk');
+        return;
+    }
+    
+    // Add upsell to session cart as a standalone item
+    const formData = new FormData();
+    formData.append('upsell_id', upsellId);
+    formData.append('quantity', quantity);
+    
+    fetch('/shop/add-upsell-standalone', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showNotification(upsellName + ' tilføjet til kurv!', 'success');
+            // Update cart count
+            updateCartCount();
+        } else {
+            showNotification(data.message || 'Kunne ikke tilføje til kurv', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Fejl ved tilføjelse til kurv', 'error');
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ' + 
+                            (type === 'success' ? 'bg-green-500' : 'bg-red-500');
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function updateCartCount() {
+    // Reload page to update cart count in header
+    window.location.reload();
+}
+</script>
 {% endblock %}
