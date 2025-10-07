@@ -182,6 +182,7 @@ class Category(db.Model):
     name: Mapped[str] = mapped_column(db.String(100), nullable=False)
     slug: Mapped[str] = mapped_column(db.String(100), unique=True, nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(db.Text)
+    image_url: Mapped[Optional[str]] = mapped_column(db.String(500))
     is_active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
     sort_order: Mapped[int] = mapped_column(db.Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow, nullable=False)

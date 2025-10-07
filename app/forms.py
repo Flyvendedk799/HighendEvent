@@ -180,6 +180,10 @@ class CategoryForm(FlaskForm):
         validators=[Optional(), Length(max=1000)],
         render_kw={'rows': 3}
     )
+    image = FileField(
+        'Kategori billede',
+        validators=[Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Kun billedfiler er tilladt!')]
+    )
     sort_order = IntegerField(
         'Sorteringsrækkefølge',
         validators=[Optional()],

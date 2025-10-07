@@ -1294,10 +1294,16 @@ def create_category():
     form = CategoryForm()
     
     if form.validate_on_submit():
+        # Handle image upload
+        image_url = None
+        if form.image.data:
+            image_url = save_uploaded_file(form.image.data)
+        
         category = Category(
             name=form.name.data,
             slug=form.slug.data,
             description=form.description.data,
+            image_url=image_url,
             sort_order=form.sort_order.data,
             is_active=form.is_active.data
         )
@@ -1320,6 +1326,10 @@ def edit_category(id):
     form = CategoryForm(obj=category)
     
     if form.validate_on_submit():
+        # Handle image upload
+        if form.image.data:
+            category.image_url = save_uploaded_file(form.image.data)
+        
         category.name = form.name.data
         category.slug = form.slug.data
         category.description = form.description.data
