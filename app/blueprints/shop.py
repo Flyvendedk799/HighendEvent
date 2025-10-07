@@ -308,6 +308,7 @@ def get_cart_count():
 @bp.route('/add-upsell-standalone', methods=['POST'])
 def add_upsell_standalone():
     """Add standalone upsell product to cart (without rental item)."""
+    # No CSRF validation needed for JSON endpoints (following same pattern as calculate_pricing)
     upsell_id = request.form.get('upsell_id', type=int)
     quantity = request.form.get('quantity', 1, type=int)
     
