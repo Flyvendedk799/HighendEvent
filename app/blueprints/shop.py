@@ -761,11 +761,14 @@ def process_checkout():
         # Fallback to session-based cart for non-authenticated users
         cart_data = session.get('cart', [])
     
-    if not cart_data:
+    # Check for standalone upsells
+    standalone_upsells = session.get('standalone_upsells', {})
+    
+    if not cart_data and not standalone_upsells:
         flash('Din kurv er tom', 'warning')
         return redirect(url_for('shop.cart'))
     
-    # Validate availability one more time
+    # Validate availability one more time (only for rental items)
     db_session = current_app.extensions['sqlalchemy'].session
     availability_service = AvailabilityService(db_session)
     
@@ -1847,28 +1850,46 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
                 delivery_type=delivery_type
             ))
         
-        if not booking_items_dto:
-            current_app.logger.error('No valid booking items after processing cart')
+        if not booking_items_dto and not standalone_upsells:
+            current_app.logger.error('No valid booking items or standalone upsells after processing cart')
             return None
+        
+        # Calculate pricing for rental items
+        pricing = None
+        if booking_items_dto:
+            current_app.logger.info(f'Calculating pricing for {len(booking_items_dto)} items')
+            # Use the same delivery type that was set for all items
+            delivery_type_for_pricing = DeliveryType.PICKUP if form.delivery_type.data == 'pickup' else DeliveryType.DELIVERY
+            current_app.logger.info(f'Delivery type for pricing: {delivery_type_for_pricing}')
             
-        current_app.logger.info(f'Calculating pricing for {len(booking_items_dto)} items')
-        # Use the same delivery type that was set for all items
-        delivery_type_for_pricing = DeliveryType.PICKUP if form.delivery_type.data == 'pickup' else DeliveryType.DELIVERY
-        current_app.logger.info(f'Delivery type for pricing: {delivery_type_for_pricing}')
-        
-        # Calculate pricing with address for delivery breakdown
-        customer_address = form.address.data if form.address.data else None
-        customer_zip = form.zip_code.data if form.zip_code.data else None
-        customer_city = form.city.data if form.city.data else None
-        
-        pricing = pricing_service.calculate_booking_pricing(
-            booking_items_dto, 
-            delivery_type_for_pricing,
-            customer_address,
-            customer_zip,
-            customer_city
-        )
-        current_app.logger.info(f'Pricing calculated: total={pricing.total}, deposit={pricing.deposit_amount}, delivery={pricing.delivery_fee}')
+            # Calculate pricing with address for delivery breakdown
+            customer_address = form.address.data if form.address.data else None
+            customer_zip = form.zip_code.data if form.zip_code.data else None
+            customer_city = form.city.data if form.city.data else None
+            
+            pricing = pricing_service.calculate_booking_pricing(
+                booking_items_dto, 
+                delivery_type_for_pricing,
+                customer_address,
+                customer_zip,
+                customer_city
+            )
+            current_app.logger.info(f'Pricing calculated: total={pricing.total}, deposit={pricing.deposit_amount}, delivery={pricing.delivery_fee}')
+        else:
+            # Only standalone upsells - create minimal pricing
+            current_app.logger.info('Only standalone upsells, no rental items')
+            from app.services.pricing import BookingPricing
+            pricing = BookingPricing(
+                subtotal=Decimal('0'),
+                vat_amount=Decimal('0'),
+                deposit_amount=Decimal('0'),
+                delivery_fee=Decimal('0'),
+                total=Decimal('0'),
+                upfront_payment=Decimal('0'),
+                remaining_payment=Decimal('0'),
+                line_items=[]
+            )
+            delivery_type_for_pricing = DeliveryType.PICKUP
         
         # Calculate delivery breakdown if delivery fee > 0
         delivery_breakdown = None
@@ -1943,6 +1964,11 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
         
         # Create booking
         current_app.logger.info('Creating booking object...')
+        # For standalone upsells only, use today's date
+        from datetime import date as date_module
+        start_date = booking_items_dto[0].start_date if booking_items_dto else date_module.today()
+        end_date = booking_items_dto[0].end_date if booking_items_dto else date_module.today()
+        
         booking = Booking(
             booking_no=booking_no,
             customer_id=customer.id,
@@ -1952,8 +1978,8 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
             address=form.address.data,
             zip_code=form.zip_code.data,
             city=form.city.data,
-            start_date=booking_items_dto[0].start_date,  # Use first item's dates
-            end_date=booking_items_dto[0].end_date,
+            start_date=start_date,
+            end_date=end_date,
             subtotal_dkk=pricing.subtotal,
             vat_dkk=pricing.vat_amount,
             deposit_dkk=pricing.deposit_amount,
@@ -2006,23 +2032,40 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
                         current_app.logger.info(f'Added upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
         
         # Add standalone upsells (not tied to a specific rental item)
-        # For standalone upsells, we need to create a placeholder booking item or store them separately
-        # Let's create them tied to the first booking item if it exists, or create a virtual item
-        if standalone_upsells and booking_items_dto:
+        if standalone_upsells:
+            # Try to find a booking item to attach them to
             first_booking_item = BookingItem.query.filter_by(booking_id=booking.id).first()
-            if first_booking_item:
-                for upsell_id, quantity in standalone_upsells.items():
-                    upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
-                    if upsell_product:
-                        standalone_booking_upsell = BookingUpsellItem(
-                            booking_item_id=first_booking_item.id,  # Attach to first item
-                            upsell_product_id=int(upsell_id),
-                            quantity=int(quantity),
-                            unit_price_dkk=upsell_product.price_dkk,
-                            name_snapshot=upsell_product.name
-                        )
-                        db.session.add(standalone_booking_upsell)
-                        current_app.logger.info(f'Added standalone upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
+            
+            # If no booking items exist (standalone upsells only), create a placeholder item
+            if not first_booking_item:
+                current_app.logger.info('No booking items found, creating placeholder for standalone upsells')
+                placeholder_item = BookingItem(
+                    booking_id=booking.id,
+                    product_id=None,  # No product for standalone upsells
+                    quantity=0,
+                    unit_price_dkk=Decimal('0'),
+                    name_snapshot='Standalone Products'
+                )
+                db.session.add(placeholder_item)
+                db.session.flush()
+                first_booking_item = placeholder_item
+            
+            # Add standalone upsells
+            for upsell_id, quantity in standalone_upsells.items():
+                upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+                if upsell_product:
+                    standalone_booking_upsell = BookingUpsellItem(
+                        booking_item_id=first_booking_item.id,
+                        upsell_product_id=int(upsell_id),
+                        quantity=int(quantity),
+                        unit_price_dkk=upsell_product.price_dkk,
+                        name_snapshot=upsell_product.name
+                    )
+                    db.session.add(standalone_booking_upsell)
+                    # Update booking total to include standalone upsell
+                    booking.total_dkk += upsell_product.price_dkk * quantity
+                    booking.upfront_payment_dkk += upsell_product.price_dkk * quantity
+                    current_app.logger.info(f'Added standalone upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
         
         current_app.logger.info('Committing booking to database...')
         db.session.commit()
