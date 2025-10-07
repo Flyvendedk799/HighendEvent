@@ -57,6 +57,21 @@ def cart():
         # Fallback to session-based cart for non-authenticated users
         cart_data = session.get('cart', [])
 
+    # Get standalone upsells from session
+    standalone_upsells = session.get('standalone_upsells', {})
+    standalone_upsell_products = []
+    standalone_upsell_total = Decimal('0')
+    
+    for upsell_id, quantity in standalone_upsells.items():
+        upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+        if upsell_product:
+            standalone_upsell_products.append({
+                'upsell': upsell_product,
+                'quantity': quantity,
+                'subtotal': upsell_product.price_dkk * quantity
+            })
+            standalone_upsell_total += upsell_product.price_dkk * quantity
+
     # Get product details for cart items
     cart_products = []
     booking_items = []
@@ -152,12 +167,15 @@ def cart():
                 upsell_total += upsell_product.price_dkk * int(quantity)
     
     total_estimate += upsell_total
+    total_estimate += standalone_upsell_total
 
     return render_template('shop/cart.html',
                          cart_products=cart_products,
                          total_estimate=total_estimate,
                          delivery_fee=delivery_fee,
-                         upsell_total=upsell_total)
+                         upsell_total=upsell_total,
+                         standalone_upsell_products=standalone_upsell_products,
+                         standalone_upsell_total=standalone_upsell_total)
 
 
 @bp.route('/add-to-cart', methods=['POST'])
@@ -353,6 +371,30 @@ def add_upsell_standalone():
         current_app.logger.error(f'❌ Error adding standalone upsell: {e}')
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Fejl: {str(e)}'})
+
+
+@bp.route('/remove-standalone-upsell', methods=['POST'])
+@csrf.exempt
+def remove_standalone_upsell():
+    """Remove standalone upsell from cart."""
+    try:
+        upsell_id = request.form.get('upsell_id', type=int)
+        
+        if not upsell_id:
+            return jsonify({'success': False, 'message': 'Upsell ID mangler'})
+        
+        standalone_upsells = session.get('standalone_upsells', {})
+        
+        if str(upsell_id) in standalone_upsells:
+            del standalone_upsells[str(upsell_id)]
+            session['standalone_upsells'] = standalone_upsells
+            session.modified = True
+            return jsonify({'success': True, 'message': 'Produkt fjernet fra kurv'})
+        else:
+            return jsonify({'success': False, 'message': 'Produkt ikke fundet i kurv'})
+    except Exception as e:
+        current_app.logger.error(f'Error removing standalone upsell: {e}')
         return jsonify({'success': False, 'message': f'Fejl: {str(e)}'})
 
 

@@ -11,7 +11,7 @@
             <p class="text-lg text-gray-600">Gennemgå dine valgte produkter og datoer</p>
         </div>
         
-        {% if cart_products %}
+        {% if cart_products or standalone_upsell_products %}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Cart Items -->
             <div class="lg:col-span-2">
@@ -110,6 +110,36 @@
                         </div>
                     </div>
                     {% endfor %}
+                    
+                    <!-- Standalone Upsell Products -->
+                    {% if standalone_upsell_products %}
+                    <div class="mt-8">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">🛍️ Tilkøbsprodukter (uden udlejning)</h2>
+                        <div class="space-y-4">
+                            {% for item in standalone_upsell_products %}
+                            <div class="bg-gradient-to-r from-accent-50 to-primary-50 border border-accent-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900">{{ item.upsell.name }}</h3>
+                                        <p class="text-sm text-gray-600 mt-1">{{ item.upsell.description }}</p>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <span class="text-sm font-medium text-gray-700">Antal: {{ item.quantity }}</span>
+                                            <span class="text-sm text-gray-600">{{ item.upsell.price_dkk | currency }} pr. stk</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right ml-4">
+                                        <div class="text-xl font-bold text-gray-900">{{ item.subtotal | currency }}</div>
+                                        <button onclick="removeStandaloneUpsell({{ item.upsell.id }})"
+                                                class="mt-2 text-red-600 hover:text-red-800 text-sm font-medium">
+                                            Fjern
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -163,8 +193,16 @@
                                 <!-- Upsell products -->
                                 {% if upsell_total > 0 %}
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-blue-700">Tilkøb</span>
+                                    <span class="text-blue-700">Tilkøb (med udlejning)</span>
                                     <span class="text-blue-900 font-medium">{{ upsell_total | currency }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Standalone upsell products -->
+                                {% if standalone_upsell_total > 0 %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-blue-700">Tilkøbsprodukter</span>
+                                    <span class="text-blue-900 font-medium">{{ standalone_upsell_total | currency }}</span>
                                 </div>
                                 {% endif %}
                                 
@@ -271,6 +309,31 @@
 
 {% block extra_js %}
 <script>
+function removeStandaloneUpsell(upsellId) {
+    if (confirm('Er du sikker på, at du vil fjerne dette produkt fra kurven?')) {
+        const formData = new FormData();
+        formData.append('upsell_id', upsellId);
+        
+        fetch('/shop/remove-standalone-upsell', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to update cart
+                window.location.reload();
+            } else {
+                alert(data.message || 'Der opstod en fejl');
+            }
+        })
+        .catch(error => {
+            console.error('Error removing standalone upsell:', error);
+            alert('Der opstod en fejl under fjernelse');
+        });
+    }
+}
+
 function cartItem(productId, startDate, endDate, deliveryType) {
     return {
         productId: productId,
