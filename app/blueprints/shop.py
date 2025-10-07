@@ -2067,11 +2067,11 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
             else:
                 # No rental items - add standalone upsells info to notes and include in total
                 current_app.logger.info('No booking items found, adding standalone upsells to notes')
-                standalone_notes = "\n\n=== Standalone Products ===\n"
+                standalone_notes = "\n\n=== Tilkøbsprodukter ===\n"
                 for upsell_id, quantity in standalone_upsells.items():
                     upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
                     if upsell_product:
-                        standalone_notes += f"- {upsell_product.name} x{quantity} @ {upsell_product.price_dkk} DKK each\n"
+                        standalone_notes += f"- {upsell_product.name} x{quantity} @ {upsell_product.price_dkk} DKK pr. stk\n"
                         # Update booking total to include standalone upsell
                         booking.total_dkk += upsell_product.price_dkk * quantity
                         booking.upfront_payment_dkk += upsell_product.price_dkk * quantity
