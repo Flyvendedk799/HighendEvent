@@ -7,6 +7,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import List, Dict, Any
 
+from app import csrf
 from app.models import Product, Booking, BookingItem, BookingUpsellItem, BookingStatus, DeliveryType, CartItem, CartUpsellItem, UpsellProduct, db
 from app.services.availability import AvailabilityService
 from app.services.pricing import PricingService, BookingItemDTO
@@ -306,10 +307,11 @@ def get_cart_count():
 
 
 @bp.route('/add-upsell-standalone', methods=['POST'])
+@csrf.exempt
 def add_upsell_standalone():
     """Add standalone upsell product to cart (without rental item)."""
     try:
-        # No CSRF validation needed for JSON endpoints (following same pattern as calculate_pricing)
+        # CSRF exempted for this API endpoint (same as /api/calculate-pricing)
         upsell_id = request.form.get('upsell_id', type=int)
         quantity = request.form.get('quantity', 1, type=int)
         
