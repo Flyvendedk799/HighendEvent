@@ -1884,16 +1884,18 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
         else:
             # Only standalone upsells - create minimal pricing
             current_app.logger.info('Only standalone upsells, no rental items')
-            from app.services.pricing import BookingPricing
-            pricing = BookingPricing(
+            from app.services.pricing import PricingBreakdown
+            pricing = PricingBreakdown(
+                line_items=[],
                 subtotal=Decimal('0'),
                 vat_amount=Decimal('0'),
+                vat_percent=current_app.config['VAT_PERCENT'],
                 deposit_amount=Decimal('0'),
                 delivery_fee=Decimal('0'),
                 total=Decimal('0'),
                 upfront_payment=Decimal('0'),
                 remaining_payment=Decimal('0'),
-                line_items=[]
+                currency='DKK'
             )
             delivery_type_for_pricing = DeliveryType.PICKUP
         
