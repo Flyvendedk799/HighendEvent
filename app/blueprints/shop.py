@@ -2040,40 +2040,49 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
                         current_app.logger.info(f'Added upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
         
         # Add standalone upsells (not tied to a specific rental item)
+        # For standalone upsells, we have two options:
+        # 1. If there are rental items, attach to first one
+        # 2. If no rental items, store in booking notes and add to total
         if standalone_upsells:
-            # Try to find a booking item to attach them to
             first_booking_item = BookingItem.query.filter_by(booking_id=booking.id).first()
             
-            # If no booking items exist (standalone upsells only), create a placeholder item
-            if not first_booking_item:
-                current_app.logger.info('No booking items found, creating placeholder for standalone upsells')
-                placeholder_item = BookingItem(
-                    booking_id=booking.id,
-                    product_id=None,  # No product for standalone upsells
-                    quantity=0,
-                    unit_price_dkk=Decimal('0'),
-                    name_snapshot='Standalone Products'
-                )
-                db.session.add(placeholder_item)
-                db.session.flush()
-                first_booking_item = placeholder_item
-            
-            # Add standalone upsells
-            for upsell_id, quantity in standalone_upsells.items():
-                upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
-                if upsell_product:
-                    standalone_booking_upsell = BookingUpsellItem(
-                        booking_item_id=first_booking_item.id,
-                        upsell_product_id=int(upsell_id),
-                        quantity=int(quantity),
-                        unit_price_dkk=upsell_product.price_dkk,
-                        name_snapshot=upsell_product.name
-                    )
-                    db.session.add(standalone_booking_upsell)
-                    # Update booking total to include standalone upsell
-                    booking.total_dkk += upsell_product.price_dkk * quantity
-                    booking.upfront_payment_dkk += upsell_product.price_dkk * quantity
-                    current_app.logger.info(f'Added standalone upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
+            if first_booking_item:
+                # Attach standalone upsells to first booking item
+                current_app.logger.info('Attaching standalone upsells to first booking item')
+                for upsell_id, quantity in standalone_upsells.items():
+                    upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+                    if upsell_product:
+                        standalone_booking_upsell = BookingUpsellItem(
+                            booking_item_id=first_booking_item.id,
+                            upsell_product_id=int(upsell_id),
+                            quantity=int(quantity),
+                            unit_price_dkk=upsell_product.price_dkk,
+                            name_snapshot=upsell_product.name
+                        )
+                        db.session.add(standalone_booking_upsell)
+                        # Update booking total to include standalone upsell
+                        booking.total_dkk += upsell_product.price_dkk * quantity
+                        booking.upfront_payment_dkk += upsell_product.price_dkk * quantity
+                        current_app.logger.info(f'Added standalone upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
+            else:
+                # No rental items - add standalone upsells info to notes and include in total
+                current_app.logger.info('No booking items found, adding standalone upsells to notes')
+                standalone_notes = "\n\n=== Standalone Products ===\n"
+                for upsell_id, quantity in standalone_upsells.items():
+                    upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+                    if upsell_product:
+                        standalone_notes += f"- {upsell_product.name} x{quantity} @ {upsell_product.price_dkk} DKK each\n"
+                        # Update booking total to include standalone upsell
+                        booking.total_dkk += upsell_product.price_dkk * quantity
+                        booking.upfront_payment_dkk += upsell_product.price_dkk * quantity
+                        booking.subtotal_dkk += upsell_product.price_dkk * quantity
+                        current_app.logger.info(f'Added standalone upsell to notes: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
+                
+                # Append to existing notes
+                if booking.notes:
+                    booking.notes += standalone_notes
+                else:
+                    booking.notes = standalone_notes.strip()
         
         current_app.logger.info('Committing booking to database...')
         db.session.commit()
