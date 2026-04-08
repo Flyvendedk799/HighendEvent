@@ -1,11 +1,11 @@
 """Calendar ICS feed for Outlook integration."""
 
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, Response, jsonify
 from datetime import datetime, timedelta
-from app.models import Booking, BookingStatus, Product
+from app.models import Booking, BookingStatus
 from app import db
 import icalendar
-from icalendar import Calendar, Event, vText, vDatetime
+from icalendar import Calendar, Event
 import pytz
 
 bp = Blueprint('calendar', __name__)
@@ -40,7 +40,8 @@ def calendar_feed():
             # Event details
             event.add('uid', f'highendevent-booking-{booking.id}@highendevent.dk')
             product_name = booking.items[0].name_snapshot if booking.items else "Rental"
-            event.add('summary', f'📦 {product_name} - {booking.customer_name}')
+            # ASCII summary: emoji/non-ASCII titles break some Outlook calendar imports
+            event.add('summary', f'{product_name} - {booking.customer_name}')
             event.add('description', _generate_event_description(booking))
             event.add('location', f'{booking.address}, {booking.zip_code} {booking.city}' if booking.address else 'Pickup Location')
             event.add('status', 'CONFIRMED')
@@ -69,19 +70,9 @@ def calendar_feed():
                 updated_at = tz.localize(updated_at)
             event.add('last-modified', updated_at)
             
-            # Add organizer
-            from icalendar import vCalAddress
-            organizer = vCalAddress('MAILTO:noreply@highendevent.dk')
-            organizer.params['cn'] = vText('HighendEvent')
-            event.add('organizer', organizer)
-            
-            # Add attendee (customer)
-            attendee = vCalAddress(f'MAILTO:{booking.email}')
-            attendee.params['cn'] = vText(booking.customer_name)
-            attendee.params['role'] = vText('REQ-PARTICIPANT')
-            attendee.params['status'] = vText('ACCEPTED')
-            event.add('attendee', attendee)
-            
+            # Omit ORGANIZER/ATTENDEE: METHOD:PUBLISH feeds with these often surface as
+            # broken imports or unwanted meeting semantics in Outlook.
+
             # Add categories
             event.add('categories', ['Rental', 'Equipment', 'HighendEvent'])
             
@@ -105,19 +96,16 @@ def calendar_feed():
             
             cal.add_component(event)
         
-        # Generate ICS content
-        ics_content = cal.to_ical().decode('utf-8')
-        
-        # Return as ICS file
+        # Raw UTF-8 bytes; avoid Content-Disposition: attachment so "subscribe by URL"
+        # clients (Outlook, Google) treat this as a calendar stream, not a one-off download.
         return Response(
-            ics_content,
-            mimetype='text/calendar',
+            cal.to_ical(),
+            mimetype='text/calendar; charset=utf-8',
             headers={
-                'Content-Disposition': 'attachment; filename="highendevent-bookings.ics"',
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
-                'Expires': '0'
-            }
+                'Expires': '0',
+            },
         )
         
     except Exception as e:
