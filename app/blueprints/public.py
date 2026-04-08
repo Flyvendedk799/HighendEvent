@@ -73,8 +73,9 @@ def catalog():
     category_id = request.args.get('category', type=int)
     search = request.args.get('search', '')
     sort_by = request.args.get('sort', 'name')
+    product_type = request.args.get('type', 'all')
     
-    # Build query
+    # Build rental products query
     query = Product.query.filter(Product.is_active == True)
     
     # Filter by category
@@ -98,19 +99,42 @@ def catalog():
     else:  # name
         query = query.order_by(Product.name.asc())
     
-    # Pagination
+    if product_type == 'upsell':
+        query = query.filter(False)
+
+    # Pagination for rental products
     products = query.paginate(
         page=page, per_page=12, error_out=False
     )
     
-    # Get upsell products for the same category if filtering by category
-    upsell_products = []
+    # Build upsell products query
+    upsell_products_query = UpsellProduct.query.filter(
+        UpsellProduct.is_active == True,
+        UpsellProduct.stock_qty > 0
+    )
+
     if category_id:
-        upsell_products = UpsellProduct.query.filter(
-            UpsellProduct.category_id == category_id,
-            UpsellProduct.is_active == True,
-            UpsellProduct.stock_qty > 0
-        ).order_by(UpsellProduct.name).all()
+        upsell_products_query = upsell_products_query.filter(UpsellProduct.category_id == category_id)
+
+    if search:
+        upsell_products_query = upsell_products_query.filter(
+            UpsellProduct.name.contains(search) |
+            UpsellProduct.description.contains(search)
+        )
+
+    if sort_by == 'price_low':
+        upsell_products_query = upsell_products_query.order_by(UpsellProduct.price_dkk.asc())
+    elif sort_by == 'price_high':
+        upsell_products_query = upsell_products_query.order_by(UpsellProduct.price_dkk.desc())
+    elif sort_by == 'newest':
+        upsell_products_query = upsell_products_query.order_by(desc(UpsellProduct.created_at))
+    else:
+        upsell_products_query = upsell_products_query.order_by(UpsellProduct.name.asc())
+
+    if product_type == 'rental':
+        upsell_products = []
+    else:
+        upsell_products = upsell_products_query.all()
     
     # Get categories for filter
     categories = Category.query.filter(
@@ -123,7 +147,8 @@ def catalog():
                          categories=categories,
                          current_category=category_id,
                          search=search,
-                         sort_by=sort_by)
+                         sort_by=sort_by,
+                         product_type=product_type)
 
 
 @bp.route('/product/<slug>')
@@ -258,5 +283,4 @@ def get_price_estimate(product_id):
     )
     
     return jsonify(price_estimate)
-
 
