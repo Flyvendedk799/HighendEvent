@@ -29,7 +29,7 @@
                 </div>
             </div>
             
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div class="space-y-2">
                     <label for="search" class="block text-sm font-medium text-gray-700">Søg efter produkter</label>
                     <div class="relative">
@@ -58,6 +58,16 @@
                 </div>
                 
                 <div class="space-y-2">
+                    <label for="type" class="block text-sm font-medium text-gray-700">Produkttype</label>
+                    <select name="type" id="type" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 appearance-none bg-white">
+                        <option value="all" {% if product_type == 'all' %}selected{% endif %}>Alle produkter</option>
+                        <option value="rental" {% if product_type == 'rental' %}selected{% endif %}>Lejeprodukter</option>
+                        <option value="upsell" {% if product_type == 'upsell' %}selected{% endif %}>Mersalgs produkter</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
                     <label for="sort" class="block text-sm font-medium text-gray-700">Sorter efter</label>
                     <select name="sort" id="sort" 
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 appearance-none bg-white">
@@ -83,7 +93,11 @@
         <div class="flex items-center justify-between mb-8">
             <div class="flex items-center space-x-4">
                 <p class="text-gray-600">
-                    Viser <span class="font-semibold text-gray-900">{{ products.items|length }}</span> af <span class="font-semibold text-gray-900">{{ products.total }}</span> produkter
+                    Viser
+                    <span class="font-semibold text-gray-900">{{ products.items|length + upsell_products|length }}</span>
+                    af
+                    <span class="font-semibold text-gray-900">{{ products.total + upsell_products|length }}</span>
+                    produkter
                 </p>
                 {% if search or current_category %}
                 <div class="flex items-center space-x-2">
@@ -100,7 +114,7 @@
                     {% endif %}
                     {% if current_category %}
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent-100 text-accent-800">
-                        {{ current_category.name }}
+                        Kategori #{{ current_category }}
                         <button class="ml-2 text-accent-600 hover:text-accent-800">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -127,8 +141,11 @@
             </div>
         </div>
         
-        <!-- Products Grid -->
+        <!-- Rental Products Grid -->
         {% if products.items %}
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold text-gray-900">Lejeprodukter</h3>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {% for product in products.items %}
             <div class="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 flex flex-col">
@@ -239,13 +256,14 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
         
         <!-- Upsell Products Section -->
         {% if upsell_products %}
         <div class="mt-16">
             <div class="mb-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-2">Tilkøbs produkter</h3>
-                <p class="text-gray-600">Tilføj disse produkter til din lejeperiode</p>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Mersalgs produkter</h3>
+                <p class="text-gray-600">Kan købes både med og uden lejeprodukter</p>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -358,7 +376,7 @@
         <div class="mt-16 flex justify-center">
             <nav class="flex items-center space-x-2">
                 {% if products.has_prev %}
-                <a href="{{ url_for('public.catalog', page=products.prev_num, search=search, category=current_category, sort=sort_by) }}" 
+                <a href="{{ url_for('public.catalog', page=products.prev_num, search=search, category=current_category, sort=sort_by, type=product_type) }}" 
                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:border-primary-300 transition-all duration-200 flex items-center space-x-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -370,7 +388,7 @@
                 {% for page_num in products.iter_pages() %}
                     {% if page_num %}
                         {% if page_num != products.page %}
-                        <a href="{{ url_for('public.catalog', page=page_num, search=search, category=current_category, sort=sort_by) }}" 
+                        <a href="{{ url_for('public.catalog', page=page_num, search=search, category=current_category, sort=sort_by, type=product_type) }}" 
                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-primary-50 hover:border-primary-300 transition-all duration-200">
                             {{ page_num }}
                         </a>
@@ -385,7 +403,7 @@
                 {% endfor %}
                 
                 {% if products.has_next %}
-                <a href="{{ url_for('public.catalog', page=products.next_num, search=search, category=current_category, sort=sort_by) }}" 
+                <a href="{{ url_for('public.catalog', page=products.next_num, search=search, category=current_category, sort=sort_by, type=product_type) }}" 
                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 hover:border-primary-300 transition-all duration-200 flex items-center space-x-2">
                     <span>Næste</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,7 +415,7 @@
         </div>
         {% endif %}
         
-        {% else %}
+        {% if not products.items and not upsell_products %}
         <!-- No results -->
         <div class="text-center py-20">
             <div class="max-w-md mx-auto">
