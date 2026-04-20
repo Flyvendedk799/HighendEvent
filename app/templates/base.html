@@ -217,24 +217,14 @@
     <!-- Navigation -->
     <nav x-data="{ mobileMenuOpen: false }" class="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-gray-200/50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-28">
+            <div class="flex h-20 items-center justify-between sm:h-24 md:h-28">
                 <div class="flex items-center">
                     <a href="{{ url_for('public.index') }}" class="flex-shrink-0 group">
-                        <div class="flex items-center space-x-4">
-                            <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="HighendEvent Logo" class="w-24 h-24 object-contain group-hover:scale-105 transition-all duration-300" style="width: 96px !important; height: 96px !important;">
-                            <h1 class="text-4xl font-bold gradient-text">HighendEvent</h1>
+                        <div class="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+                            <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="HighendEvent Logo" class="h-14 w-14 object-contain transition-all duration-300 group-hover:scale-105 sm:h-16 sm:w-16 md:h-24 md:w-24">
+                            <h1 class="whitespace-nowrap text-[2.15rem] font-bold leading-none gradient-text sm:text-4xl">HighendEvent</h1>
                         </div>
                     </a>
-                    
-                    <!-- Mobile cart button -->
-                    <div class="md:hidden ml-4">
-                        <a href="{{ url_for('shop.cart') }}" class="relative text-gray-700 hover:text-primary-600 p-2 rounded-lg hover:bg-primary-50 transition-all duration-200 group">
-                            <div class="relative">
-                                <img src="{{ url_for('static', filename='images/shopping-cart-icon-shopping-basket-on-transparent-background-free-png.webp') }}" alt="Shopping Cart" class="w-6 h-6 flex-shrink-0 filter group-hover:brightness-110 transition-all duration-200 object-contain">
-                                <span id="cart-count-mobile-header" class="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-accent-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-semibold min-w-[1rem] flex-shrink-0">{{ cart_count }}</span>
-                            </div>
-                        </a>
-                    </div>
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-1">
@@ -285,8 +275,12 @@
                     </a>
                 </div>
                 
-                <!-- Mobile menu button -->
-                <div class="md:hidden flex items-center">
+                <!-- Mobile actions -->
+                <div class="md:hidden flex items-center gap-2">
+                    <a href="{{ url_for('shop.cart') }}" class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg p-2 text-gray-700 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 group" aria-label="Åbn kurv">
+                        <img src="{{ url_for('static', filename='images/shopping-cart-icon-shopping-basket-on-transparent-background-free-png.webp') }}" alt="Shopping Cart" class="h-6 w-6 flex-shrink-0 object-contain filter transition-all duration-200 group-hover:brightness-110">
+                        <span id="cart-count-mobile-header" class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-accent-500 px-1 text-[10px] font-semibold leading-none text-white">{{ cart_count }}</span>
+                    </a>
                     <button
                         @click="mobileMenuOpen = !mobileMenuOpen"
                         class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
