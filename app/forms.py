@@ -465,6 +465,70 @@ class BulkImageUploadForm(FlaskForm):
     )
 
 
+class ManualBookingForm(FlaskForm):
+    """Admin form for creating manual bookings."""
+    customer_name = StringField(
+        'Fulde navn',
+        validators=[DataRequired(message='Navn er påkrævet'), Length(max=200)]
+    )
+    email = StringField(
+        'E-mail',
+        validators=[DataRequired(message='E-mail er påkrævet'), Email(message='Ugyldig e-mail adresse'), Length(max=200)]
+    )
+    phone = StringField(
+        'Telefonnummer',
+        validators=[DataRequired(message='Telefonnummer er påkrævet'), Length(max=20)]
+    )
+    address = StringField(
+        'Adresse',
+        validators=[DataRequired(message='Adresse er påkrævet'), Length(max=300)]
+    )
+    zip_code = StringField(
+        'Postnummer',
+        validators=[DataRequired(message='Postnummer er påkrævet'), Length(max=10)]
+    )
+    city = StringField(
+        'By',
+        validators=[DataRequired(message='By er påkrævet'), Length(max=100)]
+    )
+    delivery_type = SelectField(
+        'Leveringstype',
+        choices=[('pickup', 'Afhentning'), ('delivery', 'Levering')],
+        validators=[DataRequired()]
+    )
+    notes = TextAreaField(
+        'Bemærkninger (synlige for kunde)',
+        validators=[Optional(), Length(max=1000)],
+        render_kw={'rows': 3}
+    )
+    internal_notes = TextAreaField(
+        'Interne noter (kun admin)',
+        validators=[Optional(), Length(max=2000)],
+        render_kw={'rows': 3}
+    )
+    payment_method = SelectField(
+        'Betalingsmetode',
+        choices=[
+            ('on_site', 'Betales på stedet (kontant/MobilePay/bank)'),
+            ('payment_link', 'Generer betalingslink til kunden'),
+            ('no_payment', 'Ingen betaling (gratis / allerede betalt eksternt)'),
+        ],
+        validators=[DataRequired()]
+    )
+    send_confirmation_email = BooleanField('Send bekræftelsesemail til kunden', default=True)
+    override_availability = BooleanField('Tillad overbooking (ignorer tilgængelighed)', default=False)
+    account_number = StringField(
+        'Kontonummer',
+        validators=[Optional(), Length(max=20)],
+        render_kw={'placeholder': '1234567890'}
+    )
+    registration_number = StringField(
+        'Registreringsnummer',
+        validators=[Optional(), Length(max=10)],
+        render_kw={'placeholder': '1234'}
+    )
+
+
 class CustomerLoginForm(FlaskForm):
     """Customer login form."""
     email = StringField(

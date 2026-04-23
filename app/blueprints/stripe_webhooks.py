@@ -105,18 +105,23 @@ def handle_checkout_session_completed(session):
     """Handle successful checkout session completion."""
     try:
         current_app.logger.info(f'🔗 Processing checkout.session.completed for session: {session["id"]}')
-        
-        # Check if booking already exists (created via direct flow)
+
         existing_booking = Booking.query.filter_by(stripe_session_id=session['id']).first()
         if existing_booking:
-            current_app.logger.info(f'✅ Booking {existing_booking.booking_no} already exists for session {session["id"]}')
+            current_app.logger.info(f'✅ Booking {existing_booking.booking_no} found for session {session["id"]}')
+            # Mark as paid if still pending (covers manual bookings that used a payment link)
+            if existing_booking.status == BookingStatus.PENDING:
+                existing_booking.status = BookingStatus.DEPOSIT_PAID
+                if session.get('payment_intent'):
+                    existing_booking.stripe_payment_intent_id = session['payment_intent']
+                db.session.commit()
+                current_app.logger.info(f'✅ Booking {existing_booking.booking_no} marked as DEPOSIT_PAID via webhook')
             return True
-        
-        # For webhooks, we don't have access to Flask session, so we skip creation
-        # The booking should already be created via the direct flow after Stripe redirect
-        current_app.logger.info(f'⚠️ No existing booking found for session {session["id"]}, but this is expected in webhook context')
+
+        # No booking found – will be created via the direct redirect flow
+        current_app.logger.info(f'⚠️ No existing booking found for session {session["id"]}, expected in webhook context')
         return True
-        
+
     except Exception as e:
         current_app.logger.error(f'❌ Error handling checkout session completed: {str(e)}')
         import traceback

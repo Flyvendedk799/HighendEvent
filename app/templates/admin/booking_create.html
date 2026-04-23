@@ -1,0 +1,454 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Opret Manuel Booking - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto" x-data="manualBooking()" x-init="init()">
+
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Opret Manuel Booking</h1>
+                <p class="text-lg text-gray-600">Registrer booking modtaget via telefon, Facebook eller personligt</p>
+            </div>
+            <a href="{{ url_for('admin.bookings') }}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Tilbage til bookinger
+            </a>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.create_manual_booking') }}" @submit="syncItemsJson">
+        {{ form.hidden_tag() }}
+        <!-- Hidden field synced by Alpine before submit -->
+        <input type="hidden" name="items_json" id="items-json-field" value="[]">
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- ── Left column ─────────────────────────────────── -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Customer Info -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Kundeoplysninger
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fulde navn <span class="text-red-500">*</span></label>
+                            <input type="text" name="customer_name" id="customer_name"
+                                   value="{{ form.customer_name.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Fulde navn" required>
+                            {% for err in form.customer_name.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">E-mail <span class="text-red-500">*</span></label>
+                            <input type="email" name="email" id="email"
+                                   value="{{ form.email.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="email@example.com" required>
+                            {% for err in form.email.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefonnummer <span class="text-red-500">*</span></label>
+                            <input type="tel" name="phone" id="phone"
+                                   value="{{ form.phone.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="+45 12 34 56 78" required>
+                            {% for err in form.phone.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse <span class="text-red-500">*</span></label>
+                            <input type="text" name="address" id="address"
+                                   value="{{ form.address.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Gadenavn 1" required
+                                   onchange="window._mbPreview()">
+                            {% for err in form.address.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Postnummer <span class="text-red-500">*</span></label>
+                            <input type="text" name="zip_code" id="zip_code"
+                                   value="{{ form.zip_code.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="2100" required
+                                   onchange="window._mbPreview()">
+                            {% for err in form.zip_code.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">By <span class="text-red-500">*</span></label>
+                            <input type="text" name="city" id="city"
+                                   value="{{ form.city.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="København" required
+                                   onchange="window._mbPreview()">
+                            {% for err in form.city.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Leveringstype</label>
+                            <select name="delivery_type" id="delivery_type"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    onchange="window._mbPreview()">
+                                <option value="pickup" {% if form.delivery_type.data == 'pickup' or not form.delivery_type.data %}selected{% endif %}>Afhentning</option>
+                                <option value="delivery" {% if form.delivery_type.data == 'delivery' %}selected{% endif %}>Levering</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kontonummer</label>
+                            <input type="text" name="account_number"
+                                   value="{{ form.account_number.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="1234567890">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Registreringsnummer</label>
+                            <input type="text" name="registration_number"
+                                   value="{{ form.registration_number.data or '' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="1234">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                        </svg>
+                        Produkter
+                    </h2>
+
+                    <div class="space-y-4">
+                        <template x-for="(item, index) in items" :key="item.id">
+                            <div class="border border-gray-200 rounded-lg p-4 relative bg-gray-50">
+
+                                <!-- Remove button -->
+                                <button type="button" @click="removeItem(index)"
+                                        x-show="items.length > 1"
+                                        class="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <!-- Product -->
+                                    <div class="col-span-2">
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Produkt</label>
+                                        <select x-model="item.product_id"
+                                                @change="onProductChange(item)"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                            <option value="">-- Vælg produkt --</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}">{{ product.name }} ({{ product.daily_price_dkk|int }} kr/dag)</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <!-- Quantity -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Antal</label>
+                                        <input type="number" x-model.number="item.quantity" min="1"
+                                               @change="debouncedPreview()"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    </div>
+                                    <!-- Availability pill -->
+                                    <div class="flex items-end">
+                                        <div class="w-full">
+                                            <label class="block text-xs font-medium text-gray-500 mb-1">Lager</label>
+                                            <span class="inline-flex items-center justify-center px-2 py-2 rounded text-xs font-medium w-full"
+                                                  :class="{
+                                                      'bg-gray-100 text-gray-400': item.availability === null,
+                                                      'bg-green-100 text-green-700': item.availability !== null && item.availability >= item.quantity,
+                                                      'bg-yellow-100 text-yellow-700': item.availability !== null && item.availability > 0 && item.availability < item.quantity,
+                                                      'bg-red-100 text-red-700': item.availability !== null && item.availability === 0
+                                                  }">
+                                                <span x-text="item.availability === null ? '–'
+                                                    : item.availability === 0 ? 'Udsolgt'
+                                                    : item.availability + ' ledig'"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <!-- Start date -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Start dato</label>
+                                        <input type="date" x-model="item.start_date"
+                                               @change="checkAvailability(item); debouncedPreview()"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    </div>
+                                    <!-- End date -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Slut dato</label>
+                                        <input type="date" x-model="item.end_date"
+                                               @change="checkAvailability(item); debouncedPreview()"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                    </div>
+                                </div>
+
+                                <!-- Conflict warning -->
+                                <div x-show="item.availability !== null && item.availability < item.quantity"
+                                     class="mt-2 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 px-3 py-2 rounded flex items-start gap-1">
+                                    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                    </svg>
+                                    Konflikt med eksisterende booking. Marker "Tillad overbooking" for at fortsætte.
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <button type="button" @click="addItem()"
+                            class="mt-4 w-full inline-flex items-center justify-center px-4 py-2 border border-dashed border-indigo-300 rounded-lg text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Tilføj produkt
+                    </button>
+                </div>
+
+                <!-- Notes -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Bemærkninger
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bemærkninger (synlige for kunde)</label>
+                            <textarea name="notes" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                      placeholder="Eventuelle bemærkninger der vises til kunden...">{{ form.notes.data or '' }}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Interne noter (kun admin)</label>
+                            <textarea name="internal_notes" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                                      placeholder="Interne noter – sendes ikke til kunden...">{{ form.internal_notes.data or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Right column ─────────────────────────────────── -->
+            <div class="space-y-6">
+
+                <!-- Pricing Preview -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Prisberegning
+                    </h2>
+
+                    <div x-show="pricingLoading" class="flex items-center justify-center py-6">
+                        <svg class="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 12 0 12 0v4a8 8 0 00-8 8H4z"></path>
+                        </svg>
+                        <span class="ml-2 text-sm text-gray-500">Beregner...</span>
+                    </div>
+
+                    <p x-show="!pricingLoading && !pricing" class="text-sm text-gray-400 text-center py-2">
+                        Vælg produkter og datoer for at se pris
+                    </p>
+
+                    <div x-show="!pricingLoading && pricing" class="space-y-2 text-sm">
+                        <template x-for="li in (pricing ? pricing.line_items : [])" :key="li.name">
+                            <div class="flex justify-between text-gray-600">
+                                <span x-text="li.name + (li.description ? ' (' + li.description + ')' : '')"></span>
+                                <span x-text="fmt(li.total_price)"></span>
+                            </div>
+                        </template>
+                        <template x-if="pricing">
+                            <div class="border-t pt-2 space-y-1">
+                                <div class="flex justify-between text-gray-600" x-show="pricing.delivery_fee > 0">
+                                    <span>Levering</span>
+                                    <span x-text="fmt(pricing.delivery_fee)"></span>
+                                </div>
+                                <div class="flex justify-between text-gray-600" x-show="pricing.deposit_amount > 0">
+                                    <span>Depositum (refunderes)</span>
+                                    <span x-text="fmt(pricing.deposit_amount)"></span>
+                                </div>
+                                <div class="flex justify-between font-semibold text-gray-900 pt-1 border-t">
+                                    <span>Total</span>
+                                    <span x-text="fmt(pricing.total)"></span>
+                                </div>
+                                <div class="bg-indigo-50 rounded-lg p-3 mt-2 space-y-1 text-xs">
+                                    <div class="flex justify-between text-indigo-700">
+                                        <span>Forudbetaling (depositum + levering)</span>
+                                        <span x-text="fmt(pricing.upfront_payment)"></span>
+                                    </div>
+                                    <div class="flex justify-between text-indigo-700">
+                                        <span>Rest efter returnering</span>
+                                        <span x-text="fmt(pricing.remaining_payment)"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        Betalingsmetode
+                    </h2>
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                            <input type="radio" name="payment_method" value="on_site" checked
+                                   class="mt-0.5 h-4 w-4 text-indigo-600 border-gray-300">
+                            <div>
+                                <span class="block text-sm font-medium text-gray-700">Betales på stedet</span>
+                                <span class="block text-xs text-gray-500">Kontant, MobilePay, bankoverførsel – booking bekræftes straks</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                            <input type="radio" name="payment_method" value="payment_link"
+                                   class="mt-0.5 h-4 w-4 text-indigo-600 border-gray-300">
+                            <div>
+                                <span class="block text-sm font-medium text-gray-700">Generer betalingslink</span>
+                                <span class="block text-xs text-gray-500">Stripe-link til kunden via SMS/email – bekræftes automatisk ved betaling</span>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                            <input type="radio" name="payment_method" value="no_payment"
+                                   class="mt-0.5 h-4 w-4 text-indigo-600 border-gray-300">
+                            <div>
+                                <span class="block text-sm font-medium text-gray-700">Ingen betaling</span>
+                                <span class="block text-xs text-gray-500">Gratis / allerede betalt eksternt – booking bekræftes straks</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Indstillinger</h2>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="send_confirmation_email" checked
+                                   class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <span class="text-sm text-gray-700">Send bekræftelsesemail til kunden</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="override_availability"
+                                   class="h-4 w-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400">
+                            <span class="text-sm text-gray-700">Tillad overbooking (ignorer tilgængelighed)</span>
+                        </label>
+                        <p class="text-xs text-gray-400 pl-7">Brug kun ved specielle aftaler eller fejlretning</p>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Opret Booking
+                </button>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function manualBooking() {
+    return {
+        items: [{ id: 1, product_id: '', quantity: 1, start_date: '', end_date: '', availability: null }],
+        pricing: null,
+        pricingLoading: false,
+        _previewTimer: null,
+
+        init() {
+            // Expose debouncedPreview globally so onchange attributes on plain HTML fields can call it
+            window._mbPreview = () => this.debouncedPreview();
+        },
+
+        syncItemsJson(event) {
+            document.getElementById('items-json-field').value = JSON.stringify(this.items);
+        },
+
+        addItem() {
+            this.items.push({ id: Date.now(), product_id: '', quantity: 1, start_date: '', end_date: '', availability: null });
+        },
+
+        removeItem(index) {
+            this.items.splice(index, 1);
+            this.debouncedPreview();
+        },
+
+        onProductChange(item) {
+            this.checkAvailability(item);
+            this.debouncedPreview();
+        },
+
+        checkAvailability(item) {
+            if (!item.product_id || !item.start_date || !item.end_date) {
+                item.availability = null;
+                return;
+            }
+            const url = `/admin/api/availability-check?product_id=${item.product_id}&start_date=${item.start_date}&end_date=${item.end_date}`;
+            fetch(url)
+                .then(r => r.json())
+                .then(data => { item.availability = (data.available_quantity !== undefined) ? data.available_quantity : null; })
+                .catch(() => { item.availability = null; });
+        },
+
+        debouncedPreview() {
+            clearTimeout(this._previewTimer);
+            this._previewTimer = setTimeout(() => this.fetchPricing(), 700);
+        },
+
+        fetchPricing() {
+            const valid = this.items.filter(i => i.product_id && i.start_date && i.end_date && i.quantity > 0);
+            if (!valid.length) { this.pricing = null; return; }
+
+            const deliveryType = (document.getElementById('delivery_type') || {}).value || 'pickup';
+            const address  = (document.getElementById('address')  || {}).value || '';
+            const zipCode  = (document.getElementById('zip_code') || {}).value || '';
+            const city     = (document.getElementById('city')     || {}).value || '';
+            const csrf     = document.querySelector('[name="csrf_token"]').value;
+
+            const fd = new FormData();
+            fd.append('csrf_token', csrf);
+            fd.append('items', JSON.stringify(valid));
+            fd.append('delivery_type', deliveryType);
+            fd.append('address', address);
+            fd.append('zip_code', zipCode);
+            fd.append('city', city);
+
+            this.pricingLoading = true;
+            fetch('/admin/api/bookings/preview-pricing', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => { this.pricing = data.error ? null : data; })
+                .catch(() => { this.pricing = null; })
+                .finally(() => { this.pricingLoading = false; });
+        },
+
+        fmt(val) {
+            return new Intl.NumberFormat('da-DK', {
+                style: 'currency', currency: 'DKK',
+                minimumFractionDigits: 0, maximumFractionDigits: 0
+            }).format(val || 0);
+        }
+    };
+}
+</script>
+{% endblock %}
