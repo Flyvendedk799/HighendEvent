@@ -15,12 +15,14 @@ import uuid
 from app import db, csrf
 
 from app.models import (
-    User, Product, Category, Booking, BookingItem, BookingStatus, 
-    BlackoutDate, DeliverySetting, CompanyLocation, CMSBlock, UserRole, UpsellProduct, ProductUpsell, NewsletterSubscription, ProductImage
+    User, Product, Category, Booking, BookingItem, BookingStatus,
+    BlackoutDate, DeliverySetting, CompanyLocation, CMSBlock, UserRole, UpsellProduct, ProductUpsell,
+    NewsletterSubscription, ProductImage, Customer, DeliveryType
 )
 from app.forms import (
-    LoginForm, ProductForm, CategoryForm, BlackoutDateForm, 
-    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm, ProductImageForm, BulkImageUploadForm
+    LoginForm, ProductForm, CategoryForm, BlackoutDateForm,
+    CMSBlockForm, DeliverySettingForm, CompanyLocationForm, UpsellProductForm, ProductImageForm, BulkImageUploadForm,
+    ManualBookingForm
 )
 from app.services.availability import AvailabilityService
 from app.services.pricing import PricingService
@@ -578,6 +580,327 @@ def reorder_product_images(product_id):
         return jsonify({'success': False, 'message': f'Fejl ved sortering: {str(e)}'}), 500
 
 
+@bp.route('/api/availability-check')
+@login_required
+def api_availability_check():
+    """AJAX: return available quantity for a product and date range."""
+    product_id = request.args.get('product_id', type=int)
+    start_str = request.args.get('start_date')
+    end_str = request.args.get('end_date')
+
+    if not product_id or not start_str or not end_str:
+        return jsonify({'error': 'Missing parameters'}), 400
+
+    try:
+        start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+
+    avail = AvailabilityService(db.session).available_quantity(product_id, start_date, end_date)
+    return jsonify({'available_quantity': avail})
+
+
+@bp.route('/bookings/create', methods=['GET', 'POST'])
+@login_required
+def create_manual_booking():
+    """Create a manual booking from the admin panel."""
+    import json as json_module
+    from app.models import BookingItem, BookingUpsellItem, Customer, DeliveryType
+    from app.services.pricing import PricingService, BookingItemDTO
+    from app.utils.booking import generate_booking_number
+
+    form = ManualBookingForm()
+    products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
+
+    if request.method == 'POST' and form.validate_on_submit():
+        # Parse dynamic product rows submitted as JSON
+        items_json = request.form.get('items_json', '[]')
+        try:
+            items_data = json_module.loads(items_json)
+        except (ValueError, TypeError):
+            flash('Ugyldig produktdata – prøv igen', 'error')
+            return render_template('admin/booking_create.html', form=form, products=products)
+
+        if not items_data:
+            flash('Tilføj mindst ét produkt til bookingen', 'error')
+            return render_template('admin/booking_create.html', form=form, products=products)
+
+        delivery_type = DeliveryType.PICKUP if form.delivery_type.data == 'pickup' else DeliveryType.DELIVERY
+
+        # Build DTOs and parse dates
+        booking_items_dto = []
+        date_errors = []
+        for item in items_data:
+            try:
+                start_date = datetime.strptime(item['start_date'], '%Y-%m-%d').date()
+                end_date = datetime.strptime(item['end_date'], '%Y-%m-%d').date()
+            except (ValueError, KeyError):
+                date_errors.append(f'Ugyldige datoer for produkt ID {item.get("product_id")}')
+                continue
+            product = Product.query.get(item.get('product_id'))
+            if not product:
+                date_errors.append(f'Produkt ID {item.get("product_id")} ikke fundet')
+                continue
+            booking_items_dto.append(BookingItemDTO(
+                product_id=product.id,
+                product_name=product.name,
+                quantity=int(item.get('quantity', 1)),
+                start_date=start_date,
+                end_date=end_date,
+                delivery_type=delivery_type
+            ))
+
+        if date_errors:
+            for err in date_errors:
+                flash(err, 'error')
+            return render_template('admin/booking_create.html', form=form, products=products)
+
+        # Check availability (warn but allow override)
+        if not form.override_availability.data:
+            avail_service = AvailabilityService(db.session)
+            avail_errors = []
+            for dto in booking_items_dto:
+                avail = avail_service.available_quantity(dto.product_id, dto.start_date, dto.end_date)
+                if avail < dto.quantity:
+                    avail_errors.append(
+                        f'{dto.product_name}: kun {avail} tilgængelig ({dto.quantity} anmodet)'
+                    )
+            if avail_errors:
+                for err in avail_errors:
+                    flash(f'Tilgængelighed: {err}', 'error')
+                flash('Marker "Tillad overbooking" for at oprette alligevel.', 'warning')
+                return render_template('admin/booking_create.html', form=form, products=products)
+
+        # Calculate pricing
+        pricing_service = PricingService(db.session, current_app.config['VAT_PERCENT'])
+        pricing = pricing_service.calculate_booking_pricing(
+            booking_items_dto,
+            delivery_type,
+            form.address.data,
+            form.zip_code.data,
+            form.city.data
+        )
+
+        # Delivery breakdown
+        delivery_breakdown = None
+        if pricing.delivery_fee > 0 and delivery_type == DeliveryType.DELIVERY:
+            delivery_setting = DeliverySetting.query.filter_by(type=DeliveryType.DELIVERY).first()
+            if delivery_setting:
+                distance_km = None
+                company_location = CompanyLocation.query.filter_by(is_primary=True, is_active=True).first()
+                if company_location and company_location.latitude and company_location.longitude:
+                    distance_km = DistanceService.calculate_delivery_distance(
+                        company_location.latitude, company_location.longitude,
+                        form.address.data, form.zip_code.data, form.city.data
+                    )
+                delivery_breakdown = {
+                    'base_fee': float(delivery_setting.base_fee_dkk),
+                    'per_km_fee': float(delivery_setting.per_km_fee_dkk),
+                    'free_delivery_km': delivery_setting.free_delivery_km,
+                    'distance_km': round(distance_km, 2) if distance_km else None,
+                    'chargeable_km': max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else None,
+                    'km_fee': float(delivery_setting.per_km_fee_dkk) * max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km else 0,
+                }
+
+        # Find or create customer
+        customer = Customer.query.filter_by(email=form.email.data).first()
+        if not customer:
+            name_parts = form.customer_name.data.strip().split(' ', 1)
+            customer = Customer(
+                first_name=name_parts[0],
+                last_name=name_parts[1] if len(name_parts) > 1 else 'Kunde',
+                email=form.email.data,
+                phone=form.phone.data,
+                address=form.address.data,
+                zip_code=form.zip_code.data,
+                city=form.city.data,
+                email_verified=False,
+                password_hash='GUEST_ACCOUNT_PENDING'
+            )
+            db.session.add(customer)
+            db.session.flush()
+
+        # Determine booking date range (span all items)
+        all_starts = [dto.start_date for dto in booking_items_dto]
+        all_ends = [dto.end_date for dto in booking_items_dto]
+        booking_start = min(all_starts)
+        booking_end = max(all_ends)
+
+        # Determine initial status
+        payment_method = form.payment_method.data
+        initial_status = BookingStatus.PENDING if payment_method == 'payment_link' else BookingStatus.DEPOSIT_PAID
+
+        booking = Booking(
+            booking_no=generate_booking_number(),
+            customer_id=customer.id,
+            customer_name=form.customer_name.data,
+            email=form.email.data,
+            phone=form.phone.data,
+            address=form.address.data,
+            zip_code=form.zip_code.data,
+            city=form.city.data,
+            start_date=booking_start,
+            end_date=booking_end,
+            subtotal_dkk=pricing.subtotal,
+            vat_dkk=pricing.vat_amount,
+            deposit_dkk=pricing.deposit_amount,
+            delivery_fee_dkk=pricing.delivery_fee,
+            delivery_breakdown=delivery_breakdown,
+            total_dkk=pricing.total,
+            upfront_payment_dkk=pricing.upfront_payment,
+            remaining_payment_dkk=pricing.remaining_payment,
+            status=initial_status,
+            notes=form.notes.data,
+            internal_notes=form.internal_notes.data,
+            account_number=form.account_number.data or None,
+            registration_number=form.registration_number.data or None,
+            delivery_type=form.delivery_type.data,
+        )
+        db.session.add(booking)
+        db.session.flush()
+
+        # Create booking items
+        for i, dto in enumerate(booking_items_dto):
+            unit_price = pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')
+            booking_item = BookingItem(
+                booking_id=booking.id,
+                product_id=dto.product_id,
+                quantity=dto.quantity,
+                unit_price_dkk=unit_price,
+                name_snapshot=dto.product_name,
+            )
+            db.session.add(booking_item)
+
+        db.session.commit()
+
+        # Generate Stripe payment link if requested, store URL for one-time display
+        if payment_method == 'payment_link':
+            try:
+                from app.blueprints.shop import create_stripe_session
+                checkout_session = create_stripe_session(booking)
+                # Stash in session so booking_detail can show a copy-to-clipboard banner
+                session['_mb_payment_url'] = checkout_session.url
+                session['_mb_payment_url_booking'] = booking.id
+            except Exception as e:
+                current_app.logger.error(f'Failed to create Stripe payment link: {e}')
+                flash('Booking oprettet, men betalingslink fejlede. Brug "Generer betalingslink" på booking-siden.', 'warning')
+
+        # Send confirmation email
+        if form.send_confirmation_email.data:
+            try:
+                from app.services.email_service import email_service
+                email_service.send_order_confirmation(booking.email, booking.customer_name, booking)
+            except Exception as e:
+                current_app.logger.error(f'Failed to send confirmation email: {e}')
+
+        flash(f'Manuel booking {booking.booking_no} oprettet', 'success')
+        return redirect(url_for('admin.booking_detail', id=booking.id))
+
+    return render_template('admin/booking_create.html', form=form, products=products)
+
+
+@bp.route('/api/bookings/preview-pricing', methods=['POST'])
+@login_required
+def preview_booking_pricing():
+    """AJAX endpoint: calculate pricing preview for manual booking form."""
+    import json as json_module
+    from app.models import DeliveryType
+    from app.services.pricing import PricingService, BookingItemDTO
+
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except BadRequest:
+        return jsonify({'error': 'Invalid CSRF token'}), 400
+
+    try:
+        items = json_module.loads(request.form.get('items', '[]'))
+        delivery_type_str = request.form.get('delivery_type', 'pickup')
+        customer_address = request.form.get('address', '')
+        customer_zip = request.form.get('zip_code', '')
+        customer_city = request.form.get('city', '')
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Ugyldig data'}), 400
+
+    if not items:
+        return jsonify({'subtotal': 0, 'deposit_amount': 0, 'delivery_fee': 0, 'total': 0,
+                        'upfront_payment': 0, 'remaining_payment': 0, 'line_items': []})
+
+    delivery_type = DeliveryType.PICKUP if delivery_type_str == 'pickup' else DeliveryType.DELIVERY
+    booking_items_dto = []
+    for item in items:
+        try:
+            start_date = datetime.strptime(item['start_date'], '%Y-%m-%d').date()
+            end_date = datetime.strptime(item['end_date'], '%Y-%m-%d').date()
+            product = Product.query.get(item['product_id'])
+            if not product:
+                continue
+            booking_items_dto.append(BookingItemDTO(
+                product_id=product.id,
+                product_name=product.name,
+                quantity=int(item.get('quantity', 1)),
+                start_date=start_date,
+                end_date=end_date,
+                delivery_type=delivery_type,
+            ))
+        except (ValueError, KeyError):
+            continue
+
+    if not booking_items_dto:
+        return jsonify({'error': 'Ingen gyldige produkter'}), 400
+
+    pricing_service = PricingService(db.session, current_app.config['VAT_PERCENT'])
+    pricing = pricing_service.calculate_booking_pricing(
+        booking_items_dto, delivery_type, customer_address, customer_zip, customer_city
+    )
+
+    return jsonify({
+        'subtotal': float(pricing.subtotal),
+        'deposit_amount': float(pricing.deposit_amount),
+        'delivery_fee': float(pricing.delivery_fee),
+        'total': float(pricing.total),
+        'upfront_payment': float(pricing.upfront_payment),
+        'remaining_payment': float(pricing.remaining_payment),
+        'line_items': [
+            {
+                'name': li.name,
+                'quantity': li.quantity,
+                'unit_price': float(li.unit_price),
+                'total_price': float(li.total_price),
+                'description': li.description or '',
+            }
+            for li in pricing.line_items
+        ],
+    })
+
+
+@bp.route('/bookings/<int:id>/generate-payment-link', methods=['POST'])
+@login_required
+def generate_payment_link(id):
+    """Generate a Stripe payment link for a PENDING booking."""
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except BadRequest:
+        return jsonify({'error': 'Invalid CSRF token'}), 400
+
+    booking = Booking.query.get_or_404(id)
+
+    if booking.status != BookingStatus.PENDING:
+        return jsonify({'error': 'Betalingslink kan kun genereres for bookinger med status "Afventer"'}), 400
+
+    try:
+        from app.blueprints.shop import create_stripe_session
+        checkout_session = create_stripe_session(booking)
+        return jsonify({
+            'success': True,
+            'payment_url': checkout_session.url,
+            'session_id': checkout_session.id,
+        })
+    except Exception as e:
+        current_app.logger.error(f'Failed to generate payment link for booking {id}: {e}')
+        return jsonify({'error': f'Fejl: {str(e)}'}), 500
+
+
 @bp.route('/bookings')
 @login_required
 def bookings():
@@ -965,15 +1288,22 @@ def booking_detail(id):
     booking = Booking.query.options(
         joinedload(Booking.items).joinedload(BookingItem.upsell_items)
     ).get_or_404(id)
-    
+
     # Calculate upsell total
     from decimal import Decimal
     upsell_total = Decimal('0')
     for item in booking.items:
         for upsell in item.upsell_items:
             upsell_total += upsell.unit_price_dkk * upsell.quantity
-    
-    return render_template('admin/booking_detail.html', booking=booking, upsell_total=upsell_total)
+
+    # One-time payment URL banner (set when manual booking is created with payment_link option)
+    just_created_payment_url = None
+    if session.get('_mb_payment_url_booking') == booking.id:
+        just_created_payment_url = session.pop('_mb_payment_url', None)
+        session.pop('_mb_payment_url_booking', None)
+
+    return render_template('admin/booking_detail.html', booking=booking, upsell_total=upsell_total,
+                           just_created_payment_url=just_created_payment_url)
 
 
 @bp.route('/bookings/<int:id>/update-status', methods=['POST'])
