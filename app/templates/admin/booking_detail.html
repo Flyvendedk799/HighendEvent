@@ -152,7 +152,8 @@
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500">
-                                <div>{{ item.total_dkk | currency }}</div>
+                                <div>{{ item.line_total | currency }}</div>
+                                <div class="text-xs text-gray-400">{{ item.unit_price_dkk | currency }}/dag × {{ item.rental_days }} dag{{ 'e' if item.rental_days != 1 else '' }}</div>
                                 {% if item.upsell_items %}
                                 <div class="mt-1 pl-3 text-xs text-gray-500">
                                     {% for upsell in item.upsell_items %}
