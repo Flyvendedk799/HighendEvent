@@ -1084,14 +1084,26 @@ def bookings():
         Booking.is_deleted == False
     ).with_entities(func.sum(Booking.total_dkk)).scalar() or Decimal('0')
 
-    # Calculate upsell totals for each booking
+    # Calculate upsell totals + canonical grand totals for each booking. We
+    # recompute the grand total from line items rather than reading
+    # booking.total_dkk because earlier manual bookings have inconsistent
+    # aggregate fields (some had upsells rolled into subtotal, some didn't).
     booking_upsells = {}
+    booking_totals = {}
     for booking in bookings.items:
         upsell_total = Decimal('0')
         for item in booking.items:
             for upsell in item.upsell_items:
                 upsell_total += upsell.unit_price_dkk * upsell.quantity
         booking_upsells[booking.id] = upsell_total
+
+        rental_subtotal = sum((item.line_total for item in booking.items), Decimal('0'))
+        booking_totals[booking.id] = (
+            rental_subtotal
+            + upsell_total
+            + (booking.delivery_fee_dkk or Decimal('0'))
+            + (booking.deposit_dkk or Decimal('0'))
+        )
 
     return render_template('admin/bookings.html',
                          bookings=bookings,
@@ -1107,7 +1119,8 @@ def bookings():
                          fully_paid_count=fully_paid_count,
                          cancelled_count=cancelled_count,
                          total_revenue=total_revenue,
-                         booking_upsells=booking_upsells)
+                         booking_upsells=booking_upsells,
+                         booking_totals=booking_totals)
 
 
 @bp.route('/bookings/soft-delete', methods=['POST'])

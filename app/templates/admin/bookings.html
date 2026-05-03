@@ -302,7 +302,7 @@
                             </div>
                         </td>
                         <td class="px-3 py-3 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ (booking.total_dkk + booking_upsells.get(booking.id, 0)) | currency }}</div>
+                            <div class="text-sm font-medium text-gray-900">{{ booking_totals.get(booking.id, booking.total_dkk) | currency }}</div>
                             {% if booking.deposit_dkk > 0 %}
                             <div class="text-xs text-gray-500">Dep: {{ booking.deposit_dkk | currency }}</div>
                             {% endif %}
@@ -399,7 +399,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Beløb</div>
-                        <div class="text-sm font-medium text-gray-900">{{ (booking.total_dkk + booking_upsells.get(booking.id, 0)) | currency }}</div>
+                        <div class="text-sm font-medium text-gray-900">{{ booking_totals.get(booking.id, booking.total_dkk) | currency }}</div>
                         {% if booking.deposit_dkk > 0 %}
                         <div class="text-xs text-gray-500">Depositum: {{ booking.deposit_dkk | currency }}</div>
                         {% endif %}
