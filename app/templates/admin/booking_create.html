@@ -204,7 +204,7 @@
                                 </div>
 
                                 <div class="mt-3 pt-3 border-t border-gray-200">
-                                    <label class="block text-xs font-medium text-gray-500 mb-2">Prisjustering (kun denne booking)</label>
+                                    <label class="block text-xs font-semibold text-indigo-700 mb-2">Hovedprodukt prisjustering</label>
                                     <div class="grid grid-cols-3 gap-2">
                                         <button type="button" @click="setItemOverrideMode(item, 'none')" class="px-2 py-1.5 text-xs rounded border"
                                                 :class="item.priceOverrideMode === 'none' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-gray-300 text-gray-600'">Ingen</button>
@@ -213,10 +213,17 @@
                                         <button type="button" @click="setItemOverrideMode(item, 'percent')" class="px-2 py-1.5 text-xs rounded border"
                                                 :class="item.priceOverrideMode === 'percent' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-gray-300 text-gray-600'">%</button>
                                     </div>
-                                    <div x-show="item.priceOverrideMode !== 'none'" class="mt-2">
-                                        <input type="number" step="0.01" x-model="item.priceOverrideValue" @input="debouncedPreview()"
-                                               :placeholder="item.priceOverrideMode === 'direct' ? 'Ny enhedspris i kr' : 'Fx -10 eller 15'"
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                    <div x-show="item.priceOverrideMode !== 'none'" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-[11px] text-gray-500 mb-0.5">Rabat %</label>
+                                            <input type="number" step="0.01" min="0" :value="itemDiscountPercent(item)" @input="setItemDiscountPercent(item, $event.target.value)"
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] text-gray-500 mb-0.5">Ny stk pris (kr)</label>
+                                            <input type="number" step="0.01" min="0" :value="itemOverridePrice(item)" @input="setItemOverridePrice(item, $event.target.value)"
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -273,6 +280,7 @@
                                                 </div>
                                             </div>
                                             <div class="ml-2 mb-2">
+                                                <p class="text-[11px] font-semibold text-purple-700 mb-1">Tilkøb prisjustering</p>
                                                 <div class="grid grid-cols-3 gap-2 max-w-xs">
                                                     <button type="button" @click="setUpsellOverrideMode(item, up.id, 'none')" class="px-2 py-1 text-[11px] rounded border"
                                                             :class="(!item.upsellOverrides || !item.upsellOverrides[up.id] || item.upsellOverrides[up.id].mode === 'none') ? 'border-purple-500 text-purple-700 bg-purple-50' : 'border-gray-300 text-gray-600'">Ingen</button>
@@ -281,11 +289,18 @@
                                                     <button type="button" @click="setUpsellOverrideMode(item, up.id, 'percent')" class="px-2 py-1 text-[11px] rounded border"
                                                             :class="item.upsellOverrides && item.upsellOverrides[up.id] && item.upsellOverrides[up.id].mode === 'percent' ? 'border-purple-500 text-purple-700 bg-purple-50' : 'border-gray-300 text-gray-600'">%</button>
                                                 </div>
-                                                <input x-show="item.upsellOverrides && item.upsellOverrides[up.id] && item.upsellOverrides[up.id].mode !== 'none'"
-                                                       type="number" step="0.01"
-                                                       :value="item.upsellOverrides && item.upsellOverrides[up.id] ? item.upsellOverrides[up.id].value : ''"
-                                                       @input="if(!item.upsellOverrides){item.upsellOverrides={}}; if(!item.upsellOverrides[up.id]){item.upsellOverrides[up.id]={mode:'none',value:''}}; item.upsellOverrides[up.id].value=$event.target.value; debouncedPreview()"
-                                                       class="mt-1 w-36 px-2 py-1 border border-gray-300 rounded text-xs">
+                                                <div x-show="item.upsellOverrides && item.upsellOverrides[up.id] && item.upsellOverrides[up.id].mode !== 'none'" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label class="block text-[10px] text-gray-500 mb-0.5">Rabat %</label>
+                                                        <input type="number" step="0.01" min="0" :value="upsellDiscountPercent(item, up)" @input="setUpsellDiscountPercent(item, up, $event.target.value)"
+                                                               class="w-full px-2 py-1 border border-gray-300 rounded text-xs">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] text-gray-500 mb-0.5">Ny stk pris (kr)</label>
+                                                        <input type="number" step="0.01" min="0" :value="upsellOverridePrice(item, up)" @input="setUpsellOverridePrice(item, up, $event.target.value)"
+                                                               class="w-full px-2 py-1 border border-gray-300 rounded text-xs">
+                                                    </div>
+                                                </div>
                                             </div>
                                         </template>
                                     </div>
@@ -538,6 +553,11 @@ function _mbBlankItem(id) {
 }
 
 function manualBooking() {
+    const products = {
+        {% for product in products %}
+        "{{ product.id }}": {{ product.daily_price_dkk|float }},
+        {% endfor %}
+    };
     return {
         items: [_mbBlankItem(1)],
         pricing: null,
@@ -622,12 +642,68 @@ function manualBooking() {
             if (mode === 'none') item.priceOverrideValue = '';
             this.debouncedPreview();
         },
+        productBasePrice(item) {
+            return Number(products[String(item.product_id)] || 0);
+        },
+        itemDiscountPercent(item) {
+            const base = this.productBasePrice(item);
+            const val = Number(item.priceOverrideValue || 0);
+            if (!base) return 0;
+            return item.priceOverrideMode === 'direct' ? ((1 - (val / base)) * 100) : val;
+        },
+        itemOverridePrice(item) {
+            const base = this.productBasePrice(item);
+            const val = Number(item.priceOverrideValue || 0);
+            if (!base) return 0;
+            return item.priceOverrideMode === 'direct' ? val : (base * (1 - (val / 100)));
+        },
+        setItemDiscountPercent(item, pctRaw) {
+            const pct = Math.max(0, Number(pctRaw || 0));
+            item.priceOverrideMode = 'percent';
+            item.priceOverrideValue = pct;
+            this.debouncedPreview();
+        },
+        setItemOverridePrice(item, priceRaw) {
+            const price = Math.max(0, Number(priceRaw || 0));
+            item.priceOverrideMode = 'direct';
+            item.priceOverrideValue = price;
+            this.debouncedPreview();
+        },
 
         setUpsellOverrideMode(item, upsellId, mode) {
             if (!item.upsellOverrides) item.upsellOverrides = {};
             if (!item.upsellOverrides[upsellId]) item.upsellOverrides[upsellId] = { mode: 'none', value: '' };
             item.upsellOverrides[upsellId].mode = mode;
             if (mode === 'none') item.upsellOverrides[upsellId].value = '';
+            this.debouncedPreview();
+        },
+        upsellBasePrice(upsell) {
+            return Number(upsell && upsell.price ? upsell.price : 0);
+        },
+        upsellDiscountPercent(item, upsell) {
+            const ov = (item.upsellOverrides || {})[upsell.id] || { mode: 'none', value: 0 };
+            const base = this.upsellBasePrice(upsell);
+            const val = Number(ov.value || 0);
+            if (!base) return 0;
+            return ov.mode === 'direct' ? ((1 - (val / base)) * 100) : val;
+        },
+        upsellOverridePrice(item, upsell) {
+            const ov = (item.upsellOverrides || {})[upsell.id] || { mode: 'none', value: 0 };
+            const base = this.upsellBasePrice(upsell);
+            const val = Number(ov.value || 0);
+            if (!base) return 0;
+            return ov.mode === 'direct' ? val : (base * (1 - (val / 100)));
+        },
+        setUpsellDiscountPercent(item, upsell, pctRaw) {
+            const pct = Math.max(0, Number(pctRaw || 0));
+            if (!item.upsellOverrides) item.upsellOverrides = {};
+            item.upsellOverrides[upsell.id] = { mode: 'percent', value: pct };
+            this.debouncedPreview();
+        },
+        setUpsellOverridePrice(item, upsell, priceRaw) {
+            const price = Math.max(0, Number(priceRaw || 0));
+            if (!item.upsellOverrides) item.upsellOverrides = {};
+            item.upsellOverrides[upsell.id] = { mode: 'direct', value: price };
             this.debouncedPreview();
         },
 
