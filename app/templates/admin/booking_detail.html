@@ -169,62 +169,130 @@
         </div>
 
         <!-- Payment Information -->
-        <div class="mt-6 bg-gray-50 rounded-lg p-4">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Betalingsinformation</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% if booking.delivery_fee_dkk > 0 %}
-                <div>
-                    <div class="text-sm text-gray-600">Leveringsgebyr:</div>
-                    <div class="text-lg font-semibold text-orange-600">{{ booking.delivery_fee_dkk | currency }}</div>
-                    
-                    <!-- Delivery fee breakdown -->
+        <div class="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <h3 class="text-base font-semibold text-gray-900">Prisoversigt</h3>
+                <span class="text-xs text-gray-500">DKK · inkl. moms</span>
+            </div>
+
+            <div class="px-4 py-3 divide-y divide-gray-100 text-sm">
+                <!-- Leje (rental subtotal) -->
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-700">Leje</span>
+                    <span class="text-gray-900 font-medium">{{ booking.subtotal_dkk | currency }}</span>
+                </div>
+
+                <!-- Tilkøb -->
+                {% if upsell_total > 0 %}
+                <div class="py-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">Tilkøb</span>
+                        <span class="text-gray-900 font-medium">{{ upsell_total | currency }}</span>
+                    </div>
+                    <ul class="mt-1 ml-4 text-xs text-gray-500 space-y-0.5">
+                        {% for item in booking.items %}
+                            {% for upsell in item.upsell_items %}
+                            <li class="flex justify-between gap-2">
+                                <span>{{ upsell.name_snapshot }} × {{ upsell.quantity }}</span>
+                                <span>{{ (upsell.unit_price_dkk * upsell.quantity) | currency }}</span>
+                            </li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Levering -->
+                {% if booking.delivery_fee_dkk and booking.delivery_fee_dkk > 0 %}
+                <div class="py-2" x-data="{ open: false }">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700 flex items-center gap-2">
+                            Levering
+                            {% if booking.delivery_breakdown %}
+                            <button type="button" @click="open = !open"
+                                    class="text-xs text-indigo-600 hover:text-indigo-800 underline">
+                                <span x-text="open ? 'skjul' : 'detaljer'"></span>
+                            </button>
+                            {% endif %}
+                        </span>
+                        <span class="text-gray-900 font-medium">{{ booking.delivery_fee_dkk | currency }}</span>
+                    </div>
                     {% if booking.delivery_breakdown %}
-                    <div class="mt-2 text-xs text-gray-500 space-y-1">
-                        {% if booking.delivery_breakdown.base_fee > 0 %}
+                    <div x-show="open" x-transition x-cloak
+                         class="mt-2 ml-4 px-3 py-2 bg-indigo-50/60 border border-indigo-100 rounded-md text-xs space-y-1 text-indigo-800">
+                        {% if booking.delivery_breakdown.base_fee %}
                         <div class="flex justify-between">
-                            <span>Basisgebyr:</span>
+                            <span>Basisgebyr</span>
                             <span>{{ booking.delivery_breakdown.base_fee | currency }}</span>
                         </div>
                         {% endif %}
-                        {% if booking.delivery_breakdown.chargeable_km > 0 and booking.delivery_breakdown.km_fee > 0 %}
+                        {% if booking.delivery_breakdown.distance_km %}
                         <div class="flex justify-between">
-                            <span>{{ booking.delivery_breakdown.chargeable_km }} km × {{ booking.delivery_breakdown.per_km_fee | currency }}:</span>
-                            <span>{{ booking.delivery_breakdown.km_fee | currency }}</span>
+                            <span>Afstand til kunde</span>
+                            <span>{{ booking.delivery_breakdown.distance_km }} km</span>
                         </div>
                         {% endif %}
-                        {% if booking.delivery_breakdown.distance_km %}
-                        <div class="text-gray-400">
-                            Afstand: {{ booking.delivery_breakdown.distance_km }} km
+                        {% if booking.delivery_breakdown.free_delivery_km %}
+                        <div class="flex justify-between text-indigo-700">
+                            <span>Fri levering</span>
+                            <span>første {{ booking.delivery_breakdown.free_delivery_km }} km</span>
+                        </div>
+                        {% endif %}
+                        {% if booking.delivery_breakdown.chargeable_km and booking.delivery_breakdown.km_fee %}
+                        <div class="flex justify-between">
+                            <span>{{ booking.delivery_breakdown.chargeable_km }} km × {{ booking.delivery_breakdown.per_km_fee | currency }}/km</span>
+                            <span>{{ booking.delivery_breakdown.km_fee | currency }}</span>
                         </div>
                         {% endif %}
                     </div>
                     {% endif %}
                 </div>
                 {% endif %}
-                <div>
-                    <div class="text-sm text-gray-600">Deposit + Levering (betalt):</div>
-                    <div class="text-lg font-semibold text-green-600">{{ booking.upfront_payment_dkk | currency }}</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-600">Leje (efter returnering):</div>
-                    <div class="text-lg font-semibold text-blue-600">{{ booking.remaining_payment_dkk | currency }}</div>
-                </div>
-                {% if upsell_total > 0 %}
-                <div>
-                    <div class="text-sm text-gray-600">Tilkøb (betalt):</div>
-                    <div class="text-lg font-semibold text-purple-600">{{ upsell_total | currency }}</div>
+
+                <!-- Depositum (only if > 0) -->
+                {% if booking.deposit_dkk and booking.deposit_dkk > 0 %}
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-700">Depositum (refunderes)</span>
+                    <span class="text-gray-900 font-medium">{{ booking.deposit_dkk | currency }}</span>
                 </div>
                 {% endif %}
-                <div>
-                    <div class="text-sm text-gray-600">Total booking:</div>
-                    <div class="text-lg font-semibold text-gray-900">{{ (booking.total_dkk + upsell_total) | currency }}</div>
+
+                <!-- Total -->
+                <div class="flex justify-between py-2.5 bg-gray-50 -mx-4 px-4 mt-1">
+                    <span class="text-gray-900 font-semibold">Total</span>
+                    <span class="text-gray-900 font-bold text-base">{{ booking.total_dkk | currency }}</span>
                 </div>
-                <div>
-                    <div class="text-sm text-gray-600">Deposit refunderet:</div>
-                    <div class="text-lg font-semibold {% if booking.deposit_refunded %}text-green-600{% else %}text-gray-600{% endif %}">
-                        {% if booking.deposit_refunded %}Ja{% else %}Nej{% endif %}
+
+                <!-- Forudbetaling / Resterende -->
+                <div class="pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-green-50 border border-green-100 rounded-md px-3 py-2">
+                        <div class="text-[11px] uppercase tracking-wide text-green-700 font-semibold">
+                            Forudbetalt
+                            <span class="text-green-600 normal-case font-normal">
+                                {% set parts = [] %}
+                                {% if booking.deposit_dkk and booking.deposit_dkk > 0 %}{% set _ = parts.append('depositum') %}{% endif %}
+                                {% if booking.delivery_fee_dkk and booking.delivery_fee_dkk > 0 %}{% set _ = parts.append('levering') %}{% endif %}
+                                {% if upsell_total and upsell_total > 0 %}{% set _ = parts.append('tilkøb') %}{% endif %}
+                                {% if parts %}({{ parts | join(' + ') }}){% endif %}
+                            </span>
+                        </div>
+                        <div class="text-lg font-bold text-green-700 mt-0.5">{{ booking.upfront_payment_dkk | currency }}</div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-100 rounded-md px-3 py-2">
+                        <div class="text-[11px] uppercase tracking-wide text-blue-700 font-semibold">Rest efter returnering</div>
+                        <div class="text-lg font-bold text-blue-700 mt-0.5">{{ booking.remaining_payment_dkk | currency }}</div>
                     </div>
                 </div>
+
+                <!-- Deposit refund status (only if there's a deposit) -->
+                {% if booking.deposit_dkk and booking.deposit_dkk > 0 %}
+                <div class="flex justify-between items-center pt-3 mt-1 text-xs">
+                    <span class="text-gray-500">Depositum refunderet</span>
+                    <span class="font-medium {% if booking.deposit_refunded %}text-green-600{% else %}text-gray-600{% endif %}">
+                        {% if booking.deposit_refunded %}Ja{% else %}Nej, endnu ikke{% endif %}
+                    </span>
+                </div>
+                {% endif %}
             </div>
             
             {% if booking.return_condition %}

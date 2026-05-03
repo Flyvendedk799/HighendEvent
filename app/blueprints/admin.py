@@ -819,9 +819,10 @@ def create_manual_booking():
                 ))
                 upsells_total += upsell_product.price_dkk * qty_int
 
-        # Roll upsells into booking totals (paid upfront together with deposit/delivery)
+        # Roll upsells into total + upfront payment (they're charged together with
+        # the deposit/delivery). subtotal_dkk stays as rental-only so the booking
+        # detail "Leje" line stays accurate across customer + admin flows.
         if upsells_total > 0:
-            booking.subtotal_dkk += upsells_total
             booking.total_dkk += upsells_total
             booking.upfront_payment_dkk += upsells_total
 
@@ -876,8 +877,12 @@ def preview_booking_pricing():
         return jsonify({'error': 'Ugyldig data'}), 400
 
     if not items:
-        return jsonify({'subtotal': 0, 'deposit_amount': 0, 'delivery_fee': 0, 'total': 0,
-                        'upfront_payment': 0, 'remaining_payment': 0, 'line_items': []})
+        return jsonify({
+            'subtotal': 0, 'rental_subtotal': 0, 'upsells_total': 0,
+            'deposit_amount': 0, 'delivery_fee': 0, 'delivery_breakdown': None,
+            'total': 0, 'upfront_payment': 0, 'remaining_payment': 0,
+            'rental_line_items': [], 'upsell_line_items': [],
+        })
 
     delivery_type = DeliveryType.PICKUP if delivery_type_str == 'pickup' else DeliveryType.DELIVERY
     booking_items_dto = []
@@ -930,10 +935,11 @@ def preview_booking_pricing():
                 'quantity': qty_int,
                 'unit_price': float(upsell_product.price_dkk),
                 'total_price': float(line_total),
-                'description': 'Tilkøb',
             })
 
-    line_items = [
+    # PricingService bundles "Levering" into line_items — strip it out so the UI
+    # can render delivery exactly once (with its own breakdown row).
+    rental_line_items = [
         {
             'name': li.name,
             'quantity': li.quantity,
@@ -942,7 +948,8 @@ def preview_booking_pricing():
             'description': li.description or '',
         }
         for li in pricing.line_items
-    ] + upsell_line_items
+        if li.name != 'Levering'
+    ]
 
     # Delivery breakdown (distance + per-km details) for the preview card
     delivery_breakdown = None
@@ -970,13 +977,16 @@ def preview_booking_pricing():
 
     return jsonify({
         'subtotal': float(pricing.subtotal + upsells_total),
+        'rental_subtotal': float(pricing.subtotal),
+        'upsells_total': float(upsells_total),
         'deposit_amount': float(pricing.deposit_amount),
         'delivery_fee': float(pricing.delivery_fee),
         'delivery_breakdown': delivery_breakdown,
         'total': float(pricing.total + upsells_total),
         'upfront_payment': float(pricing.upfront_payment + upsells_total),
         'remaining_payment': float(pricing.remaining_payment),
-        'line_items': line_items,
+        'rental_line_items': rental_line_items,
+        'upsell_line_items': upsell_line_items,
     })
 
 
