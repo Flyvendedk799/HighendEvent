@@ -193,18 +193,6 @@
                         </div>
                         {% endif %}
 
-                        <!-- Deposit -->
-                        {% if product.deposit_dkk %}
-                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200">
-                            <dt class="text-sm font-bold text-yellow-800 mb-2 flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z"></path>
-                                </svg>
-                                Depositum
-                            </dt>
-                            <dd class="text-lg font-semibold text-gray-900">{{ product.deposit_dkk | currency }}</dd>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -426,24 +414,6 @@
                     </div>
                     {% endif %}
 
-                    <!-- Deposit Info -->
-                    {% if product.deposit_dkk %}
-                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-lg font-semibold text-gray-900">
-                                    {{ product.deposit_dkk | currency }}
-                                </div>
-                                <div class="text-sm text-gray-600">Depositum (refunderbart)</div>
-                            </div>
-                            <div class="text-green-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
 
 
@@ -1236,19 +1206,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (totalPrice > 0) {
                 priceDisplayEl.textContent = `${totalPrice} kr.`;
 
-                // Build price details with deposit info
-                let detailsText = `${daysDiff} dag${daysDiff > 1 ? 'e' : ''} • ${dailyRate} kr./dag`;
-
-                // Add deposit information if present
-                const depositAmount = data.deposit_amount ? Math.round(parseFloat(data.deposit_amount)) : 0;
-                if (depositAmount > 0) {
-                    detailsText += `\nDeposit: ${depositAmount} kr. (refunderbart)`;
-                }
-
-                priceDetailsEl.innerHTML = detailsText.replace('\n', '<br>');
+                priceDetailsEl.innerHTML = `${daysDiff} dag${daysDiff > 1 ? 'e' : ''} • ${dailyRate} kr./dag`;
                 addToCartBtn.disabled = false;
 
-                console.log('✅ SUCCESS! Price displayed:', { totalPrice, dailyRate, daysDiff, depositAmount });
+                console.log('✅ SUCCESS! Price displayed:', { totalPrice, dailyRate, daysDiff });
 
                 // Add subtle animation to price display
                 priceDisplayEl.style.transform = 'scale(1.05)';

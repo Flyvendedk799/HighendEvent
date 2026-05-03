@@ -109,19 +109,19 @@
                                 <h4 class="text-lg font-medium text-gray-900">Booking #{{ booking.booking_no }}</h4>
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {% if booking.status.value == 'pending' %}bg-yellow-100 text-yellow-800
-                                    {% elif booking.status.value == 'deposit_paid' %}bg-blue-100 text-blue-800
+                                    {% elif booking.status.value == 'deposit_paid' %}bg-green-100 text-green-800
                                     {% elif booking.status.value == 'out_for_delivery' %}bg-purple-100 text-purple-800
                                     {% elif booking.status.value == 'returned_good' %}bg-green-100 text-green-800
                                     {% elif booking.status.value == 'returned_damaged' %}bg-orange-100 text-orange-800
-                                    {% elif booking.status.value == 'deposit_refunded' %}bg-blue-100 text-blue-800
+                                    {% elif booking.status.value == 'deposit_refunded' %}bg-green-100 text-green-800
                                     {% elif booking.status.value == 'fully_paid' %}bg-green-100 text-green-800
                                     {% elif booking.status.value == 'cancelled' %}bg-red-100 text-red-800
                                     {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {% if booking.status.value == 'deposit_paid' %}Deposit Betalt
+                                    {% if booking.status.value == 'deposit_paid' %}Betalt
                                     {% elif booking.status.value == 'out_for_delivery' %}Udleveret
                                     {% elif booking.status.value == 'returned_good' %}Returneret (God)
                                     {% elif booking.status.value == 'returned_damaged' %}Returneret (Skadet)
-                                    {% elif booking.status.value == 'deposit_refunded' %}Deposit Refunderet
+                                    {% elif booking.status.value == 'deposit_refunded' %}Afsluttet
                                     {% elif booking.status.value == 'fully_paid' %}Fuldt Betalt
                                     {% else %}{{ booking.status.value | title }}{% endif %}
                                 </span>
@@ -148,43 +148,15 @@
                                         <div class="w-2 h-2 rounded-full {% if booking.status.value in ['returned_good', 'returned_damaged', 'deposit_refunded'] %}bg-green-500{% else %}bg-gray-300{% endif %}"></div>
                                         <span class="ml-1">Returneret</span>
                                     </div>
-                                    <div class="w-4 h-px {% if booking.status.value in ['deposit_refunded'] %}bg-green-500{% else %}bg-gray-300{% endif %}"></div>
-                                    <div class="flex items-center {% if booking.status.value in ['deposit_refunded'] %}text-green-600{% else %}text-gray-400{% endif %}">
-                                        <div class="w-2 h-2 rounded-full {% if booking.status.value in ['deposit_refunded'] %}bg-green-500{% else %}bg-gray-300{% endif %}"></div>
-                                        <span class="ml-1">Refunderet</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            {% if booking.status.value == 'returned_good' and not booking.deposit_refunded %}
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-600">Deposit refunderes:</p>
-                                    <p class="text-lg font-semibold text-green-600">{{ booking.deposit_dkk | currency }}</p>
-                                </div>
-                            {% elif booking.status.value == 'returned_damaged' and booking.damage_fee_dkk > 0 %}
+                            {% if booking.status.value == 'returned_damaged' and booking.damage_fee_dkk and booking.damage_fee_dkk > 0 %}
                                 <div class="text-right">
                                     <p class="text-sm text-gray-600">Skadegebyr:</p>
                                     <p class="text-lg font-semibold text-red-600">{{ booking.damage_fee_dkk | currency }}</p>
                                 </div>
-                                <button onclick="payRemaining({{ booking.id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                                    Betal Nu
-                                </button>
-                            {% elif booking.status.value in ['returned_good', 'returned_damaged'] and booking.remaining_payment_dkk > 0 %}
-                                {% set outstanding_amount = booking.remaining_payment_dkk %}
-                                {% if booking.damage_fee_dkk > 0 %}
-                                    {% set outstanding_amount = outstanding_amount + booking.damage_fee_dkk %}
-                                {% endif %}
-                                
-                                {% if outstanding_amount > 0 %}
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-600">Udestående:</p>
-                                    <p class="text-lg font-semibold text-red-600">{{ outstanding_amount | currency }}</p>
-                                </div>
-                                <button onclick="payRemaining({{ booking.id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                                    Betal Nu
-                                </button>
-                                {% endif %}
                             {% endif %}
                             <a href="{{ url_for('customer.booking_detail', booking_id=booking.id) }}" class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                                 Se Detaljer
@@ -215,32 +187,4 @@
     </div>
 </div>
 
-<script>
-function payRemaining(bookingId) {
-    if (!confirm('Er du sikker på at du vil betale det udestående beløb?')) {
-        return;
-    }
-    
-    const csrfToken = '{{ csrf_token() }}';
-    
-    fetch(`/customer/bookings/${bookingId}/pay-remaining`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `csrf_token=${csrfToken}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.checkout_url) {
-            window.location.href = data.checkout_url;
-        } else {
-            alert(data.error || 'Der opstod en fejl');
-        }
-    })
-    .catch(error => {
-        alert('Netværksfejl');
-    });
-}
-</script>
 {% endblock %}

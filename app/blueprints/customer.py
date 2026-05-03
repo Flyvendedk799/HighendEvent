@@ -153,36 +153,18 @@ def dashboard():
         Booking.is_deleted == False
     ).order_by(Booking.created_at.desc()).all()
     
-    # Calculate outstanding payments
+    # Outstanding = damage fees only (deposit feature removed; everything else paid upfront)
     outstanding_bookings = []
     total_outstanding = Decimal('0.00')
-    
+
     for booking in bookings:
-        # Only show outstanding payments for bookings that need final payment
-        if booking.status == BookingStatus.RETURNED_GOOD and not booking.deposit_refunded:
-            # Customer should receive deposit back, no outstanding payment
-            pass
-        elif booking.status == BookingStatus.RETURNED_DAMAGED:
-            # Customer owes damage fees
-            if booking.damage_fee_dkk > 0:
-                outstanding_bookings.append({
-                    'booking': booking,
-                    'outstanding_amount': booking.damage_fee_dkk
-                })
-                total_outstanding += booking.damage_fee_dkk
-        elif booking.status in [BookingStatus.RETURNED_GOOD, BookingStatus.RETURNED_DAMAGED] and booking.remaining_payment_dkk > 0:
-            # Only if there's actual remaining payment (shouldn't happen with upfront payment model)
-            outstanding_amount = booking.remaining_payment_dkk
-            if booking.damage_fee_dkk > 0:
-                outstanding_amount += booking.damage_fee_dkk
-            
-            if outstanding_amount > 0:
-                outstanding_bookings.append({
-                    'booking': booking,
-                    'outstanding_amount': outstanding_amount
-                })
-                total_outstanding += outstanding_amount
-    
+        if booking.status == BookingStatus.RETURNED_DAMAGED and booking.damage_fee_dkk and booking.damage_fee_dkk > 0:
+            outstanding_bookings.append({
+                'booking': booking,
+                'outstanding_amount': booking.damage_fee_dkk,
+            })
+            total_outstanding += booking.damage_fee_dkk
+
     # Calculate upsell totals for each booking
     booking_upsells = {}
     for booking in bookings:
@@ -211,20 +193,11 @@ def booking_detail(booking_id):
         Booking.is_deleted == False
     ).first_or_404()
     
-    # Calculate outstanding amount
+    # Outstanding = damage fees only (everything else paid upfront)
     outstanding_amount = Decimal('0.00')
-    if booking.status == BookingStatus.RETURNED_GOOD and not booking.deposit_refunded:
-        # Customer should receive deposit back, no outstanding payment
-        outstanding_amount = Decimal('0.00')
-    elif booking.status == BookingStatus.RETURNED_DAMAGED:
-        # Customer owes damage fees only
+    if booking.status == BookingStatus.RETURNED_DAMAGED and booking.damage_fee_dkk:
         outstanding_amount = booking.damage_fee_dkk
-    elif booking.status in [BookingStatus.RETURNED_GOOD, BookingStatus.RETURNED_DAMAGED] and booking.remaining_payment_dkk > 0:
-        # Only if there's actual remaining payment (shouldn't happen with upfront payment model)
-        outstanding_amount = booking.remaining_payment_dkk
-        if booking.damage_fee_dkk > 0:
-            outstanding_amount += booking.damage_fee_dkk
-    
+
     # Calculate upsell total
     upsell_total = Decimal('0')
     for item in booking.items:
@@ -235,113 +208,3 @@ def booking_detail(booking_id):
                          booking=booking,
                          outstanding_amount=outstanding_amount,
                          upsell_total=upsell_total)
-
-
-@bp.route('/bookings/<int:booking_id>/pay-remaining', methods=['POST'])
-@login_required
-def pay_remaining(booking_id):
-    """Process remaining payment for a booking."""
-    try:
-        validate_csrf(request.form.get('csrf_token'))
-    except BadRequest:
-        return jsonify({'error': 'Invalid CSRF token'}), 400
-    
-    booking = Booking.query.filter(
-        Booking.id == booking_id, 
-        Booking.customer_id == current_user.id,
-        Booking.is_deleted == False
-    ).first_or_404()
-    
-    if booking.status not in [BookingStatus.RETURNED_GOOD, BookingStatus.RETURNED_DAMAGED]:
-        return jsonify({'error': 'Denne booking er ikke klar til betaling'}), 400
-    
-    # Calculate amount to pay
-    amount_to_pay = booking.remaining_payment_dkk
-    if booking.damage_fee_dkk > 0:
-        amount_to_pay += booking.damage_fee_dkk
-    if not booking.deposit_refunded and booking.return_condition == 'good':
-        amount_to_pay -= booking.deposit_dkk  # Deposit will be refunded
-    
-    if amount_to_pay <= 0:
-        return jsonify({'error': 'Ingen betaling påkrævet'}), 400
-    
-    try:
-        # Create Stripe checkout session for remaining payment
-        checkout_session = create_remaining_payment_session(booking, amount_to_pay)
-        return jsonify({'checkout_url': checkout_session.url})
-    except Exception as e:
-        current_app.logger.error(f'Error creating remaining payment session: {e}')
-        return jsonify({'error': 'Der opstod en fejl under oprettelse af betaling'}), 500
-
-
-def create_remaining_payment_session(booking: Booking, amount: Decimal):
-    """Create Stripe checkout session for remaining payment."""
-    import stripe
-    
-    stripe_secret_key = current_app.config.get('STRIPE_SECRET_KEY')
-    if not stripe_secret_key:
-        raise Exception("Stripe secret key is not configured")
-    
-    stripe.api_key = stripe_secret_key
-    
-    # Create line item for remaining payment
-    line_items = [{
-        'price_data': {
-            'currency': 'dkk',
-            'product_data': {
-                'name': f'Leje for booking {booking.booking_no}',
-                'description': f'Leje periode: {booking.start_date.strftime("%d/%m/%Y")} - {booking.end_date.strftime("%d/%m/%Y")}'
-            },
-            'unit_amount': int(amount * 100),
-        },
-        'quantity': 1,
-    }]
-    
-    # Add damage fee if applicable
-    if booking.damage_fee_dkk > 0:
-        line_items.append({
-            'price_data': {
-                'currency': 'dkk',
-                'product_data': {
-                    'name': 'Skadegebyr',
-                },
-                'unit_amount': int(booking.damage_fee_dkk * 100),
-            },
-            'quantity': 1,
-        })
-    
-    checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=line_items,
-        mode='payment',
-        success_url=url_for('customer.payment_success', booking_id=booking.id, _external=True),
-        cancel_url=url_for('customer.booking_detail', booking_id=booking.id, _external=True),
-        customer_email=booking.email,
-        metadata={
-            'booking_id': str(booking.id),
-            'booking_no': booking.booking_no,
-            'payment_type': 'remaining'
-        }
-    )
-    
-    # Update booking with remaining payment session ID
-    booking.remaining_payment_session_id = checkout_session.id
-    db.session.commit()
-    
-    return checkout_session
-
-
-@bp.route('/bookings/<int:booking_id>/payment-success')
-@login_required
-def payment_success(booking_id):
-    """Handle successful remaining payment."""
-    booking = Booking.query.filter_by(id=booking_id, customer_id=current_user.id).first_or_404()
-    
-    # Update booking status to fully paid
-    if booking.status in [BookingStatus.RETURNED_GOOD, BookingStatus.RETURNED_DAMAGED]:
-        booking.status = BookingStatus.FULLY_PAID
-        db.session.commit()
-        
-        flash('Betaling gennemført! Din booking er nu fuldt betalt.', 'success')
-    
-    return redirect(url_for('customer.booking_detail', booking_id=booking_id))

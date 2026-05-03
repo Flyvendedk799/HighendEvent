@@ -172,20 +172,16 @@
             <div class="payment-info">
                 <h3>Betalingsinformation</h3>
                 <div class="detail-row">
-                    <span class="detail-label">Leje (betales efter aflevering):</span>
-                    <span class="detail-value">{{ booking.remaining_payment_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Depositum (betalt nu):</span>
-                    <span class="detail-value">{{ booking.deposit_dkk | currency }}</span>
+                    <span class="detail-label">Leje:</span>
+                    <span class="detail-value">{{ booking.subtotal_dkk | currency }}</span>
                 </div>
                 {% if booking.delivery_fee_dkk > 0 %}
                 <div class="detail-row">
-                    <span class="detail-label">Leveringsgebyr (betalt nu):</span>
+                    <span class="detail-label">Leveringsgebyr:</span>
                     <span class="detail-value">{{ booking.delivery_fee_dkk | currency }}</span>
                 </div>
                 {% endif %}
-                
+
                 <!-- Calculate and display upsell total -->
                 {% set upsell_total = 0 %}
                 {% for item in booking.items %}
@@ -195,18 +191,18 @@
                 {% endfor %}
                 {% if upsell_total > 0 %}
                 <div class="detail-row">
-                    <span class="detail-label">Tilkøb (betalt nu):</span>
+                    <span class="detail-label">Tilkøb:</span>
                     <span class="detail-value">{{ upsell_total | currency }}</span>
                 </div>
                 {% endif %}
-                
+
                 <div class="detail-row">
-                    <span class="detail-label">I alt betalt nu:</span>
-                    <span class="detail-value">{{ booking.upfront_payment_dkk | currency }}</span>
+                    <span class="detail-label">I alt betalt:</span>
+                    <span class="detail-value">{{ (booking.total_dkk + upsell_total) | currency }}</span>
                 </div>
             </div>
-            
-            <p><strong>Vigtigt:</strong> Du betaler kun depositum og levering nu. Lejeafgiften betales efter aflevering og returnering af udstyret.</p>
+
+            <p><strong>Tak for din bestilling!</strong> Det fulde beløb er betalt og din booking er bekræftet.</p>
             
             <div style="text-align: center;">
                 <a href="{{ url_for('customer.booking_detail', booking_id=booking.id, _external=True) }}" class="cta-button">

@@ -1645,31 +1645,6 @@ def test_email():
             'message': 'Test email failed'
         }), 500
 
-@bp.route('/bookings/<int:id>/refund-deposit', methods=['POST'])
-@login_required
-def refund_deposit(id):
-    """Mark deposit as refunded for a booking."""
-    try:
-        validate_csrf(request.form.get('csrf_token'))
-    except BadRequest:
-        return jsonify({'error': 'Invalid CSRF token'}), 400
-    
-    booking = Booking.query.get_or_404(id)
-    
-    if booking.deposit_refunded:
-        return jsonify({'error': 'Depositum er allerede refunderet'}), 400
-    
-    if booking.status not in [BookingStatus.RETURNED_GOOD, BookingStatus.FULLY_PAID]:
-        return jsonify({'error': 'Depositum kan kun refunderes efter returnering'}), 400
-    
-    booking.deposit_refunded = True
-    
-    from app import db, csrf
-    db.session.commit()
-    
-    return jsonify({'success': True, 'message': 'Depositum markeret som refunderet'})
-
-
 @bp.route('/bookings/calendar')
 @login_required
 def bookings_calendar():

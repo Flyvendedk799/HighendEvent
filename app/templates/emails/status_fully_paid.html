@@ -92,14 +92,6 @@
                     <span>{{ booking.start_date.strftime('%d/%m/%Y') }} - {{ booking.end_date.strftime('%d/%m/%Y') }}</span>
                 </div>
                 <div class="detail-row">
-                    <span>Lejeafgift:</span>
-                    <span>{{ booking.remaining_payment_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span>Depositum (refunderet):</span>
-                    <span>-{{ booking.deposit_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
                     <span>Total betalt:</span>
                     <span>{{ booking.total_dkk | currency }}</span>
                 </div>

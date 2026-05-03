@@ -91,12 +91,8 @@
                     <span>{{ 'Hjemmelevering' if booking.delivery_fee_dkk > 0 else 'Afhentning' }}</span>
                 </div>
                 <div class="detail-row">
-                    <span>Betalt nu:</span>
-                    <span>{{ booking.upfront_payment_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span>Leje (efter returnering):</span>
-                    <span>{{ booking.remaining_payment_dkk | currency }}</span>
+                    <span>Total betalt:</span>
+                    <span>{{ booking.total_dkk | currency }}</span>
                 </div>
             </div>
             
