@@ -40,11 +40,15 @@
 <!-- Hero Section -->
 <section class="relative text-white overflow-hidden">
     <!-- Background image -->
-    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ url_for('static', filename='images/background.png') }}');"></div>
-    <!-- Blue gradient filter overlay -->
-    <div class="absolute inset-0 bg-gradient-to-br from-primary-600/80 via-primary-700/80 to-accent-600/80"></div>
+    <div class="absolute inset-0 bg-cover bg-center scale-105" style="background-image: url('{{ url_for('static', filename='images/background.png') }}');"></div>
+    <!-- Blue color tint -->
+    <div class="absolute inset-0 bg-primary-700/70 mix-blend-multiply"></div>
+    <!-- Depth gradient for text contrast -->
+    <div class="absolute inset-0 bg-gradient-to-b from-primary-900/40 via-primary-800/30 to-primary-900/70"></div>
+    <!-- Subtle radial vignette -->
+    <div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 0%, rgba(15, 23, 42, 0.45) 100%);"></div>
     <!-- Background decoration -->
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.08"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
     
     <!-- Floating elements -->
     <div class="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-bounce-gentle"></div>
@@ -54,15 +58,15 @@
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div class="text-center animate-fade-in">
             <div class="mb-8 animate-slide-up">
-                <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="HighendEvent" class="h-32 w-auto mx-auto" style="height: 128px !important;">
+                <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="HighendEvent" class="h-32 w-auto mx-auto drop-shadow-2xl" style="height: 128px !important;">
             </div>
-            
-            <h1 class="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+
+            <h1 class="text-5xl md:text-7xl font-bold mb-8 leading-tight" style="text-shadow: 0 4px 24px rgba(0,0,0,0.4);">
                 Gør din fest til en
-                <span class="gradient-text bg-gradient-to-r from-white to-primary-200">succes</span>
+                <span class="text-yellow-300">succes</span>
             </h1>
-            
-            <p class="text-xl md:text-2xl mb-12 text-primary-100 max-w-3xl mx-auto leading-relaxed">
+
+            <p class="text-xl md:text-2xl mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed" style="text-shadow: 0 2px 12px rgba(0,0,0,0.4);">
                 Professionelt udstyr til fester og events. Fra slush ice maskiner til hoppeborg - vi har alt hvad du behøver til at skabe uforglemmelige oplevelser.
             </p>
             
