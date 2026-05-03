@@ -125,40 +125,6 @@
                             {% endif %}
                         </div>
 
-                        <!-- Bank Account Information -->
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 class="text-lg font-medium text-blue-900 mb-4">Bankoplysninger til depositum refusion (valgfrit)</h3>
-                            <p class="text-sm text-blue-800 mb-4">Du kan angive dine bankoplysninger nu for hurtigere refusion af depositum, eller du kan oplyse dem senere via email.</p>
-                            
-                            <div class="grid grid-cols-2 gap-4">
-                                <!-- Account Number -->
-                                <div>
-                                    {{ form.account_number.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                    {{ form.account_number(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.account_number.errors else "")) }}
-                                    {% if form.account_number.errors %}
-                                        <div class="mt-1 text-sm text-red-600">
-                                            {% for error in form.account_number.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Registration Number -->
-                                <div>
-                                    {{ form.registration_number.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                    {{ form.registration_number(class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" + (" border-red-300" if form.registration_number.errors else "")) }}
-                                    {% if form.registration_number.errors %}
-                                        <div class="mt-1 text-sm text-red-600">
-                                            {% for error in form.registration_number.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Terms (Simple text instead of checkbox since form doesn't have it) -->
                         <div class="bg-gray-50 rounded-lg p-4">
                             <p class="text-sm text-gray-700">

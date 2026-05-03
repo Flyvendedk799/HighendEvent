@@ -28,11 +28,11 @@ class PricingBreakdown:
     subtotal: Decimal
     vat_amount: Decimal
     vat_percent: Decimal
-    deposit_amount: Decimal
+    deposit_amount: Decimal  # Always 0 — deposit feature removed
     delivery_fee: Decimal
     total: Decimal
-    upfront_payment: Decimal  # What customer pays now (deposit + delivery)
-    remaining_payment: Decimal  # What customer pays after return (rental amount)
+    upfront_payment: Decimal  # Equal to total — entire amount paid upfront
+    remaining_payment: Decimal  # Always 0 — no deferred payment
     currency: str = "DKK"
 
 
@@ -75,15 +75,13 @@ class PricingService:
         """
         line_items = []
         subtotal = Decimal('0')
-        deposit_amount = Decimal('0')
-        
+
         # Process each booking item
         for item in booking_items:
             item_pricing = self._calculate_item_pricing(item)
             line_items.extend(item_pricing.line_items)
             subtotal += item_pricing.subtotal
-            deposit_amount += item_pricing.deposit_amount
-        
+
         # Calculate delivery fee
         delivery_fee, delivery_description = self._calculate_delivery_fee(
             delivery_type, customer_address, customer_zip, customer_city
@@ -96,37 +94,23 @@ class PricingService:
                 total_price=delivery_fee,
                 description=delivery_description
             ))
-        
+
         # No VAT calculations - all prices include VAT already
         vat_amount = Decimal('0')
-        
-        # Calculate total - subtotal + delivery fee + deposit (everything customer pays)
-        total = subtotal + delivery_fee + deposit_amount
-        
-        # Debug final calculation
-        print(f"💰 FINAL PRICING BREAKDOWN:")
-        print(f"   📊 Subtotal: {subtotal} DKK")
-        print(f"   📊 VAT ({self.vat_percent}%): {vat_amount} DKK")
-        print(f"   📊 Delivery fee: {delivery_fee} DKK") 
-        print(f"   📊 Deposit: {deposit_amount} DKK")
-        print(f"   💰 TOTAL: {total} DKK")
-        
-        # Calculate upfront payment (deposit + delivery fee)
-        upfront_payment = deposit_amount + delivery_fee
-        
-        # Calculate remaining payment (rental amount only)
-        remaining_payment = subtotal
+
+        # Deposit feature removed — total = rental + delivery, paid upfront in full
+        total = subtotal + delivery_fee
 
         return PricingBreakdown(
             line_items=line_items,
             subtotal=subtotal,
             vat_amount=vat_amount,
             vat_percent=self.vat_percent,
-            deposit_amount=deposit_amount,
+            deposit_amount=Decimal('0'),
             delivery_fee=delivery_fee,
-            total=total,  # Full total for reference
-            upfront_payment=upfront_payment,  # What customer pays now
-            remaining_payment=remaining_payment  # What customer pays after return
+            total=total,
+            upfront_payment=total,       # Entire amount paid upfront
+            remaining_payment=Decimal('0'),  # No deferred payment
         )
     
     def _calculate_item_pricing(self, item: BookingItemDTO) -> 'ItemPricing':
@@ -157,37 +141,21 @@ class PricingService:
         
         # Apply quantity
         total_price = base_price * item.quantity
-        
-        # Calculate deposit
-        deposit_amount = Decimal('0')
-        if product.deposit_dkk:
-            deposit_amount = product.deposit_dkk * item.quantity
-        
-        # Create line items
+
         line_items = [
             PricingLineItem(
                 name=item.product_name,
                 quantity=item.quantity,
-                unit_price=daily_price,  # Daily price, not total price
+                unit_price=daily_price,
                 total_price=total_price,
                 description=f"{rental_days} dage @ {daily_price} DKK/dag"
             )
         ]
-        
-        # Don't include deposit in price display - it's handled separately
-        # if deposit_amount > 0:
-        #     line_items.append(PricingLineItem(
-        #         name=f"Depositum - {item.product_name}",
-        #         quantity=item.quantity,
-        #         unit_price=product.deposit_dkk,
-        #         total_price=deposit_amount,
-        #         description="Refunderbart depositum"
-        #     ))
-        
+
         return ItemPricing(
             line_items=line_items,
             subtotal=total_price,
-            deposit_amount=deposit_amount
+            deposit_amount=Decimal('0'),
         )
     
     def _get_effective_daily_price(

@@ -104,10 +104,6 @@ class ProductForm(FlaskForm):
         'Fuld weekend pris (Fre-Søn) (DKK)',
         validators=[Optional()]
     )
-    deposit_dkk = StringField(
-        'Depositum (DKK)',
-        validators=[Optional()]
-    )
     stock_qty = IntegerField(
         'Lagerantal',
         validators=[DataRequired(message='Lagerantal er påkrævet'), NumberRange(min=1, message='Lagerantal skal være mindst 1')]
@@ -153,16 +149,6 @@ class ProductForm(FlaskForm):
                     raise ValidationError('Pris skal være positiv')
             except (ValueError, TypeError):
                 raise ValidationError('Ugyldig pris format')
-
-    def validate_deposit_dkk(self, field):
-        """Validate deposit is a positive number."""
-        if field.data:
-            try:
-                price = float(field.data)
-                if price < 0:
-                    raise ValidationError('Depositum skal være positiv')
-            except (ValueError, TypeError):
-                raise ValidationError('Ugyldig depositum format')
 
 
 class CategoryForm(FlaskForm):

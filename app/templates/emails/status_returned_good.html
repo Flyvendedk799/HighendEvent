@@ -86,25 +86,7 @@
             </div>
             
             <p>Din booking er nu afsluttet, og vi håber du har haft en fantastisk oplevelse med vores udstyr!</p>
-            
-            <div class="payment-info">
-                <h3>Betalingsoversigt</h3>
-                <div class="detail-row">
-                    <span>Lejeafgift (nu betalt):</span>
-                    <span>{{ booking.remaining_payment_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span>Depositum (refunderes):</span>
-                    <span>-{{ booking.deposit_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span>I alt betalt for leje:</span>
-                    <span>{{ booking.total_dkk | currency }}</span>
-                </div>
-            </div>
-            
-            <p><strong>Depositum refunderet:</strong> Dit depositum på {{ booking.deposit_dkk | currency }} vil blive refunderet til det betalingskort, du brugte ved bestillingen. Refusionen kan tage 3-5 arbejdsdage at nå frem.</p>
-            
+
             <p>Vi håber at se dig igen snart! 🎉</p>
             
             <p>Med venlig hilsen,<br>HighendEvent Team</p>

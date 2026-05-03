@@ -136,13 +136,6 @@ def dashboard():
         Booking.is_deleted == False
     ).order_by(desc(Booking.created_at)).limit(10).all()
     
-    # Deposit refund management
-    pending_deposit_refunds = Booking.query.filter(
-        Booking.status == BookingStatus.RETURNED_GOOD,
-        Booking.deposit_refunded == False,
-        Booking.is_deleted == False
-    ).order_by(Booking.end_date).all()
-    
     # Bookings awaiting return
     awaiting_return = Booking.query.filter(
         Booking.status == BookingStatus.OUT_FOR_DELIVERY,
@@ -173,7 +166,6 @@ def dashboard():
                          revenue_this_month=revenue_this_month,
                          upcoming_pickups=upcoming_pickups,
                          recent_bookings=recent_bookings,
-                         pending_deposit_refunds=pending_deposit_refunds,
                          awaiting_return=awaiting_return,
                          product_stats=product_stats)
 
@@ -255,7 +247,7 @@ def create_product():
             daily_price_dkk=Decimal(str(form.daily_price_dkk.data)),
             weekend_price_dkk=Decimal(str(form.weekend_price_dkk.data)) if form.weekend_price_dkk.data else None,
             weekend_discount_dkk=Decimal(str(form.weekend_discount_dkk.data)) if form.weekend_discount_dkk.data else None,
-            deposit_dkk=Decimal(str(form.deposit_dkk.data)) if form.deposit_dkk.data else None,
+            deposit_dkk=None,
             stock_qty=form.stock_qty.data,
             prep_buffer_days=form.prep_buffer_days.data,
             cleanup_buffer_days=form.cleanup_buffer_days.data,
@@ -345,7 +337,7 @@ def edit_product(id):
         product.daily_price_dkk = Decimal(str(form.daily_price_dkk.data))
         product.weekend_price_dkk = Decimal(str(form.weekend_price_dkk.data)) if form.weekend_price_dkk.data else None
         product.weekend_discount_dkk = Decimal(str(form.weekend_discount_dkk.data)) if form.weekend_discount_dkk.data else None
-        product.deposit_dkk = Decimal(str(form.deposit_dkk.data)) if form.deposit_dkk.data else None
+        product.deposit_dkk = None
         product.stock_qty = form.stock_qty.data
         product.prep_buffer_days = form.prep_buffer_days.data
         product.cleanup_buffer_days = form.cleanup_buffer_days.data
@@ -1084,14 +1076,25 @@ def bookings():
         Booking.is_deleted == False
     ).with_entities(func.sum(Booking.total_dkk)).scalar() or Decimal('0')
 
-    # Calculate upsell totals for each booking
+    # Calculate upsell totals + canonical grand totals for each booking. We
+    # recompute the grand total from line items rather than reading
+    # booking.total_dkk because earlier manual bookings have inconsistent
+    # aggregate fields (some had upsells rolled into subtotal, some didn't).
     booking_upsells = {}
+    booking_totals = {}
     for booking in bookings.items:
         upsell_total = Decimal('0')
         for item in booking.items:
             for upsell in item.upsell_items:
                 upsell_total += upsell.unit_price_dkk * upsell.quantity
         booking_upsells[booking.id] = upsell_total
+
+        rental_subtotal = sum((item.line_total for item in booking.items), Decimal('0'))
+        booking_totals[booking.id] = (
+            rental_subtotal
+            + upsell_total
+            + (booking.delivery_fee_dkk or Decimal('0'))
+        )
 
     return render_template('admin/bookings.html',
                          bookings=bookings,
@@ -1107,7 +1110,8 @@ def bookings():
                          fully_paid_count=fully_paid_count,
                          cancelled_count=cancelled_count,
                          total_revenue=total_revenue,
-                         booking_upsells=booking_upsells)
+                         booking_upsells=booking_upsells,
+                         booking_totals=booking_totals)
 
 
 @bp.route('/bookings/soft-delete', methods=['POST'])
@@ -1640,31 +1644,6 @@ def test_email():
             'error': str(e),
             'message': 'Test email failed'
         }), 500
-
-@bp.route('/bookings/<int:id>/refund-deposit', methods=['POST'])
-@login_required
-def refund_deposit(id):
-    """Mark deposit as refunded for a booking."""
-    try:
-        validate_csrf(request.form.get('csrf_token'))
-    except BadRequest:
-        return jsonify({'error': 'Invalid CSRF token'}), 400
-    
-    booking = Booking.query.get_or_404(id)
-    
-    if booking.deposit_refunded:
-        return jsonify({'error': 'Depositum er allerede refunderet'}), 400
-    
-    if booking.status not in [BookingStatus.RETURNED_GOOD, BookingStatus.FULLY_PAID]:
-        return jsonify({'error': 'Depositum kan kun refunderes efter returnering'}), 400
-    
-    booking.deposit_refunded = True
-    
-    from app import db, csrf
-    db.session.commit()
-    
-    return jsonify({'success': True, 'message': 'Depositum markeret som refunderet'})
-
 
 @bp.route('/bookings/calendar')
 @login_required

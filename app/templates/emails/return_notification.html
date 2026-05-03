@@ -121,28 +121,10 @@
             <div class="success-message">
                 <div class="success-icon">✅</div>
                 <h3>Tak for at returnere udstyret!</h3>
-                <p>Vi har modtaget og kontrolleret dit udlejede udstyr, og det er i perfekt stand. Depositummet vil blive refunderet til dig.</p>
+                <p>Vi har modtaget og kontrolleret dit udlejede udstyr, og det er i perfekt stand.</p>
             </div>
-            
+
             <p>Din booking er nu afsluttet, og vi håber du har haft en fantastisk oplevelse med vores udstyr!</p>
-            
-            <div class="payment-info">
-                <h3>Betalingsoversigt</h3>
-                <div class="detail-row">
-                    <span class="detail-label">Lejeafgift (nu betalt):</span>
-                    <span class="detail-value">{{ booking.remaining_payment_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Depositum (refunderet):</span>
-                    <span class="detail-value">-{{ booking.deposit_dkk | currency }}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">I alt betalt for leje:</span>
-                    <span class="detail-value">{{ booking.total_dkk | currency }}</span>
-                </div>
-            </div>
-            
-            <p><strong>Depositum refunderet:</strong> Dit depositum på {{ booking.deposit_dkk | currency }} vil blive refunderet til det betalingskort, du brugte ved bestillingen. Refusionen kan tage 3-5 arbejdsdage at nå frem.</p>
             
             <div style="text-align: center;">
                 <a href="{{ url_for('customer.booking_detail', booking_id=booking.id, _external=True) }}" class="cta-button">
