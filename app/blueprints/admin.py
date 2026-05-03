@@ -30,6 +30,37 @@ from app.services.distance import DistanceService
 
 bp = Blueprint('admin', __name__)
 
+
+# Statuses that represent confirmed (at least partially paid) revenue. PENDING
+# means the customer hasn't paid yet and CANCELLED is excluded entirely.
+PAID_STATUSES = [
+    BookingStatus.DEPOSIT_PAID,
+    BookingStatus.OUT_FOR_DELIVERY,
+    BookingStatus.RETURNED_GOOD,
+    BookingStatus.RETURNED_DAMAGED,
+    BookingStatus.DEPOSIT_REFUNDED,
+    BookingStatus.FULLY_PAID,
+]
+
+
+def compute_booking_total(booking):
+    """Canonical booking total: rental line items + upsells + delivery.
+
+    Recomputed from line items because Booking.total_dkk is inconsistent for
+    older manual bookings (some had upsells rolled into subtotal, some didn't).
+    """
+    rental = sum((item.line_total for item in booking.items), Decimal('0'))
+    upsells = sum(
+        (
+            upsell.unit_price_dkk * upsell.quantity
+            for item in booking.items
+            for upsell in item.upsell_items
+        ),
+        Decimal('0'),
+    )
+    return rental + upsells + (booking.delivery_fee_dkk or Decimal('0'))
+
+
 def allowed_file(filename):
     """Check if file extension is allowed."""
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -116,12 +147,17 @@ def dashboard():
         Booking.is_deleted == False
     ).count()
     
-    # Revenue this month
-    revenue_this_month = Booking.query.filter(
+    # Revenue this month — computed canonically from line items because
+    # Booking.total_dkk is unreliable for older manual bookings.
+    revenue_bookings_this_month = Booking.query.filter(
         Booking.created_at >= month_start,
-        Booking.status.in_([BookingStatus.DEPOSIT_PAID, BookingStatus.DEPOSIT_REFUNDED, BookingStatus.FULLY_PAID]),
+        Booking.status.in_(PAID_STATUSES),
         Booking.is_deleted == False
-    ).with_entities(func.sum(Booking.total_dkk)).scalar() or Decimal('0')
+    ).all()
+    revenue_this_month = sum(
+        (compute_booking_total(b) for b in revenue_bookings_this_month),
+        Decimal('0'),
+    )
     
     # Upcoming pickups (next 7 days)
     upcoming_pickups = Booking.query.filter(
@@ -1070,16 +1106,19 @@ def bookings():
     fully_paid_count = Booking.query.filter(Booking.status == BookingStatus.FULLY_PAID, Booking.is_deleted == False).count()
     cancelled_count = Booking.query.filter(Booking.status == BookingStatus.CANCELLED, Booking.is_deleted == False).count()
 
-    # Calculate total revenue from paid bookings (only non-deleted)
-    total_revenue = Booking.query.filter(
-        Booking.status.in_([BookingStatus.DEPOSIT_PAID, BookingStatus.DEPOSIT_REFUNDED, BookingStatus.FULLY_PAID]),
-        Booking.is_deleted == False
-    ).with_entities(func.sum(Booking.total_dkk)).scalar() or Decimal('0')
+    # Calculate total revenue from paid bookings (only non-deleted) using the
+    # canonical line-item computation — Booking.total_dkk is unreliable.
+    paid_bookings = Booking.query.options(
+        joinedload(Booking.items).joinedload(BookingItem.upsell_items)
+    ).filter(
+        Booking.status.in_(PAID_STATUSES),
+        Booking.is_deleted == False,
+    ).all()
+    total_revenue = sum(
+        (compute_booking_total(b) for b in paid_bookings),
+        Decimal('0'),
+    )
 
-    # Calculate upsell totals + canonical grand totals for each booking. We
-    # recompute the grand total from line items rather than reading
-    # booking.total_dkk because earlier manual bookings have inconsistent
-    # aggregate fields (some had upsells rolled into subtotal, some didn't).
     booking_upsells = {}
     booking_totals = {}
     for booking in bookings.items:
@@ -1088,13 +1127,7 @@ def bookings():
             for upsell in item.upsell_items:
                 upsell_total += upsell.unit_price_dkk * upsell.quantity
         booking_upsells[booking.id] = upsell_total
-
-        rental_subtotal = sum((item.line_total for item in booking.items), Decimal('0'))
-        booking_totals[booking.id] = (
-            rental_subtotal
-            + upsell_total
-            + (booking.delivery_fee_dkk or Decimal('0'))
-        )
+        booking_totals[booking.id] = compute_booking_total(booking)
 
     return render_template('admin/bookings.html',
                          bookings=bookings,
@@ -2092,59 +2125,91 @@ def customers():
 @login_required
 def analytics():
     """Analytics dashboard."""
-    # Get basic stats
-    total_bookings = Booking.query.filter(
-        Booking.status != BookingStatus.CANCELLED,
-        Booking.is_deleted == False
-    ).count()
-    total_revenue = db.session.query(func.sum(Booking.total_dkk)).filter(
-        Booking.status != BookingStatus.CANCELLED,
-        Booking.is_deleted == False
-    ).scalar() or 0
+    from sqlalchemy.orm import joinedload
+    from collections import defaultdict
+
+    # Bookings counted toward revenue: at least the deposit has been paid.
+    # PENDING is excluded because no money has changed hands yet.
+    paid_bookings = Booking.query.options(
+        joinedload(Booking.items).joinedload(BookingItem.upsell_items)
+    ).filter(
+        Booking.status.in_(PAID_STATUSES),
+        Booking.is_deleted == False,
+    ).all()
+
+    total_bookings = len(paid_bookings)
+    total_revenue = sum(
+        (compute_booking_total(b) for b in paid_bookings),
+        Decimal('0'),
+    )
+
     total_products = Product.query.count()
     active_products = Product.query.filter(Product.is_active == True).count()
-    
-    # Get monthly revenue data for chart
-    # Use database-specific date formatting
-    from sqlalchemy import text, literal_column
-    if current_app.config.get('SQLALCHEMY_DATABASE_URI', '').startswith('mysql'):
-        # MySQL uses DATE_FORMAT
-        month_col = literal_column("DATE_FORMAT(created_at, '%Y-%m')").label('month')
-        monthly_revenue = db.session.query(
-            month_col,
-            func.sum(Booking.total_dkk).label('revenue')
-        ).select_from(Booking).filter(
-            Booking.status != BookingStatus.CANCELLED,
-            Booking.is_deleted == False
-        ).group_by(month_col).order_by(month_col).all()
-    else:
-        # SQLite uses strftime
-        monthly_revenue = db.session.query(
-            func.strftime('%Y-%m', Booking.created_at).label('month'),
-            func.sum(Booking.total_dkk).label('revenue')
-        ).filter(
-            Booking.status != BookingStatus.CANCELLED,
-            Booking.is_deleted == False
-        ).group_by(func.strftime('%Y-%m', Booking.created_at)).order_by('month').all()
-    
-    # Get top products
-    top_products = db.session.query(
-        Product.name,
-        func.count(BookingItem.id).label('bookings_count')
-    ).join(BookingItem, Product.id == BookingItem.product_id
-    ).join(Booking, BookingItem.booking_id == Booking.id
+
+    # Monthly revenue + booking counts for the charts, computed in Python
+    # against canonical totals so the chart matches the headline number.
+    monthly_revenue_map = defaultdict(lambda: Decimal('0'))
+    monthly_bookings_map = defaultdict(int)
+    for booking in paid_bookings:
+        key = booking.created_at.strftime('%Y-%m')
+        monthly_revenue_map[key] += compute_booking_total(booking)
+        monthly_bookings_map[key] += 1
+
+    monthly_revenue = [
+        {'month': month, 'revenue': monthly_revenue_map[month]}
+        for month in sorted(monthly_revenue_map)
+    ]
+    monthly_bookings = [
+        {'month': month, 'count': monthly_bookings_map[month]}
+        for month in sorted(monthly_bookings_map)
+    ]
+
+    # Top products by quantity rented across paid bookings, with revenue.
+    product_quantity = defaultdict(int)
+    product_revenue = defaultdict(lambda: Decimal('0'))
+    product_names = {}
+    for booking in paid_bookings:
+        for item in booking.items:
+            product_quantity[item.product_id] += item.quantity
+            product_revenue[item.product_id] += item.line_total
+            product_names[item.product_id] = item.name_snapshot
+
+    top_products = sorted(
+        (
+            {
+                'name': product_names[pid],
+                'bookings_count': qty,
+                'revenue': product_revenue[pid],
+            }
+            for pid, qty in product_quantity.items()
+        ),
+        key=lambda p: p['bookings_count'],
+        reverse=True,
+    )[:5]
+
+    recent_bookings = Booking.query.options(
+        joinedload(Booking.items).joinedload(BookingItem.upsell_items)
     ).filter(
+        Booking.is_deleted == False,
         Booking.status != BookingStatus.CANCELLED,
-        Booking.is_deleted == False
-    ).group_by(Product.id).order_by(func.count(BookingItem.id).desc()).limit(5).all()
-    
-    return render_template('admin/analytics.html', 
+    ).order_by(desc(Booking.created_at)).limit(5).all()
+    recent_activity = [
+        {
+            'booking': b,
+            'total': compute_booking_total(b),
+        }
+        for b in recent_bookings
+    ]
+
+    return render_template('admin/analytics.html',
                          total_bookings=total_bookings,
                          total_revenue=total_revenue,
                          total_products=total_products,
                          active_products=active_products,
                          monthly_revenue=monthly_revenue,
-                         top_products=top_products)
+                         monthly_bookings=monthly_bookings,
+                         top_products=top_products,
+                         recent_activity=recent_activity)
 
 
 @bp.route('/api/stats/products')
