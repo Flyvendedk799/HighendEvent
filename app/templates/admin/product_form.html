@@ -118,19 +118,6 @@
                                 {% endif %}
                                 <p class="mt-1 text-sm text-gray-500">Special pris for fuld weekend (Fredag-Søndag)</p>
                             </div>
-                            
-                            <div>
-                                {{ form.deposit_dkk.label(class="block text-sm font-medium text-gray-700 mb-2") }}
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">DKK</span>
-                                    </div>
-                                    {{ form.deposit_dkk(class="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500") }}
-                                </div>
-                                {% if form.deposit_dkk.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ form.deposit_dkk.errors[0] }}</p>
-                                {% endif %}
-                            </div>
                         </div>
                     </div>
                 </div>

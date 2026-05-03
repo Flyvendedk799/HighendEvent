@@ -244,54 +244,8 @@
         </div>
     </div>
 
-    <!-- Deposit Refund Management -->
-    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Pending Deposit Refunds -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900">Afventende Deposit Refusioner</h2>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        {{ pending_deposit_refunds|length }} afventende
-                    </span>
-                </div>
-            </div>
-            <div class="divide-y divide-gray-200">
-                {% for booking in pending_deposit_refunds[:5] %}
-                <div class="px-6 py-4 hover:bg-gray-50 transition-colors duration-200">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">{{ booking.customer_name }}</p>
-                                <p class="text-sm text-gray-500">{{ booking.booking_no }}</p>
-                                <p class="text-xs text-gray-400">Returneret: {{ booking.end_date | date_format }}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900">{{ booking.deposit_dkk | currency }}</p>
-                            <a href="{{ url_for('admin.booking_detail', id=booking.id) }}" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200">
-                                Håndter
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% if pending_deposit_refunds|length == 0 %}
-                <div class="px-6 py-8 text-center text-gray-500">
-                    <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <p class="mt-2 text-sm">Ingen afventende refusioner</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
+    <!-- Returns Management -->
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-1 gap-6">
         <!-- Bookings Awaiting Return -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -319,7 +273,6 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900">{{ booking.deposit_dkk | currency }}</p>
                             <a href="{{ url_for('admin.booking_detail', id=booking.id) }}" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200">
                                 Håndter
                             </a>

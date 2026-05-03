@@ -303,9 +303,6 @@
                         </td>
                         <td class="px-3 py-3 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900">{{ booking_totals.get(booking.id, booking.total_dkk) | currency }}</div>
-                            {% if booking.deposit_dkk > 0 %}
-                            <div class="text-xs text-gray-500">Dep: {{ booking.deposit_dkk | currency }}</div>
-                            {% endif %}
                         </td>
                         <td class="px-3 py-3 whitespace-nowrap">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ booking.status | status_badge_class }}">
@@ -400,9 +397,6 @@
                     <div>
                         <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Beløb</div>
                         <div class="text-sm font-medium text-gray-900">{{ booking_totals.get(booking.id, booking.total_dkk) | currency }}</div>
-                        {% if booking.deposit_dkk > 0 %}
-                        <div class="text-xs text-gray-500">Depositum: {{ booking.deposit_dkk | currency }}</div>
-                        {% endif %}
                     </div>
                     
                     <div class="flex space-x-2">

@@ -136,13 +136,6 @@ def dashboard():
         Booking.is_deleted == False
     ).order_by(desc(Booking.created_at)).limit(10).all()
     
-    # Deposit refund management
-    pending_deposit_refunds = Booking.query.filter(
-        Booking.status == BookingStatus.RETURNED_GOOD,
-        Booking.deposit_refunded == False,
-        Booking.is_deleted == False
-    ).order_by(Booking.end_date).all()
-    
     # Bookings awaiting return
     awaiting_return = Booking.query.filter(
         Booking.status == BookingStatus.OUT_FOR_DELIVERY,
@@ -173,7 +166,6 @@ def dashboard():
                          revenue_this_month=revenue_this_month,
                          upcoming_pickups=upcoming_pickups,
                          recent_bookings=recent_bookings,
-                         pending_deposit_refunds=pending_deposit_refunds,
                          awaiting_return=awaiting_return,
                          product_stats=product_stats)
 
@@ -255,7 +247,7 @@ def create_product():
             daily_price_dkk=Decimal(str(form.daily_price_dkk.data)),
             weekend_price_dkk=Decimal(str(form.weekend_price_dkk.data)) if form.weekend_price_dkk.data else None,
             weekend_discount_dkk=Decimal(str(form.weekend_discount_dkk.data)) if form.weekend_discount_dkk.data else None,
-            deposit_dkk=Decimal(str(form.deposit_dkk.data)) if form.deposit_dkk.data else None,
+            deposit_dkk=None,
             stock_qty=form.stock_qty.data,
             prep_buffer_days=form.prep_buffer_days.data,
             cleanup_buffer_days=form.cleanup_buffer_days.data,
@@ -345,7 +337,7 @@ def edit_product(id):
         product.daily_price_dkk = Decimal(str(form.daily_price_dkk.data))
         product.weekend_price_dkk = Decimal(str(form.weekend_price_dkk.data)) if form.weekend_price_dkk.data else None
         product.weekend_discount_dkk = Decimal(str(form.weekend_discount_dkk.data)) if form.weekend_discount_dkk.data else None
-        product.deposit_dkk = Decimal(str(form.deposit_dkk.data)) if form.deposit_dkk.data else None
+        product.deposit_dkk = None
         product.stock_qty = form.stock_qty.data
         product.prep_buffer_days = form.prep_buffer_days.data
         product.cleanup_buffer_days = form.cleanup_buffer_days.data
@@ -1102,7 +1094,6 @@ def bookings():
             rental_subtotal
             + upsell_total
             + (booking.delivery_fee_dkk or Decimal('0'))
-            + (booking.deposit_dkk or Decimal('0'))
         )
 
     return render_template('admin/bookings.html',
