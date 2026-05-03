@@ -601,6 +601,31 @@ def api_availability_check():
     return jsonify({'available_quantity': avail})
 
 
+@bp.route('/api/products/<int:product_id>/upsells')
+@login_required
+def api_product_upsells(product_id):
+    """AJAX: list active upsells linked to a product (for manual booking form)."""
+    rows = db.session.query(ProductUpsell, UpsellProduct).join(
+        UpsellProduct, ProductUpsell.upsell_product_id == UpsellProduct.id
+    ).filter(
+        ProductUpsell.product_id == product_id,
+        ProductUpsell.is_active == True,
+        UpsellProduct.is_active == True,
+    ).order_by(ProductUpsell.sort_order).all()
+
+    return jsonify({
+        'upsells': [
+            {
+                'id': up.id,
+                'name': up.name,
+                'price': float(up.price_dkk),
+                'stock_qty': up.stock_qty,
+            }
+            for _, up in rows
+        ]
+    })
+
+
 @bp.route('/bookings/create', methods=['GET', 'POST'])
 @login_required
 def create_manual_booking():
@@ -760,7 +785,8 @@ def create_manual_booking():
         db.session.add(booking)
         db.session.flush()
 
-        # Create booking items
+        # Create booking items + upsells
+        upsells_total = Decimal('0')
         for i, dto in enumerate(booking_items_dto):
             unit_price = pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')
             booking_item = BookingItem(
@@ -771,6 +797,33 @@ def create_manual_booking():
                 name_snapshot=dto.product_name,
             )
             db.session.add(booking_item)
+            db.session.flush()  # Get booking_item.id for upsells
+
+            raw_upsells = items_data[i].get('upsells', {}) if i < len(items_data) else {}
+            for upsell_id, qty in raw_upsells.items():
+                try:
+                    qty_int = int(qty)
+                except (TypeError, ValueError):
+                    continue
+                if qty_int <= 0:
+                    continue
+                upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+                if not upsell_product:
+                    continue
+                db.session.add(BookingUpsellItem(
+                    booking_item_id=booking_item.id,
+                    upsell_product_id=upsell_product.id,
+                    quantity=qty_int,
+                    unit_price_dkk=upsell_product.price_dkk,
+                    name_snapshot=upsell_product.name,
+                ))
+                upsells_total += upsell_product.price_dkk * qty_int
+
+        # Roll upsells into booking totals (paid upfront together with deposit/delivery)
+        if upsells_total > 0:
+            booking.subtotal_dkk += upsells_total
+            booking.total_dkk += upsells_total
+            booking.upfront_payment_dkk += upsells_total
 
         db.session.commit()
 
@@ -828,6 +881,7 @@ def preview_booking_pricing():
 
     delivery_type = DeliveryType.PICKUP if delivery_type_str == 'pickup' else DeliveryType.DELIVERY
     booking_items_dto = []
+    upsell_specs = []  # parallel list of {upsell_id: qty} dicts
     for item in items:
         try:
             start_date = datetime.strptime(item['start_date'], '%Y-%m-%d').date()
@@ -843,6 +897,7 @@ def preview_booking_pricing():
                 end_date=end_date,
                 delivery_type=delivery_type,
             ))
+            upsell_specs.append(item.get('upsells', {}) or {})
         except (ValueError, KeyError):
             continue
 
@@ -854,23 +909,49 @@ def preview_booking_pricing():
         booking_items_dto, delivery_type, customer_address, customer_zip, customer_city
     )
 
+    # Resolve upsell line items and total
+    upsell_line_items = []
+    upsells_total = Decimal('0')
+    for spec in upsell_specs:
+        for upsell_id, qty in spec.items():
+            try:
+                qty_int = int(qty)
+            except (TypeError, ValueError):
+                continue
+            if qty_int <= 0:
+                continue
+            upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
+            if not upsell_product:
+                continue
+            line_total = upsell_product.price_dkk * qty_int
+            upsells_total += line_total
+            upsell_line_items.append({
+                'name': upsell_product.name,
+                'quantity': qty_int,
+                'unit_price': float(upsell_product.price_dkk),
+                'total_price': float(line_total),
+                'description': 'Tilkøb',
+            })
+
+    line_items = [
+        {
+            'name': li.name,
+            'quantity': li.quantity,
+            'unit_price': float(li.unit_price),
+            'total_price': float(li.total_price),
+            'description': li.description or '',
+        }
+        for li in pricing.line_items
+    ] + upsell_line_items
+
     return jsonify({
-        'subtotal': float(pricing.subtotal),
+        'subtotal': float(pricing.subtotal + upsells_total),
         'deposit_amount': float(pricing.deposit_amount),
         'delivery_fee': float(pricing.delivery_fee),
-        'total': float(pricing.total),
-        'upfront_payment': float(pricing.upfront_payment),
+        'total': float(pricing.total + upsells_total),
+        'upfront_payment': float(pricing.upfront_payment + upsells_total),
         'remaining_payment': float(pricing.remaining_payment),
-        'line_items': [
-            {
-                'name': li.name,
-                'quantity': li.quantity,
-                'unit_price': float(li.unit_price),
-                'total_price': float(li.total_price),
-                'description': li.description or '',
-            }
-            for li in pricing.line_items
-        ],
+        'line_items': line_items,
     })
 
 
