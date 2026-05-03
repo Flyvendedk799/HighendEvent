@@ -320,22 +320,47 @@
                         Vælg produkter og datoer for at se pris
                     </p>
 
-                    <div x-show="!pricingLoading && pricing" class="space-y-2 text-sm">
-                        <template x-for="li in (pricing ? pricing.line_items : [])" :key="li.name">
-                            <div class="flex justify-between text-gray-600">
-                                <span x-text="li.name + (li.description ? ' (' + li.description + ')' : '')"></span>
-                                <span x-text="fmt(li.total_price)"></span>
+                    <div x-show="!pricingLoading && pricing" class="space-y-3 text-sm">
+                        <!-- Rental line items -->
+                        <template x-if="pricing && pricing.rental_line_items && pricing.rental_line_items.length > 0">
+                            <div class="space-y-1.5">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Leje</p>
+                                <template x-for="li in pricing.rental_line_items" :key="'r-' + li.name">
+                                    <div class="flex justify-between gap-3 text-gray-700">
+                                        <span class="min-w-0">
+                                            <span class="block truncate" x-text="li.name + ' × ' + li.quantity"></span>
+                                            <span x-show="li.description" class="block text-xs text-gray-400" x-text="li.description"></span>
+                                        </span>
+                                        <span class="whitespace-nowrap" x-text="fmt(li.total_price)"></span>
+                                    </div>
+                                </template>
                             </div>
                         </template>
+
+                        <!-- Upsell line items -->
+                        <template x-if="pricing && pricing.upsell_line_items && pricing.upsell_line_items.length > 0">
+                            <div class="space-y-1.5 pt-2 border-t border-dashed border-gray-200">
+                                <p class="text-[11px] font-semibold uppercase tracking-wide text-purple-500">Tilkøb</p>
+                                <template x-for="li in pricing.upsell_line_items" :key="'u-' + li.name">
+                                    <div class="flex justify-between gap-3 text-gray-700">
+                                        <span class="min-w-0 truncate" x-text="li.name + ' × ' + li.quantity"></span>
+                                        <span class="whitespace-nowrap" x-text="fmt(li.total_price)"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Fees & total -->
                         <template x-if="pricing">
-                            <div class="border-t pt-2 space-y-1">
+                            <div class="border-t pt-2 space-y-1.5">
+                                <!-- Levering with toggleable breakdown -->
                                 <div x-show="pricing.delivery_fee > 0 || (pricing.delivery_breakdown && deliveryType() === 'delivery')">
-                                    <div class="flex justify-between text-gray-600">
-                                        <span class="flex items-center gap-1.5">
-                                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex justify-between gap-3 text-gray-700">
+                                        <span class="flex items-center gap-1.5 min-w-0">
+                                            <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                                             </svg>
-                                            Levering
+                                            <span>Levering</span>
                                             <button type="button"
                                                     x-show="pricing.delivery_breakdown"
                                                     @click="deliveryDetailsOpen = !deliveryDetailsOpen"
@@ -343,12 +368,11 @@
                                                 <span x-text="deliveryDetailsOpen ? 'skjul' : 'detaljer'"></span>
                                             </button>
                                         </span>
-                                        <span x-text="fmt(pricing.delivery_fee)"></span>
+                                        <span class="whitespace-nowrap" x-text="fmt(pricing.delivery_fee)"></span>
                                     </div>
-                                    <!-- Breakdown -->
                                     <div x-show="deliveryDetailsOpen && pricing.delivery_breakdown"
                                          x-transition
-                                         class="mt-1 ml-5 px-3 py-2 bg-indigo-50/60 border border-indigo-100 rounded-md text-xs space-y-1">
+                                         class="mt-1.5 ml-5 px-3 py-2 bg-indigo-50/60 border border-indigo-100 rounded-md text-xs space-y-1">
                                         <template x-if="pricing.delivery_breakdown && !pricing.delivery_breakdown.address_resolved">
                                             <p class="text-yellow-700 flex items-start gap-1">
                                                 <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -384,22 +408,22 @@
                                         </template>
                                     </div>
                                 </div>
-                                <div class="flex justify-between text-gray-600" x-show="pricing.deposit_amount > 0">
+                                <div class="flex justify-between gap-3 text-gray-700" x-show="pricing.deposit_amount > 0">
                                     <span>Depositum (refunderes)</span>
-                                    <span x-text="fmt(pricing.deposit_amount)"></span>
+                                    <span class="whitespace-nowrap" x-text="fmt(pricing.deposit_amount)"></span>
                                 </div>
-                                <div class="flex justify-between font-semibold text-gray-900 pt-1 border-t">
+                                <div class="flex justify-between gap-3 font-semibold text-gray-900 pt-2 border-t">
                                     <span>Total</span>
-                                    <span x-text="fmt(pricing.total)"></span>
+                                    <span class="whitespace-nowrap" x-text="fmt(pricing.total)"></span>
                                 </div>
                                 <div class="bg-indigo-50 rounded-lg p-3 mt-2 space-y-1 text-xs">
-                                    <div class="flex justify-between text-indigo-700">
-                                        <span>Forudbetaling (depositum + levering)</span>
-                                        <span x-text="fmt(pricing.upfront_payment)"></span>
+                                    <div class="flex justify-between gap-3 text-indigo-700">
+                                        <span x-text="upfrontLabel()"></span>
+                                        <span class="whitespace-nowrap font-medium" x-text="fmt(pricing.upfront_payment)"></span>
                                     </div>
-                                    <div class="flex justify-between text-indigo-700">
+                                    <div class="flex justify-between gap-3 text-indigo-700">
                                         <span>Rest efter returnering</span>
-                                        <span x-text="fmt(pricing.remaining_payment)"></span>
+                                        <span class="whitespace-nowrap" x-text="fmt(pricing.remaining_payment)"></span>
                                     </div>
                                 </div>
                             </div>
@@ -506,6 +530,15 @@ function manualBooking() {
 
         deliveryType() {
             return (document.getElementById('delivery_type') || {}).value || 'pickup';
+        },
+
+        upfrontLabel() {
+            if (!this.pricing) return 'Forudbetaling';
+            const parts = [];
+            if (this.pricing.deposit_amount > 0) parts.push('depositum');
+            if (this.pricing.delivery_fee > 0) parts.push('levering');
+            if (this.pricing.upsells_total > 0) parts.push('tilkøb');
+            return parts.length ? `Forudbetaling (${parts.join(' + ')})` : 'Forudbetaling';
         },
 
         syncItemsJson(event) {

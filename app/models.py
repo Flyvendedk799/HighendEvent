@@ -438,7 +438,18 @@ class BookingItem(db.Model):
     booking: Mapped["Booking"] = relationship("Booking", back_populates="items")
     product: Mapped["Product"] = relationship("Product", back_populates="booking_items")
     upsell_items: Mapped[List["BookingUpsellItem"]] = relationship("BookingUpsellItem", back_populates="booking_item", cascade="all, delete-orphan")
-    
+
+    @property
+    def rental_days(self) -> int:
+        if not self.booking or not self.booking.start_date or not self.booking.end_date:
+            return 0
+        return (self.booking.end_date - self.booking.start_date).days + 1
+
+    @property
+    def line_total(self) -> Decimal:
+        # unit_price_dkk is the daily price snapshot taken at booking time
+        return (self.unit_price_dkk or Decimal('0')) * self.quantity * self.rental_days
+
     def __repr__(self) -> str:
         return f'<BookingItem {self.name_snapshot} x{self.quantity}>'
 
