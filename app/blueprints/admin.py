@@ -944,10 +944,35 @@ def preview_booking_pricing():
         for li in pricing.line_items
     ] + upsell_line_items
 
+    # Delivery breakdown (distance + per-km details) for the preview card
+    delivery_breakdown = None
+    if pricing.delivery_fee > 0 and delivery_type == DeliveryType.DELIVERY:
+        delivery_setting = DeliverySetting.query.filter_by(type=DeliveryType.DELIVERY).first()
+        if delivery_setting:
+            distance_km = None
+            company_location = CompanyLocation.query.filter_by(is_primary=True, is_active=True).first()
+            if company_location and company_location.latitude and company_location.longitude \
+                    and customer_address and customer_zip and customer_city:
+                distance_km = DistanceService.calculate_delivery_distance(
+                    company_location.latitude, company_location.longitude,
+                    customer_address, customer_zip, customer_city,
+                )
+            chargeable = max(0, (distance_km or 0) - delivery_setting.free_delivery_km) if distance_km is not None else None
+            delivery_breakdown = {
+                'base_fee': float(delivery_setting.base_fee_dkk),
+                'per_km_fee': float(delivery_setting.per_km_fee_dkk),
+                'free_delivery_km': delivery_setting.free_delivery_km,
+                'distance_km': round(distance_km, 2) if distance_km is not None else None,
+                'chargeable_km': round(chargeable, 2) if chargeable is not None else None,
+                'km_fee': float(delivery_setting.per_km_fee_dkk) * chargeable if chargeable is not None else 0,
+                'address_resolved': distance_km is not None,
+            }
+
     return jsonify({
         'subtotal': float(pricing.subtotal + upsells_total),
         'deposit_amount': float(pricing.deposit_amount),
         'delivery_fee': float(pricing.delivery_fee),
+        'delivery_breakdown': delivery_breakdown,
         'total': float(pricing.total + upsells_total),
         'upfront_payment': float(pricing.upfront_payment + upsells_total),
         'remaining_payment': float(pricing.remaining_payment),

@@ -329,9 +329,60 @@
                         </template>
                         <template x-if="pricing">
                             <div class="border-t pt-2 space-y-1">
-                                <div class="flex justify-between text-gray-600" x-show="pricing.delivery_fee > 0">
-                                    <span>Levering</span>
-                                    <span x-text="fmt(pricing.delivery_fee)"></span>
+                                <div x-show="pricing.delivery_fee > 0 || (pricing.delivery_breakdown && deliveryType() === 'delivery')">
+                                    <div class="flex justify-between text-gray-600">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                            </svg>
+                                            Levering
+                                            <button type="button"
+                                                    x-show="pricing.delivery_breakdown"
+                                                    @click="deliveryDetailsOpen = !deliveryDetailsOpen"
+                                                    class="text-xs text-indigo-600 hover:text-indigo-800 underline">
+                                                <span x-text="deliveryDetailsOpen ? 'skjul' : 'detaljer'"></span>
+                                            </button>
+                                        </span>
+                                        <span x-text="fmt(pricing.delivery_fee)"></span>
+                                    </div>
+                                    <!-- Breakdown -->
+                                    <div x-show="deliveryDetailsOpen && pricing.delivery_breakdown"
+                                         x-transition
+                                         class="mt-1 ml-5 px-3 py-2 bg-indigo-50/60 border border-indigo-100 rounded-md text-xs space-y-1">
+                                        <template x-if="pricing.delivery_breakdown && !pricing.delivery_breakdown.address_resolved">
+                                            <p class="text-yellow-700 flex items-start gap-1">
+                                                <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                                </svg>
+                                                Adressen kunne ikke geokodes – kun basisgebyr vist.
+                                            </p>
+                                        </template>
+                                        <div class="flex justify-between text-indigo-800">
+                                            <span>Basisgebyr</span>
+                                            <span x-text="fmt(pricing.delivery_breakdown.base_fee)"></span>
+                                        </div>
+                                        <template x-if="pricing.delivery_breakdown && pricing.delivery_breakdown.distance_km !== null">
+                                            <div class="flex justify-between text-indigo-800">
+                                                <span>Afstand til kunde</span>
+                                                <span><span x-text="pricing.delivery_breakdown.distance_km"></span> km</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="pricing.delivery_breakdown && pricing.delivery_breakdown.free_delivery_km > 0">
+                                            <div class="flex justify-between text-indigo-700">
+                                                <span>Fri levering</span>
+                                                <span>første <span x-text="pricing.delivery_breakdown.free_delivery_km"></span> km</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="pricing.delivery_breakdown && pricing.delivery_breakdown.chargeable_km !== null && pricing.delivery_breakdown.chargeable_km > 0">
+                                            <div class="flex justify-between text-indigo-800">
+                                                <span>
+                                                    <span x-text="pricing.delivery_breakdown.chargeable_km"></span> km ×
+                                                    <span x-text="fmt(pricing.delivery_breakdown.per_km_fee)"></span>/km
+                                                </span>
+                                                <span x-text="fmt(pricing.delivery_breakdown.km_fee)"></span>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
                                 <div class="flex justify-between text-gray-600" x-show="pricing.deposit_amount > 0">
                                     <span>Depositum (refunderes)</span>
@@ -445,11 +496,16 @@ function manualBooking() {
         items: [_mbBlankItem(1)],
         pricing: null,
         pricingLoading: false,
+        deliveryDetailsOpen: true,
         _previewTimer: null,
 
         init() {
             // Expose debouncedPreview globally so onchange attributes on plain HTML fields can call it
             window._mbPreview = () => this.debouncedPreview();
+        },
+
+        deliveryType() {
+            return (document.getElementById('delivery_type') || {}).value || 'pickup';
         },
 
         syncItemsJson(event) {
