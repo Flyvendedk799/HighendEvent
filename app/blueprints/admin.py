@@ -72,7 +72,8 @@ def _apply_price_override(base_price, mode, value):
         return price
     if mode == 'direct':
         return max(Decimal('0'), value_dec)
-    return max(Decimal('0'), price * (Decimal('1') + (value_dec / Decimal('100'))))
+    # Percent overrides are discounts: 40 means 40% off the base price.
+    return max(Decimal('0'), price * (Decimal('1') - (value_dec / Decimal('100'))))
 
 
 def allowed_file(filename):
