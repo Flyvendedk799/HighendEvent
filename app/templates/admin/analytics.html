@@ -34,9 +34,9 @@
                     </div>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Total bookinger</p>
+                    <p class="text-sm font-medium text-gray-600">Betalte bookinger</p>
                     <p class="text-2xl font-semibold text-gray-900">{{ total_bookings }}</p>
-                    <p class="text-sm text-green-600 mt-1">+12% fra sidste måned</p>
+                    <p class="text-sm text-gray-500 mt-1">eksklusiv afventende & annullerede</p>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600">Total omsætning</p>
                     <p class="text-2xl font-semibold text-gray-900">{{ total_revenue | currency }}</p>
-                    <p class="text-sm text-green-600 mt-1">+18% fra sidste måned</p>
+                    <p class="text-sm text-gray-500 mt-1">fra betalte bookinger</p>
                 </div>
             </div>
         </div>
@@ -168,44 +168,27 @@
             </div>
             <div class="p-6">
                 <div class="space-y-4">
+                    {% for activity in recent_activity %}
                     <div class="flex items-center space-x-3">
                         <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                             <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-gray-900">Ny booking oprettet</p>
-                            <p class="text-sm text-gray-500">#1234 - DKK 1,250</p>
+                            <p class="text-sm font-medium text-gray-900">
+                                <a href="{{ url_for('admin.booking_detail', id=activity.booking.id) }}" class="hover:text-indigo-600">
+                                    {{ activity.booking.booking_no }}
+                                </a>
+                                — {{ activity.booking.customer_name }}
+                            </p>
+                            <p class="text-sm text-gray-500">{{ activity.total | currency }} · {{ activity.booking.status.value }}</p>
                         </div>
-                        <div class="text-xs text-gray-400 ml-auto">2 timer siden</div>
+                        <div class="text-xs text-gray-400 ml-auto">{{ activity.booking.created_at.strftime('%d-%m-%Y %H:%M') }}</div>
                     </div>
-                    
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Produkt tilføjet</p>
-                            <p class="text-sm text-gray-500">Popcorn maskine 8oz</p>
-                        </div>
-                        <div class="text-xs text-gray-400 ml-auto">4 timer siden</div>
-                    </div>
-                    
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Booking betalt</p>
-                            <p class="text-sm text-gray-500">#1233 - DKK 850</p>
-                        </div>
-                        <div class="text-xs text-gray-400 ml-auto">6 timer siden</div>
-                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">Ingen aktivitet endnu.</p>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -262,10 +245,18 @@ const bookingsCtx = document.getElementById('bookingsChart').getContext('2d');
 const bookingsChart = new Chart(bookingsCtx, {
     type: 'bar',
     data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun'],
+        labels: [
+            {% for month in monthly_bookings %}
+            '{{ month.month }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
         datasets: [{
             label: 'Bookinger',
-            data: [12, 19, 3, 5, 2, 3],
+            data: [
+                {% for month in monthly_bookings %}
+                {{ month.count }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
             backgroundColor: 'rgba(16, 185, 129, 0.8)',
             borderColor: 'rgb(16, 185, 129)',
             borderWidth: 1
