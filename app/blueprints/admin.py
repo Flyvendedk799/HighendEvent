@@ -61,6 +61,20 @@ def compute_booking_total(booking):
     return rental + upsells + (booking.delivery_fee_dkk or Decimal('0'))
 
 
+def _apply_price_override(base_price, mode, value):
+    """Apply optional direct/percent override to a unit price."""
+    price = Decimal(base_price or 0)
+    if mode not in {'direct', 'percent'}:
+        return price
+    try:
+        value_dec = Decimal(str(value))
+    except Exception:
+        return price
+    if mode == 'direct':
+        return max(Decimal('0'), value_dec)
+    return max(Decimal('0'), price * (Decimal('1') + (value_dec / Decimal('100'))))
+
+
 def allowed_file(filename):
     """Check if file extension is allowed."""
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -817,6 +831,12 @@ def create_manual_booking():
         upsells_total = Decimal('0')
         for i, dto in enumerate(booking_items_dto):
             unit_price = pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')
+            raw_item = items_data[i] if i < len(items_data) else {}
+            unit_price = _apply_price_override(
+                unit_price,
+                raw_item.get('price_override_mode'),
+                raw_item.get('price_override_value')
+            )
             booking_item = BookingItem(
                 booking_id=booking.id,
                 product_id=dto.product_id,
@@ -842,10 +862,28 @@ def create_manual_booking():
                     booking_item_id=booking_item.id,
                     upsell_product_id=upsell_product.id,
                     quantity=qty_int,
-                    unit_price_dkk=upsell_product.price_dkk,
+                    unit_price_dkk=_apply_price_override(
+                        upsell_product.price_dkk,
+                        ((raw_item.get('upsell_overrides') or {}).get(str(upsell_id), {}) or {}).get('mode'),
+                        ((raw_item.get('upsell_overrides') or {}).get(str(upsell_id), {}) or {}).get('value')
+                    ),
                     name_snapshot=upsell_product.name,
                 ))
-                upsells_total += upsell_product.price_dkk * qty_int
+                unit_upsell = _apply_price_override(
+                    upsell_product.price_dkk,
+                    ((raw_item.get('upsell_overrides') or {}).get(str(upsell_id), {}) or {}).get('mode'),
+                    ((raw_item.get('upsell_overrides') or {}).get(str(upsell_id), {}) or {}).get('value')
+                )
+                upsells_total += unit_upsell * qty_int
+
+            # keep booking totals in sync if the main line price was overridden
+            default_line_total = (pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')) * dto.quantity
+            actual_line_total = unit_price * dto.quantity
+            if actual_line_total != default_line_total:
+                delta = actual_line_total - default_line_total
+                booking.total_dkk += delta
+                booking.upfront_payment_dkk += delta
+                booking.subtotal_dkk += delta
 
         # Roll upsells into total + upfront payment (they're charged together with
         # the deposit/delivery). subtotal_dkk stays as rental-only so the booking
@@ -930,7 +968,10 @@ def preview_booking_pricing():
                 end_date=end_date,
                 delivery_type=delivery_type,
             ))
-            upsell_specs.append(item.get('upsells', {}) or {})
+            upsell_specs.append({
+                'upsells': item.get('upsells', {}) or {},
+                'upsell_overrides': item.get('upsell_overrides', {}) or {},
+            })
         except (ValueError, KeyError):
             continue
 
@@ -946,7 +987,7 @@ def preview_booking_pricing():
     upsell_line_items = []
     upsells_total = Decimal('0')
     for spec in upsell_specs:
-        for upsell_id, qty in spec.items():
+        for upsell_id, qty in (spec.get('upsells') or {}).items():
             try:
                 qty_int = int(qty)
             except (TypeError, ValueError):
@@ -956,28 +997,43 @@ def preview_booking_pricing():
             upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
             if not upsell_product:
                 continue
-            line_total = upsell_product.price_dkk * qty_int
+            override_spec = (spec.get('upsell_overrides') or {}).get(str(upsell_id), {}) or {}
+            unit_upsell = _apply_price_override(
+                upsell_product.price_dkk,
+                override_spec.get('mode'),
+                override_spec.get('value')
+            )
+            line_total = unit_upsell * qty_int
             upsells_total += line_total
             upsell_line_items.append({
                 'name': upsell_product.name,
                 'quantity': qty_int,
-                'unit_price': float(upsell_product.price_dkk),
+                'unit_price': float(unit_upsell),
                 'total_price': float(line_total),
             })
 
     # PricingService bundles "Levering" into line_items — strip it out so the UI
     # can render delivery exactly once (with its own breakdown row).
+    raw_rental_line_items = [li for li in pricing.line_items if li.name != 'Levering']
     rental_line_items = [
         {
             'name': li.name,
             'quantity': li.quantity,
-            'unit_price': float(li.unit_price),
-            'total_price': float(li.total_price),
+            'unit_price': float(_apply_price_override(
+                li.unit_price,
+                (items[idx].get('price_override_mode') if idx < len(items) else None),
+                (items[idx].get('price_override_value') if idx < len(items) else None),
+            )),
+            'total_price': float(_apply_price_override(
+                li.unit_price,
+                (items[idx].get('price_override_mode') if idx < len(items) else None),
+                (items[idx].get('price_override_value') if idx < len(items) else None),
+            ) * li.quantity),
             'description': li.description or '',
         }
-        for li in pricing.line_items
-        if li.name != 'Levering'
+        for idx, li in enumerate(raw_rental_line_items)
     ]
+    rental_subtotal = sum((Decimal(str(li['total_price'])) for li in rental_line_items), Decimal('0'))
 
     # Delivery breakdown (distance + per-km details) for the preview card
     delivery_breakdown = None
@@ -1004,14 +1060,14 @@ def preview_booking_pricing():
             }
 
     return jsonify({
-        'subtotal': float(pricing.subtotal + upsells_total),
-        'rental_subtotal': float(pricing.subtotal),
+        'subtotal': float(rental_subtotal + upsells_total),
+        'rental_subtotal': float(rental_subtotal),
         'upsells_total': float(upsells_total),
         'deposit_amount': float(pricing.deposit_amount),
         'delivery_fee': float(pricing.delivery_fee),
         'delivery_breakdown': delivery_breakdown,
-        'total': float(pricing.total + upsells_total),
-        'upfront_payment': float(pricing.upfront_payment + upsells_total),
+        'total': float(rental_subtotal + pricing.delivery_fee + upsells_total),
+        'upfront_payment': float(rental_subtotal + pricing.delivery_fee + upsells_total),
         'remaining_payment': float(pricing.remaining_payment),
         'rental_line_items': rental_line_items,
         'upsell_line_items': upsell_line_items,
