@@ -202,6 +202,62 @@
                                     </svg>
                                     Konflikt med eksisterende booking. Marker "Tillad overbooking" for at fortsætte.
                                 </div>
+
+                                <!-- Mersalgsprodukter (upsells) -->
+                                <div x-show="item.product_id" class="mt-3 pt-3 border-t border-gray-200">
+                                    <button type="button"
+                                            @click="item.upsellsExpanded = !item.upsellsExpanded"
+                                            class="w-full flex items-center justify-between text-xs font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                            </svg>
+                                            Tilkøb / Mersalg
+                                            <span x-show="upsellSelectedCount(item) > 0"
+                                                  class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700"
+                                                  x-text="upsellSelectedCount(item) + ' valgt'"></span>
+                                            <span x-show="item.upsellsLoading" class="text-gray-400">(indlæser…)</span>
+                                            <span x-show="!item.upsellsLoading && item.availableUpsells && item.availableUpsells.length === 0"
+                                                  class="text-gray-400">(ingen tilgængelige)</span>
+                                        </span>
+                                        <svg class="w-4 h-4 transition-transform"
+                                             :class="item.upsellsExpanded ? 'rotate-180' : ''"
+                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+
+                                    <div x-show="item.upsellsExpanded && item.availableUpsells && item.availableUpsells.length > 0"
+                                         x-transition
+                                         class="mt-3 space-y-2">
+                                        <template x-for="up in item.availableUpsells" :key="up.id">
+                                            <div class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-800 truncate" x-text="up.name"></p>
+                                                    <p class="text-xs text-gray-500">
+                                                        <span x-text="fmt(up.price)"></span>
+                                                        <span class="ml-2" :class="up.stock_qty > 0 ? 'text-green-600' : 'text-red-500'"
+                                                              x-text="up.stock_qty > 0 ? ('Lager: ' + up.stock_qty) : 'Udsolgt'"></span>
+                                                    </p>
+                                                </div>
+                                                <div class="flex items-center gap-1.5">
+                                                    <button type="button"
+                                                            @click="changeUpsellQty(item, up, -1)"
+                                                            class="w-7 h-7 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                                                            :disabled="(item.upsells[up.id] || 0) <= 0">−</button>
+                                                    <input type="number" min="0" :max="up.stock_qty"
+                                                           :value="item.upsells[up.id] || 0"
+                                                           @input="setUpsellQty(item, up, $event.target.value)"
+                                                           class="w-12 text-center px-1 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                    <button type="button"
+                                                            @click="changeUpsellQty(item, up, 1)"
+                                                            class="w-7 h-7 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                                                            :disabled="(item.upsells[up.id] || 0) >= up.stock_qty">+</button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
                         </template>
                     </div>
@@ -273,9 +329,60 @@
                         </template>
                         <template x-if="pricing">
                             <div class="border-t pt-2 space-y-1">
-                                <div class="flex justify-between text-gray-600" x-show="pricing.delivery_fee > 0">
-                                    <span>Levering</span>
-                                    <span x-text="fmt(pricing.delivery_fee)"></span>
+                                <div x-show="pricing.delivery_fee > 0 || (pricing.delivery_breakdown && deliveryType() === 'delivery')">
+                                    <div class="flex justify-between text-gray-600">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                            </svg>
+                                            Levering
+                                            <button type="button"
+                                                    x-show="pricing.delivery_breakdown"
+                                                    @click="deliveryDetailsOpen = !deliveryDetailsOpen"
+                                                    class="text-xs text-indigo-600 hover:text-indigo-800 underline">
+                                                <span x-text="deliveryDetailsOpen ? 'skjul' : 'detaljer'"></span>
+                                            </button>
+                                        </span>
+                                        <span x-text="fmt(pricing.delivery_fee)"></span>
+                                    </div>
+                                    <!-- Breakdown -->
+                                    <div x-show="deliveryDetailsOpen && pricing.delivery_breakdown"
+                                         x-transition
+                                         class="mt-1 ml-5 px-3 py-2 bg-indigo-50/60 border border-indigo-100 rounded-md text-xs space-y-1">
+                                        <template x-if="pricing.delivery_breakdown && !pricing.delivery_breakdown.address_resolved">
+                                            <p class="text-yellow-700 flex items-start gap-1">
+                                                <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                                </svg>
+                                                Adressen kunne ikke geokodes – kun basisgebyr vist.
+                                            </p>
+                                        </template>
+                                        <div class="flex justify-between text-indigo-800">
+                                            <span>Basisgebyr</span>
+                                            <span x-text="fmt(pricing.delivery_breakdown.base_fee)"></span>
+                                        </div>
+                                        <template x-if="pricing.delivery_breakdown && pricing.delivery_breakdown.distance_km !== null">
+                                            <div class="flex justify-between text-indigo-800">
+                                                <span>Afstand til kunde</span>
+                                                <span><span x-text="pricing.delivery_breakdown.distance_km"></span> km</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="pricing.delivery_breakdown && pricing.delivery_breakdown.free_delivery_km > 0">
+                                            <div class="flex justify-between text-indigo-700">
+                                                <span>Fri levering</span>
+                                                <span>første <span x-text="pricing.delivery_breakdown.free_delivery_km"></span> km</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="pricing.delivery_breakdown && pricing.delivery_breakdown.chargeable_km !== null && pricing.delivery_breakdown.chargeable_km > 0">
+                                            <div class="flex justify-between text-indigo-800">
+                                                <span>
+                                                    <span x-text="pricing.delivery_breakdown.chargeable_km"></span> km ×
+                                                    <span x-text="fmt(pricing.delivery_breakdown.per_km_fee)"></span>/km
+                                                </span>
+                                                <span x-text="fmt(pricing.delivery_breakdown.km_fee)"></span>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
                                 <div class="flex justify-between text-gray-600" x-show="pricing.deposit_amount > 0">
                                     <span>Depositum (refunderes)</span>
@@ -369,11 +476,27 @@
 </div>
 
 <script>
+function _mbBlankItem(id) {
+    return {
+        id: id || Date.now(),
+        product_id: '',
+        quantity: 1,
+        start_date: '',
+        end_date: '',
+        availability: null,
+        upsells: {},               // { upsell_id: qty }
+        availableUpsells: [],      // [{id, name, price, stock_qty}]
+        upsellsLoading: false,
+        upsellsExpanded: false,
+    };
+}
+
 function manualBooking() {
     return {
-        items: [{ id: 1, product_id: '', quantity: 1, start_date: '', end_date: '', availability: null }],
+        items: [_mbBlankItem(1)],
         pricing: null,
         pricingLoading: false,
+        deliveryDetailsOpen: true,
         _previewTimer: null,
 
         init() {
@@ -381,12 +504,24 @@ function manualBooking() {
             window._mbPreview = () => this.debouncedPreview();
         },
 
+        deliveryType() {
+            return (document.getElementById('delivery_type') || {}).value || 'pickup';
+        },
+
         syncItemsJson(event) {
-            document.getElementById('items-json-field').value = JSON.stringify(this.items);
+            // Strip view-only fields, keep only what backend needs
+            const payload = this.items.map(i => ({
+                product_id: i.product_id,
+                quantity: i.quantity,
+                start_date: i.start_date,
+                end_date: i.end_date,
+                upsells: i.upsells || {},
+            }));
+            document.getElementById('items-json-field').value = JSON.stringify(payload);
         },
 
         addItem() {
-            this.items.push({ id: Date.now(), product_id: '', quantity: 1, start_date: '', end_date: '', availability: null });
+            this.items.push(_mbBlankItem());
         },
 
         removeItem(index) {
@@ -395,8 +530,47 @@ function manualBooking() {
         },
 
         onProductChange(item) {
+            // Reset upsells when switching product
+            item.upsells = {};
+            item.availableUpsells = [];
+            item.upsellsExpanded = false;
+            this.loadUpsells(item);
             this.checkAvailability(item);
             this.debouncedPreview();
+        },
+
+        loadUpsells(item) {
+            if (!item.product_id) {
+                item.availableUpsells = [];
+                return;
+            }
+            item.upsellsLoading = true;
+            fetch(`/admin/api/products/${item.product_id}/upsells`)
+                .then(r => r.json())
+                .then(data => { item.availableUpsells = data.upsells || []; })
+                .catch(() => { item.availableUpsells = []; })
+                .finally(() => { item.upsellsLoading = false; });
+        },
+
+        setUpsellQty(item, upsell, raw) {
+            let qty = parseInt(raw, 10);
+            if (isNaN(qty) || qty < 0) qty = 0;
+            if (qty > upsell.stock_qty) qty = upsell.stock_qty;
+            if (qty <= 0) {
+                delete item.upsells[upsell.id];
+            } else {
+                item.upsells[upsell.id] = qty;
+            }
+            this.debouncedPreview();
+        },
+
+        changeUpsellQty(item, upsell, delta) {
+            const current = item.upsells[upsell.id] || 0;
+            this.setUpsellQty(item, upsell, current + delta);
+        },
+
+        upsellSelectedCount(item) {
+            return Object.values(item.upsells || {}).reduce((s, q) => s + (parseInt(q, 10) || 0), 0);
         },
 
         checkAvailability(item) {
@@ -417,7 +591,15 @@ function manualBooking() {
         },
 
         fetchPricing() {
-            const valid = this.items.filter(i => i.product_id && i.start_date && i.end_date && i.quantity > 0);
+            const valid = this.items
+                .filter(i => i.product_id && i.start_date && i.end_date && i.quantity > 0)
+                .map(i => ({
+                    product_id: i.product_id,
+                    quantity: i.quantity,
+                    start_date: i.start_date,
+                    end_date: i.end_date,
+                    upsells: i.upsells || {},
+                }));
             if (!valid.length) { this.pricing = null; return; }
 
             const deliveryType = (document.getElementById('delivery_type') || {}).value || 'pickup';
