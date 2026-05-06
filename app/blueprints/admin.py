@@ -830,6 +830,7 @@ def create_manual_booking():
 
         # Create booking items + upsells
         upsells_total = Decimal('0')
+        reserved_upsell_quantities = {}
         for i, dto in enumerate(booking_items_dto):
             unit_price = pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')
             raw_item = items_data[i] if i < len(items_data) else {}
@@ -876,6 +877,7 @@ def create_manual_booking():
                     ((raw_item.get('upsell_overrides') or {}).get(str(upsell_id), {}) or {}).get('value')
                 )
                 upsells_total += unit_upsell * qty_int
+                reserved_upsell_quantities[upsell_product.id] = reserved_upsell_quantities.get(upsell_product.id, 0) + qty_int
 
             # keep booking totals in sync if the main line price was overridden
             default_line_total = (pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')) * dto.quantity
@@ -892,6 +894,24 @@ def create_manual_booking():
         if upsells_total > 0:
             booking.total_dkk += upsells_total
             booking.upfront_payment_dkk += upsells_total
+
+        # Reserve/reduce upsell stock immediately for manual bookings as well.
+        # This mirrors shop checkout behavior so inventory stays consistent.
+        try:
+            for upsell_product_id, reserved_qty in reserved_upsell_quantities.items():
+                upsell_product = UpsellProduct.query.filter_by(id=upsell_product_id).with_for_update().first()
+                if not upsell_product:
+                    raise ValueError(f'Upsell product not found: {upsell_product_id}')
+                if upsell_product.stock_qty < reserved_qty:
+                    raise ValueError(
+                        f'Ikke nok lager for mersalgsprodukt "{upsell_product.name}". '
+                        f'Tilgængelig: {upsell_product.stock_qty}, ønsket: {reserved_qty}'
+                    )
+                upsell_product.stock_qty -= reserved_qty
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
+            return render_template('admin/booking_create.html', form=form, products=products)
 
         db.session.commit()
 
