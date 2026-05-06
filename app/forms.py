@@ -3,7 +3,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, SelectField, DateField, IntegerField, BooleanField, PasswordField
-from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange, ValidationError, EqualTo
+from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange, ValidationError, EqualTo, InputRequired
 from wtforms.widgets import TextArea
 
 
@@ -326,7 +326,7 @@ class UpsellProductForm(FlaskForm):
     )
     stock_qty = IntegerField(
         'Lager antal',
-        validators=[DataRequired(message='Lager antal er påkrævet'), NumberRange(min=0)]
+        validators=[InputRequired(message='Lager antal er påkrævet'), NumberRange(min=0)]
     )
     category_id = SelectField(
         'Kategori',
