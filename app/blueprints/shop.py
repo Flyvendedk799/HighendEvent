@@ -2007,6 +2007,10 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
         db.session.flush()  # Get booking ID
         current_app.logger.info(f'Booking added to database with ID: {booking.id}')
         
+        # Track total upsell quantities across the whole booking so stock
+        # is reduced once the booking is created (independent of booking status).
+        reserved_upsell_quantities: Dict[int, int] = {}
+
         # Create booking items and their upsells
         for i, item_dto in enumerate(booking_items_dto):
             product = Product.query.get(item_dto.product_id)
@@ -2029,14 +2033,16 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
                 for upsell_id, quantity in upsells.items():
                     upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
                     if upsell_product:
+                        upsell_quantity = int(quantity)
                         booking_upsell = BookingUpsellItem(
                             booking_item_id=booking_item.id,
                             upsell_product_id=int(upsell_id),
-                            quantity=int(quantity),
+                            quantity=upsell_quantity,
                             unit_price_dkk=upsell_product.price_dkk,
                             name_snapshot=upsell_product.name
                         )
                         db.session.add(booking_upsell)
+                        reserved_upsell_quantities[upsell_product.id] = reserved_upsell_quantities.get(upsell_product.id, 0) + upsell_quantity
                         current_app.logger.info(f'Added upsell: {upsell_product.name} x{quantity} for {upsell_product.price_dkk} DKK')
         
         # Add standalone upsells (not tied to a specific rental item)
@@ -2052,14 +2058,16 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
                 for upsell_id, quantity in standalone_upsells.items():
                     upsell_product = UpsellProduct.query.filter_by(id=int(upsell_id), is_active=True).first()
                     if upsell_product:
+                        upsell_quantity = int(quantity)
                         standalone_booking_upsell = BookingUpsellItem(
                             booking_item_id=first_booking_item.id,
                             upsell_product_id=int(upsell_id),
-                            quantity=int(quantity),
+                            quantity=upsell_quantity,
                             unit_price_dkk=upsell_product.price_dkk,
                             name_snapshot=upsell_product.name
                         )
                         db.session.add(standalone_booking_upsell)
+                        reserved_upsell_quantities[upsell_product.id] = reserved_upsell_quantities.get(upsell_product.id, 0) + upsell_quantity
                         # Update booking total to include standalone upsell
                         booking.total_dkk += upsell_product.price_dkk * quantity
                         booking.upfront_payment_dkk += upsell_product.price_dkk * quantity
@@ -2083,6 +2091,23 @@ def create_booking_from_cart(cart_items: List[Dict], form: CheckoutForm, standal
                     booking.notes += standalone_notes
                 else:
                     booking.notes = standalone_notes.strip()
+
+        # Decrease upsell stock as soon as booking is created.
+        # This intentionally does not depend on payment/booking status.
+        for upsell_product_id, reserved_qty in reserved_upsell_quantities.items():
+            upsell_product = UpsellProduct.query.filter_by(id=upsell_product_id).with_for_update().first()
+            if not upsell_product:
+                raise ValueError(f'Upsell product not found: {upsell_product_id}')
+            if upsell_product.stock_qty < reserved_qty:
+                raise ValueError(
+                    f'Insufficient stock for upsell "{upsell_product.name}". '
+                    f'Available: {upsell_product.stock_qty}, requested: {reserved_qty}'
+                )
+            upsell_product.stock_qty -= reserved_qty
+            current_app.logger.info(
+                f'Reduced upsell stock for "{upsell_product.name}" by {reserved_qty}. '
+                f'New stock: {upsell_product.stock_qty}'
+            )
         
         current_app.logger.info('Committing booking to database...')
         db.session.commit()
