@@ -182,10 +182,11 @@ def dashboard():
         Booking.is_deleted == False
     ).order_by(Booking.start_date).all()
     
-    # Recent bookings (exclude deleted)
+    # Recent bookings (exclude deleted).
     recent_bookings = Booking.query.filter(
         Booking.is_deleted == False
     ).order_by(desc(Booking.created_at)).limit(10).all()
+    recent_booking_totals = {b.id: compute_booking_total(b) for b in recent_bookings}
     
     # Bookings awaiting return
     awaiting_return = Booking.query.filter(
@@ -217,6 +218,7 @@ def dashboard():
                          revenue_this_month=revenue_this_month,
                          upcoming_pickups=upcoming_pickups,
                          recent_bookings=recent_bookings,
+                         recent_booking_totals=recent_booking_totals,
                          awaiting_return=awaiting_return,
                          product_stats=product_stats)
 
@@ -2619,7 +2621,7 @@ def api_overview_calendar_data():
                 'customer_email': booking.email,
                 'customer_phone': booking.phone,
                 'status': booking.status.value,
-                'total': float(booking.total_dkk),
+                'total': float(compute_booking_total(booking)),
                 'products': product_names,
                 'item_count': len(booking.items)
             }
