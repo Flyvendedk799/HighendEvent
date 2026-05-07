@@ -197,7 +197,7 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900">{{ booking.total_dkk | currency }}</p>
+                            <p class="text-sm font-medium text-gray-900">{{ recent_booking_totals.get(booking.id, booking.total_dkk) | currency }}</p>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ booking.status | status_badge_class }}">
                                 {{ booking.status | status_text }}
                             </span>
