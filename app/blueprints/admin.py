@@ -880,8 +880,9 @@ def create_manual_booking():
                 reserved_upsell_quantities[upsell_product.id] = reserved_upsell_quantities.get(upsell_product.id, 0) + qty_int
 
             # keep booking totals in sync if the main line price was overridden
-            default_line_total = (pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')) * dto.quantity
-            actual_line_total = unit_price * dto.quantity
+            rental_days = (dto.end_date - dto.start_date).days + 1
+            default_line_total = (pricing.line_items[i].unit_price if i < len(pricing.line_items) else Decimal('0')) * dto.quantity * rental_days
+            actual_line_total = unit_price * dto.quantity * rental_days
             if actual_line_total != default_line_total:
                 delta = actual_line_total - default_line_total
                 booking.total_dkk += delta
@@ -1036,24 +1037,24 @@ def preview_booking_pricing():
     # PricingService bundles "Levering" into line_items — strip it out so the UI
     # can render delivery exactly once (with its own breakdown row).
     raw_rental_line_items = [li for li in pricing.line_items if li.name != 'Levering']
-    rental_line_items = [
-        {
+    rental_line_items = []
+    for idx, li in enumerate(raw_rental_line_items):
+        override_mode = items[idx].get('price_override_mode') if idx < len(items) else None
+        override_value = items[idx].get('price_override_value') if idx < len(items) else None
+        unit_price = _apply_price_override(li.unit_price, override_mode, override_value)
+
+        rental_days = 1
+        if idx < len(booking_items_dto):
+            dto = booking_items_dto[idx]
+            rental_days = (dto.end_date - dto.start_date).days + 1
+
+        rental_line_items.append({
             'name': li.name,
             'quantity': li.quantity,
-            'unit_price': float(_apply_price_override(
-                li.unit_price,
-                (items[idx].get('price_override_mode') if idx < len(items) else None),
-                (items[idx].get('price_override_value') if idx < len(items) else None),
-            )),
-            'total_price': float(_apply_price_override(
-                li.unit_price,
-                (items[idx].get('price_override_mode') if idx < len(items) else None),
-                (items[idx].get('price_override_value') if idx < len(items) else None),
-            ) * li.quantity),
+            'unit_price': float(unit_price),
+            'total_price': float(unit_price * li.quantity * rental_days),
             'description': li.description or '',
-        }
-        for idx, li in enumerate(raw_rental_line_items)
-    ]
+        })
     rental_subtotal = sum((Decimal(str(li['total_price'])) for li in rental_line_items), Decimal('0'))
 
     # Delivery breakdown (distance + per-km details) for the preview card
