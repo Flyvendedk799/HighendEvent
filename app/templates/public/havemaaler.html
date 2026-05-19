@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Havemåler - Beregn areal hurtigt | HighendEvent{% endblock %}
+
+{% block meta_description %}Mobilvenlig havemåler til hurtig beregning af areal i m². Perfekt til planlægning af telte, borde og eventudstyr.{% endblock %}
+
+{% block content %}
+<section class="py-8 md:py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-6 md:mb-8">
+            <h1 class="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">Havemåler</h1>
+            <p class="mt-3 text-base md:text-lg text-slate-600 max-w-2xl">Mål hurtigt din have og få et præcist areal i m². Designet til mobil først – uden at ændre desktop-oplevelsen.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
+                <h2 class="text-lg md:text-xl font-semibold text-slate-900 mb-4">Indtast mål</h2>
+                <form id="area-form" class="space-y-4">
+                    <div>
+                        <label for="shape" class="block text-sm font-medium text-slate-700 mb-1">Form</label>
+                        <select id="shape" class="w-full rounded-xl border-slate-300 focus:border-primary-500 focus:ring-primary-500 h-12 text-base px-3">
+                            <option value="rectangle">Rektangel</option>
+                            <option value="triangle">Trekant</option>
+                            <option value="circle">Cirkel</option>
+                        </select>
+                    </div>
+
+                    <div id="field-a-wrap">
+                        <label for="field-a" id="field-a-label" class="block text-sm font-medium text-slate-700 mb-1">Længde (meter)</label>
+                        <input id="field-a" type="number" min="0" step="0.1" inputmode="decimal" placeholder="fx 12.5" class="w-full rounded-xl border-slate-300 focus:border-primary-500 focus:ring-primary-500 h-12 text-base px-3" required>
+                    </div>
+
+                    <div id="field-b-wrap">
+                        <label for="field-b" id="field-b-label" class="block text-sm font-medium text-slate-700 mb-1">Bredde (meter)</label>
+                        <input id="field-b" type="number" min="0" step="0.1" inputmode="decimal" placeholder="fx 8" class="w-full rounded-xl border-slate-300 focus:border-primary-500 focus:ring-primary-500 h-12 text-base px-3" required>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl h-12 text-base">Beregn areal</button>
+                </form>
+            </div>
+
+            <div class="bg-gradient-to-br from-primary-50 to-white rounded-2xl border border-primary-100 p-4 md:p-6 flex flex-col">
+                <h2 class="text-lg md:text-xl font-semibold text-slate-900 mb-3">Resultat</h2>
+                <div class="rounded-2xl bg-white border border-slate-200 p-4 md:p-6 mb-4">
+                    <p class="text-sm text-slate-500">Areal</p>
+                    <p id="result" class="text-4xl md:text-5xl font-extrabold text-primary-700 mt-1">0 m²</p>
+                    <p id="hint" class="text-sm text-slate-500 mt-2">Indtast målene ovenfor for at beregne.</p>
+                </div>
+
+                <div class="mt-auto grid grid-cols-1 gap-3 text-sm text-slate-600">
+                    <div class="rounded-xl bg-white/80 border border-slate-200 p-3">
+                        Tip: På mobil kan du bruge decimaler (fx <span class="font-medium">7.5</span>).
+                    </div>
+                    <div class="rounded-xl bg-white/80 border border-slate-200 p-3">
+                        Brug resultatet til at vurdere hvor meget udstyr der passer på området.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+(() => {
+    const shape = document.getElementById('shape');
+    const fieldA = document.getElementById('field-a');
+    const fieldB = document.getElementById('field-b');
+    const fieldALabel = document.getElementById('field-a-label');
+    const fieldBLabel = document.getElementById('field-b-label');
+    const fieldBWrap = document.getElementById('field-b-wrap');
+    const form = document.getElementById('area-form');
+    const result = document.getElementById('result');
+    const hint = document.getElementById('hint');
+
+    function updateFields() {
+        if (shape.value === 'rectangle') {
+            fieldALabel.textContent = 'Længde (meter)';
+            fieldBLabel.textContent = 'Bredde (meter)';
+            fieldBWrap.classList.remove('hidden');
+            fieldB.required = true;
+        } else if (shape.value === 'triangle') {
+            fieldALabel.textContent = 'Grundlinje (meter)';
+            fieldBLabel.textContent = 'Højde (meter)';
+            fieldBWrap.classList.remove('hidden');
+            fieldB.required = true;
+        } else {
+            fieldALabel.textContent = 'Radius (meter)';
+            fieldBWrap.classList.add('hidden');
+            fieldB.required = false;
+        }
+    }
+
+    function calculateArea() {
+        const a = parseFloat(fieldA.value || '0');
+        const b = parseFloat(fieldB.value || '0');
+        if (a <= 0 || (shape.value !== 'circle' && b <= 0)) {
+            result.textContent = '0 m²';
+            hint.textContent = 'Indtast gyldige mål over 0.';
+            return;
+        }
+
+        let area = 0;
+        if (shape.value === 'rectangle') area = a * b;
+        if (shape.value === 'triangle') area = (a * b) / 2;
+        if (shape.value === 'circle') area = Math.PI * a * a;
+
+        result.textContent = `${area.toFixed(2)} m²`;
+        hint.textContent = 'Beregning opdateret.';
+    }
+
+    shape.addEventListener('change', () => {
+        updateFields();
+        calculateArea();
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        calculateArea();
+    });
+
+    updateFields();
+})();
+</script>
+{% endblock %}

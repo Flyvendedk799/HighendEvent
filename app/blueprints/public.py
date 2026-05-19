@@ -218,6 +218,12 @@ def about():
     return render_template('public/about.html', about_block=about_block)
 
 
+@bp.route('/havemaaler')
+def havemaaler():
+    """Lawn area calculator page."""
+    return render_template('public/havemaaler.html')
+
+
 # API endpoints for HTMX
 @bp.route('/api/availability/<int:product_id>')
 def check_availability_public(product_id):
@@ -283,4 +289,3 @@ def get_price_estimate(product_id):
     )
     
     return jsonify(price_estimate)
-
