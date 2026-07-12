@@ -7,15 +7,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def normalize_database_url(url):
+    """SQLAlchemy needs an explicit driver; bare mysql:// resolves to MySQLdb, which we don't install."""
+    if url.startswith('mysql://'):
+        return url.replace('mysql://', 'mysql+pymysql://', 1)
+    return url
+
+
 class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    
+
     # Database configuration with MySQL support
-    database_url = os.environ.get('DATABASE_URL') or 'sqlite:///instance/app.db'
-    if database_url.startswith('mysql://'):
-        # Convert mysql:// to mysql+pymysql:// for SQLAlchemy compatibility
-        database_url = database_url.replace('mysql://', 'mysql+pymysql://', 1)
+    database_url = normalize_database_url(
+        os.environ.get('DATABASE_URL') or 'sqlite:///instance/app.db'
+    )
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
@@ -73,18 +79,16 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
-    # Use SQLite for development if DATABASE_URL is set, otherwise fallback to MySQL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///instance/app.db'
-    
-    # Stripe sandbox keys for development
-    STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY') or 'pk_test_51S84RAGzFU37JYeIIaqmzVTz0OZhfNE5SCdjpmSTbjv2W2vGO5gnOwVrNxrmosrTXSMlXtKQNcYV0q9g0stITPCi00z7ryFXFE'
-    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY') or 'sk_test_51S84RAGzFU37JYeIgnouFRu0oVJfayA3c8zj0sdllCutGAaha6tAVniwemBrhNktkj37gwskdiG5QaAs5ZEJ3LWx00GW6jh4HX'
 
 
 class ProductionConfig(Config):
-    """Production configuration."""
+    """Production configuration.
+
+    Deliberately does not redefine SQLALCHEMY_DATABASE_URI: it must inherit Config's value so the
+    mysql:// -> mysql+pymysql:// normalization is applied. Overriding it here reintroduces the
+    MySQLdb driver error. wsgi.py enforces that DATABASE_URL is actually set.
+    """
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///instance/app.db'
 
 
 class TestingConfig(Config):

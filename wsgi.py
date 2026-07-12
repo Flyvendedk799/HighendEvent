@@ -22,6 +22,14 @@ os.environ['FLASK_ENV'] = 'production'
 # Required in production: set SECRET_KEY and DATABASE_URL in PythonAnywhere
 # environment or in a .env file next to this repo (never commit real secrets).
 
+# Fail loudly rather than let config.py fall back to sqlite:///instance/app.db, which would
+# serve an empty site against a brand-new database while the real MySQL data sits untouched.
+if not os.environ.get('DATABASE_URL'):
+    raise RuntimeError(
+        f"DATABASE_URL is not set. Expected it in {os.path.join(path, '.env')}. "
+        "Refusing to start on the SQLite fallback, which would look like total data loss."
+    )
+
 from app import create_app
 
 application = create_app()
