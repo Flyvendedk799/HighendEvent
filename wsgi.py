@@ -31,8 +31,16 @@ if not os.environ.get('DATABASE_URL'):
     )
 
 from app import create_app
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 application = create_app()
+
+# ServerHoster runs this app on localhost behind Cloudflare's tunnel, which
+# terminates TLS and forwards X-Forwarded-Proto/For/Host. Trust one proxy hop so
+# url_for(_external=True) (Stripe success/cancel URLs, email links, sitemap)
+# builds https:// URLs on the public host and request.remote_addr is the real
+# client IP. PythonAnywhere did the equivalent at its nginx layer.
+application.wsgi_app = ProxyFix(application.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
 if __name__ == '__main__':
     application.run()
