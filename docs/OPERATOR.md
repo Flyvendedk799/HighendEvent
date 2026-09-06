@@ -70,11 +70,15 @@ Ensure `REDIS_URL` is set and workers restart cleanly on deploy (SIGINT/SIGTERM 
 
 ## Web deploy (Vercel)
 
-Preview/production for `apps/web` should use **Root Directory = `apps/web`** in the Vercel project settings (or rely on root `vercel.json` `"rootDirectory": "apps/web"`).
+In the Vercel project **Settings → General → Root Directory**, set **`apps/web`** (this cannot be set via `vercel.json`).
 
-- Install / build run from the monorepo root via `pnpm --filter …` so `@rentora/domain` and `@rentora/ui` are available.
-- Set `NEXT_PUBLIC_API_URL` to the public API base URL for that environment.
-- API and worker are deployed separately (Fly/Render/Railway or similar); Vercel only hosts the Next.js app.
+With that root:
+
+- `apps/web/vercel.json` installs/builds from the monorepo root so `@rentora/domain` and `@rentora/ui` resolve.
+- Set `NEXT_PUBLIC_API_URL` to the public API base URL for the environment.
+- API and worker deploy separately (Fly/Render/Railway/etc.); Vercel only hosts Next.js.
+
+If Root Directory is left at the repository root instead, root `vercel.json` builds the web app with `outputDirectory: apps/web/.next`.
 
 ## Incident notes
 
