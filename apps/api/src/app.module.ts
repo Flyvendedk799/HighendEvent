@@ -28,6 +28,7 @@ import { GdprModule } from "./gdpr/gdpr.module";
 import { BillingModule } from "./billing/billing.module";
 import { DomainsModule } from "./domains/domains.module";
 import { PublicModule } from "./public/public.module";
+import { CouponsModule } from "./coupons/coupons.module";
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PublicModule } from "./public/public.module";
     PlatformModule,
     PublicModule,
     DomainsModule,
+    CouponsModule,
     OnboardingModule,
     CatalogModule,
     AvailabilityModule,

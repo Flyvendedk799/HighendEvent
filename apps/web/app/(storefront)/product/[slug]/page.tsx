@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { ProductDetailClient } from "./product-detail-client";
 import { api } from "@/lib/api";
-import { mapApiProductToCard, type ApiProduct } from "@/lib/catalog-map";
+import { mapApiProductToDetail, type ApiProduct } from "@/lib/catalog-map";
 
 type ApiProductDetail = ApiProduct & {
   blackouts?: Array<{
@@ -34,7 +34,7 @@ export default async function ProductDetailPage({
 
   if (!apiProduct) notFound();
 
-  const product = mapApiProductToCard(apiProduct);
+  const product = mapApiProductToDetail(apiProduct);
   const blackouts = (apiProduct.blackouts ?? []).map((b) => ({
     productId: apiProduct!.id,
     startDate: String(b.startDate).slice(0, 10),

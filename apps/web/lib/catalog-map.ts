@@ -1,3 +1,4 @@
+import type { ProductCardModel } from "@/components/product-card";
 import type { DemoProduct } from "@/lib/demo-data";
 
 export type ApiProduct = {
@@ -11,16 +12,33 @@ export type ApiProduct = {
   depositMinor?: number | null;
   currency: string;
   stockQty: number;
+  heroImageUrl?: string | null;
   prepBufferDays?: number;
   cleanupBufferDays?: number;
   attributes?: Record<string, unknown> | null;
   isActive?: boolean;
   category?: { name: string; slug?: string } | null;
+  images?: Array<{ url: string }>;
 };
+
+export function mapApiProductToCard(product: ApiProduct): ProductCardModel {
+  return {
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    description: product.description ?? "",
+    dailyPriceMinor: product.dailyPriceMinor,
+    currency: product.currency,
+    stockQty: product.stockQty,
+    category: product.category?.name ?? "Uncategorized",
+    imageUrl: product.heroImageUrl ?? product.images?.[0]?.url ?? null,
+  };
+}
 
 const tones: Array<DemoProduct["imageTone"]> = ["teal", "amber", "slate"];
 
-export function mapApiProductToCard(product: ApiProduct, index = 0): DemoProduct {
+/** Detail view still uses DemoProduct-shaped helpers for pricing/availability. */
+export function mapApiProductToDetail(product: ApiProduct, index = 0): DemoProduct {
   const attrs = product.attributes ?? {};
   const specs = Object.entries(attrs).map(([label, value]) => ({
     label,

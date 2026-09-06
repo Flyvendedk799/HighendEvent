@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ProductCard } from "@/components/product-card";
+import { ProductCard, type ProductCardModel } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, Input } from "@rentora/ui";
-import type { DemoProduct } from "@/lib/demo-data";
 
-export function CatalogClient({ products }: { products: DemoProduct[] }) {
+export function CatalogClient({ products }: { products: ProductCardModel[] }) {
   const categories = useMemo(
     () => [...new Set(products.map((p) => p.category))],
     [products],

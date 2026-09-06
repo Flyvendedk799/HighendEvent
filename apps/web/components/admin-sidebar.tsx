@@ -16,6 +16,7 @@ const items = [
   { href: "/admin/theme", key: "theme" as const },
   { href: "/admin/media", key: "media" as const },
   { href: "/admin/analytics", key: "analytics" as const },
+  { href: "/admin/coupons", key: "coupons" as const },
   { href: "/admin/settings", key: "settings" as const },
   { href: "/admin/emails", key: "emails" as const },
   { href: "/admin/newsletter", key: "newsletter" as const },

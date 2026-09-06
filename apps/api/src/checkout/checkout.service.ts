@@ -8,6 +8,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { CouponsService } from "../coupons/coupons.service";
 import { requireTenantId } from "../common/tenant.util";
 
 type CheckoutItem = {
@@ -23,6 +24,7 @@ export class CheckoutService {
     private readonly prisma: PrismaService,
     private readonly bookings: BookingsService,
     private readonly notifications: NotificationsService,
+    private readonly coupons: CouponsService,
   ) {}
 
   async createSession(input: {
@@ -39,6 +41,7 @@ export class CheckoutService {
     city?: string;
     deliveryType?: DeliveryType;
     deliveryFeeMinor?: number;
+    couponCode?: string;
   }) {
     const tenantId = requireTenantId();
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -85,6 +88,25 @@ export class CheckoutService {
     }
 
     if (!booking) throw new BadRequestException("bookingId, cartId, or items required");
+
+    if (input.couponCode?.trim()) {
+      const applied = await this.coupons.validate(
+        input.couponCode,
+        booking.subtotalMinor,
+      );
+      const newTotal = Math.max(0, booking.totalMinor - applied.discountMinor);
+      const newUpfront = Math.max(0, booking.upfrontMinor - applied.discountMinor);
+      booking = await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          couponCode: applied.code,
+          discountMinor: applied.discountMinor,
+          totalMinor: newTotal,
+          upfrontMinor: newUpfront,
+        },
+        include: { items: true },
+      });
+    }
 
     const amount = booking.upfrontMinor;
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -197,11 +219,14 @@ export class CheckoutService {
     });
     if (!booking) throw new NotFoundException("Checkout session not found");
 
-    if (booking.statusKey === "pending") {
+    if (booking.statusKey === "pending" || booking.statusKey === "awaiting_payment") {
       await this.prisma.booking.update({
         where: { id: booking.id },
         data: { statusKey: "fully_paid" },
       });
+      if (booking.couponCode) {
+        await this.coupons.redeem(booking.couponCode);
+      }
       await this.notifications.enqueueBookingConfirmation({
         tenantId,
         bookingId: booking.id,

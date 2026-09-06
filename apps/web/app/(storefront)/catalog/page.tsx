@@ -13,7 +13,7 @@ export default async function CatalogPage() {
       tenantSlug,
       cache: "no-store",
     });
-    products = rows.map((row, index) => mapApiProductToCard(row, index));
+    products = rows.map((row) => mapApiProductToCard(row));
   } catch {
     products = [];
   }

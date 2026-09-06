@@ -40,6 +40,7 @@ class CheckoutDto {
   @IsOptional() @IsString() city?: string;
   @IsOptional() @IsEnum(DeliveryType) deliveryType?: DeliveryType;
   @IsOptional() @Type(() => Number) @IsInt() deliveryFeeMinor?: number;
+  @IsOptional() @IsString() couponCode?: string;
 }
 
 class CompleteStubDto {

@@ -14,4 +14,14 @@ export class AnalyticsController {
   kpis() {
     return this.analytics.kpis();
   }
+
+  @Get("revenue-series")
+  revenueSeries() {
+    return this.analytics.revenueSeries();
+  }
+
+  @Get("utilization")
+  utilization() {
+    return this.analytics.utilization();
+  }
 }
