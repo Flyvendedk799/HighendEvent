@@ -51,7 +51,16 @@ pnpm db:seed
 pnpm dev
 ```
 
-Demo seed creates tenant slug `demo` with staff `owner@demo.rentora.local`.
+Demo seed creates:
+
+| Surface | Credentials |
+| --- | --- |
+| Platform admin | `admin@rentora.app` / `admin123` → `/platform/login` |
+| Tenant staff | `owner@demo.rentora.local` / `demo1234` (tenant slug `demo`) → `/admin/login` |
+
+Storefront on `demo.localhost:3000` (or `x-tenant-slug: demo`).
+
+Phase A progress: checked-in Prisma migration, cookie session auth for admin/platform, admin products list reads live `/catalog/products`.
 
 Useful scripts:
 

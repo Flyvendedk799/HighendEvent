@@ -12,7 +12,25 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rentora
+          POSTGRES_PASSWORD: rentora
+          POSTGRES_DB: rentora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rentora -d rentora"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
 
     steps:
       - name: Checkout
@@ -34,18 +52,23 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm db:generate
-        env:
-          DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+
+      - name: Apply migrations
+        run: pnpm --filter @rentora/db migrate:deploy
 
       - name: Domain package tests
         run: pnpm --filter @rentora/domain test
 
       - name: Build packages
         run: pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui --filter @rentora/worker build
-        env:
-          DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Build API
+        run: pnpm --filter @rentora/api build
+
+      - name: Build web
+        run: pnpm --filter @rentora/web build
         env:
-          DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+          NEXT_PUBLIC_API_URL: http://localhost:4000

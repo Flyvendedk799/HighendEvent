@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+export const SESSION_COOKIE = "rentora_session";
 
 export type ApiError = {
   status: number;
@@ -11,6 +14,7 @@ export type ApiRequestOptions = {
   body?: unknown;
   headers?: Record<string, string>;
   tenantSlug?: string | null;
+  token?: string | null;
   cache?: RequestCache;
   next?: NextFetchRequestConfig;
 };
@@ -23,6 +27,11 @@ async function parseBody(response: Response): Promise<unknown> {
   } catch {
     return text;
   }
+}
+
+export async function getSessionToken(): Promise<string | null> {
+  const jar = await cookies();
+  return jar.get(SESSION_COOKIE)?.value ?? null;
 }
 
 export async function apiFetch<T = unknown>(
@@ -40,6 +49,11 @@ export async function apiFetch<T = unknown>(
 
   if (options.tenantSlug) {
     headers["x-tenant-slug"] = options.tenantSlug;
+  }
+
+  const token = options.token === undefined ? await getSessionToken() : options.token;
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_URL}${path.startsWith("/") ? path : `/${path}`}`, {
