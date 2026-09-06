@@ -12,9 +12,12 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-teal-700 text-white hover:bg-teal-800",
-  secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
-  ghost: "bg-transparent text-slate-700 hover:bg-slate-100",
+  primary:
+    "bg-[var(--color-primary,#0f766e)] text-white hover:bg-[var(--color-primary-hover,#0d9488)] shadow-sm",
+  secondary:
+    "bg-[var(--color-surface,#fff)] text-[var(--color-foreground,#0f172a)] border border-[var(--color-border,#e2e8f0)] hover:bg-[var(--color-muted,#f1f5f9)]",
+  ghost:
+    "bg-transparent text-[var(--color-foreground,#0f172a)] hover:bg-[var(--color-muted,#f1f5f9)]",
   danger: "bg-red-600 text-white hover:bg-red-700",
 };
 
@@ -36,7 +39,7 @@ export function Button({
     <button
       type={type}
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:pointer-events-none disabled:opacity-50",
         variantClasses[variant],
         sizeClasses[size],
         className,
