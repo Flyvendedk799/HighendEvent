@@ -28,6 +28,8 @@ import { BookingsService } from "./bookings.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
+import type { JwtPayload } from "../auth/password";
 
 class BookingItemDto {
   @IsString() productId!: string;
@@ -89,6 +91,13 @@ export class BookingsController {
   @Header("Content-Disposition", "inline; filename=\"rentora-bookings.ics\"")
   calendarIcs(@Query("statusKey") statusKey?: string) {
     return this.bookings.toIcs({ statusKey });
+  }
+
+  @Get("mine")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("customer")
+  mine(@CurrentUser() user: JwtPayload) {
+    return this.bookings.list({ customerId: user.sub });
   }
 
   @Get(":id")

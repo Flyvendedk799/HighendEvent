@@ -89,6 +89,14 @@ export async function middleware(request: NextRequest) {
   ) {
     return redirectToLogin(request, "/platform/login");
   }
+  if (
+    pathname.startsWith("/account") &&
+    !pathname.startsWith("/account/login") &&
+    !pathname.startsWith("/account/register") &&
+    !hasSession
+  ) {
+    return redirectToLogin(request, "/account/login");
+  }
 
   if (PLATFORM_HOSTS.has(host) || PLATFORM_HOSTS.has(hostWithPort)) {
     requestHeaders.delete("x-tenant-slug");
