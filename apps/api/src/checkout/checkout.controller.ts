@@ -1,10 +1,35 @@
-import { Body, Controller, Post } from "@nestjs/common";
-import { IsEmail, IsOptional, IsString, IsUrl, MinLength } from "class-validator";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { DeliveryType } from "@prisma/client";
+import { Type } from "class-transformer";
+import {
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Min,
+  MinLength,
+  ValidateNested,
+} from "class-validator";
 import { CheckoutService } from "./checkout.service";
+
+class CheckoutItemDto {
+  @IsString() productId!: string;
+  @Type(() => Number) @IsInt() @Min(1) quantity!: number;
+  @IsOptional() @IsString() startDate?: string;
+  @IsOptional() @IsString() endDate?: string;
+}
 
 class CheckoutDto {
   @IsOptional() @IsString() cartId?: string;
   @IsOptional() @IsString() bookingId?: string;
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CheckoutItemDto)
+  items?: CheckoutItemDto[];
   @IsUrl({ require_tld: false }) successUrl!: string;
   @IsUrl({ require_tld: false }) cancelUrl!: string;
   @IsOptional() @IsString() @MinLength(1) customerName?: string;
@@ -13,6 +38,12 @@ class CheckoutDto {
   @IsOptional() @IsString() address?: string;
   @IsOptional() @IsString() zipCode?: string;
   @IsOptional() @IsString() city?: string;
+  @IsOptional() @IsEnum(DeliveryType) deliveryType?: DeliveryType;
+  @IsOptional() @Type(() => Number) @IsInt() deliveryFeeMinor?: number;
+}
+
+class CompleteStubDto {
+  @IsString() @MinLength(1) sessionId!: string;
 }
 
 @Controller("checkout")
@@ -22,5 +53,15 @@ export class CheckoutController {
   @Post("session")
   createSession(@Body() body: CheckoutDto) {
     return this.checkout.createSession(body);
+  }
+
+  @Get("session/:sessionId")
+  getSession(@Param("sessionId") sessionId: string) {
+    return this.checkout.getBySession(sessionId);
+  }
+
+  @Post("complete-stub")
+  completeStub(@Body() body: CompleteStubDto) {
+    return this.checkout.completeStub(body.sessionId);
   }
 }

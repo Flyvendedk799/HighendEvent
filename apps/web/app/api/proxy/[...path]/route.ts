@@ -8,8 +8,8 @@ async function proxy(request: NextRequest, path: string[]) {
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const headers = new Headers();
   headers.set("Accept", "application/json");
-  const tenant = request.headers.get("x-tenant-slug");
-  if (tenant) headers.set("x-tenant-slug", tenant);
+  const tenant = request.headers.get("x-tenant-slug") ?? "demo";
+  headers.set("x-tenant-slug", tenant);
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const init: RequestInit = {

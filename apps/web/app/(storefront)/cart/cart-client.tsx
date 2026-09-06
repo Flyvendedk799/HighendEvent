@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button, Card } from "@rentora/ui";
 import { PageHeader } from "@/components/page-header";
 import { useCart } from "@/lib/cart";
-import { formatPrice } from "@/lib/demo-data";
+import { formatMoney } from "@/lib/money";
 import { getDictionary } from "@/lib/i18n";
 
 const tones = {
@@ -57,13 +57,13 @@ export function CartClient() {
                       {item.endDate !== item.startDate ? ` → ${item.endDate}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatPrice(item.unitPriceMinor, item.currency)}/day effective
+                      {formatMoney(item.unitPriceMinor, item.currency)}/day effective
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <p className="font-medium">
-                    {formatPrice(item.lineTotalMinor, item.currency)}
+                    {formatMoney(item.lineTotalMinor, item.currency)}
                   </p>
                   <Button
                     variant="ghost"
@@ -87,17 +87,17 @@ export function CartClient() {
           <Card className="h-fit space-y-4">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t.cart.subtotal}</span>
-              <span className="font-semibold">{formatPrice(subtotalMinor, currency)}</span>
+              <span className="font-semibold">{formatMoney(subtotalMinor, currency)}</span>
             </div>
             {depositMinor > 0 ? (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Deposits</span>
-                <span>{formatPrice(depositMinor, currency)}</span>
+                <span>{formatMoney(depositMinor, currency)}</span>
               </div>
             ) : null}
             <div className="flex justify-between border-t border-border pt-3 text-base font-semibold">
               <span>Estimated total</span>
-              <span>{formatPrice(subtotalMinor + depositMinor, currency)}</span>
+              <span>{formatMoney(subtotalMinor + depositMinor, currency)}</span>
             </div>
             <Link href="/checkout" className="block">
               <Button className="w-full">{t.cart.proceed}</Button>
