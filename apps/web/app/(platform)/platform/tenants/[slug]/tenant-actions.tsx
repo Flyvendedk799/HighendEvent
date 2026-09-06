@@ -90,6 +90,26 @@ export function TenantActions({
     }
   }
 
+  async function impersonate() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await clientApi<{
+        accessToken: string;
+        adminUrl: string;
+        tenant: { slug: string };
+        note: string;
+      }>(`/platform/tenants/${tenantId}/impersonate`, { method: "POST" });
+      window.sessionStorage.setItem("rentora_token", res.accessToken);
+      window.sessionStorage.setItem("rentora_tenant", res.tenant.slug);
+      setMessage(res.note);
+      window.location.href = res.adminUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impersonation failed");
+      setBusy(false);
+    }
+  }
+
   return (
     <Card className="space-y-4">
       <CardHeader title="Actions" description={slug} />
@@ -129,6 +149,10 @@ export function TenantActions({
           Save flags
         </Button>
       </div>
+
+      <Button className="w-full" variant="secondary" disabled={busy} onClick={() => void impersonate()}>
+        View as tenant
+      </Button>
 
       <Button
         className="w-full"

@@ -8,6 +8,8 @@ export type JwtPayload = {
   role: AuthRole;
   tenantId?: string;
   staffRole?: string;
+  /** Set when a platform operator is viewing as tenant staff. */
+  impersonatorId?: string;
 };
 
 export function hashPassword(password: string): string {

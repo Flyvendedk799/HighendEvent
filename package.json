@@ -12,6 +12,7 @@
     "db:migrate": "pnpm --filter @rentora/db migrate:dev",
     "db:seed": "pnpm --filter @rentora/db seed",
     "check:isolation": "tsx scripts/check-tenant-isolation.ts",
+    "smoke:e2e": "tsx scripts/e2e-smoke.ts",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "devDependencies": {
