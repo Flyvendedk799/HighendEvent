@@ -1,19 +1,36 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { DeliveryType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { CouponsService } from "../coupons/coupons.service";
 import { requireTenantId } from "../common/tenant.util";
+
+type CheckoutItem = {
+  productId: string;
+  quantity: number;
+  startDate?: string;
+  endDate?: string;
+};
 
 @Injectable()
 export class CheckoutService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bookings: BookingsService,
+    private readonly notifications: NotificationsService,
+    private readonly coupons: CouponsService,
   ) {}
 
   async createSession(input: {
     cartId?: string;
     bookingId?: string;
+    items?: CheckoutItem[];
     successUrl: string;
     cancelUrl: string;
     customerName?: string;
@@ -22,10 +39,17 @@ export class CheckoutService {
     address?: string;
     zipCode?: string;
     city?: string;
+    deliveryType?: DeliveryType;
+    deliveryFeeMinor?: number;
+    couponCode?: string;
+    customerId?: string;
+    paymentKind?: "upfront" | "remainder";
   }) {
     const tenantId = requireTenantId();
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException("Tenant not found");
+
+    const paymentKind = input.paymentKind ?? "upfront";
 
     let booking =
       input.bookingId != null
@@ -34,6 +58,30 @@ export class CheckoutService {
             include: { items: true },
           })
         : null;
+
+    if (paymentKind === "remainder") {
+      if (!booking) throw new BadRequestException("bookingId required for remainder checkout");
+      if (booking.remainingMinor <= 0) {
+        throw new BadRequestException("No remainder due on this booking");
+      }
+      if (booking.statusKey === "pending" || booking.statusKey === "awaiting_payment") {
+        throw new BadRequestException("Collect upfront payment before remainder");
+      }
+      return this.openStripeSession({
+        tenant,
+        tenantId,
+        booking,
+        amount: booking.remainingMinor,
+        paymentKind: "remainder",
+        successUrl: input.successUrl,
+        cancelUrl: input.cancelUrl,
+        lineName: `Remainder · ${booking.bookingNo}`,
+      });
+    }
+
+    if (!booking && input.items?.length) {
+      booking = await this.createBookingFromItems(input, input.items);
+    }
 
     if (!booking && input.cartId) {
       const cart = await this.prisma.cart.findFirst({
@@ -45,42 +93,98 @@ export class CheckoutService {
       if (!first.startDate || !first.endDate) {
         throw new BadRequestException("Cart items require startDate and endDate");
       }
-      if (!input.email || !input.customerName || !input.phone || !input.address) {
-        throw new BadRequestException("Customer details required for checkout");
-      }
+      this.requireCustomer(input);
       booking = await this.bookings.create({
         source: "ONLINE",
-        customerName: input.customerName,
-        email: input.email,
-        phone: input.phone,
-        address: input.address,
+        customerName: input.customerName!,
+        email: input.email!,
+        phone: input.phone!,
+        address: input.address!,
         zipCode: input.zipCode ?? "",
         city: input.city ?? "",
         startDate: first.startDate.toISOString().slice(0, 10),
         endDate: first.endDate.toISOString().slice(0, 10),
-        deliveryType: first.deliveryType,
+        deliveryType: input.deliveryType ?? first.deliveryType,
+        deliveryFeeMinor: input.deliveryFeeMinor,
+        customerId: input.customerId ?? cart.customerId ?? undefined,
         items: cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      });
+      await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+    }
+
+    if (!booking) throw new BadRequestException("bookingId, cartId, or items required");
+
+    if (input.couponCode?.trim()) {
+      const applied = await this.coupons.validate(
+        input.couponCode,
+        booking.subtotalMinor,
+      );
+      const newTotal = Math.max(0, booking.totalMinor - applied.discountMinor);
+      const newUpfront = Math.max(0, booking.upfrontMinor - applied.discountMinor);
+      booking = await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          couponCode: applied.code,
+          discountMinor: applied.discountMinor,
+          totalMinor: newTotal,
+          upfrontMinor: newUpfront,
+        },
+        include: { items: true },
       });
     }
 
-    if (!booking) throw new BadRequestException("bookingId or cartId required");
+    return this.openStripeSession({
+      tenant,
+      tenantId,
+      booking,
+      amount: booking.upfrontMinor,
+      paymentKind: "upfront",
+      successUrl: input.successUrl,
+      cancelUrl: input.cancelUrl,
+      lineName: `Booking ${booking.bookingNo}`,
+    });
+  }
 
-    const amount = booking.upfrontMinor;
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+  private async openStripeSession(input: {
+    tenant: { stripeConnectAccountId: string | null; applicationFeeBps: number };
+    tenantId: string;
+    booking: { id: string; bookingNo: string; currency: string };
+    amount: number;
+    paymentKind: "upfront" | "remainder";
+    successUrl: string;
+    cancelUrl: string;
+    lineName: string;
+  }) {
+    const { tenant, tenantId, booking, amount, paymentKind, successUrl, cancelUrl, lineName } =
+      input;
+    if (amount <= 0) throw new BadRequestException("Checkout amount must be positive");
 
-    if (!stripeKey) {
-      const stubSessionId = `cs_test_stub_${randomUUID()}`;
+    const stripeKey = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
+    const useStripeStub =
+      !stripeKey ||
+      stripeKey === "sk_test_stub" ||
+      stripeKey.startsWith("sk_test_stub") ||
+      process.env.STRIPE_CHECKOUT_STUB === "1";
+
+    if (useStripeStub) {
+      const stubSessionId = `cs_test_stub_${paymentKind}_${randomUUID()}`;
       await this.prisma.booking.update({
         where: { id: booking.id },
-        data: { stripeSessionId: stubSessionId },
+        data:
+          paymentKind === "remainder"
+            ? { remainingSessionId: stubSessionId }
+            : { stripeSessionId: stubSessionId },
       });
+      const sep = successUrl.includes("?") ? "&" : "?";
       return {
         stub: true,
         id: stubSessionId,
-        url: `${input.successUrl}${input.successUrl.includes("?") ? "&" : "?"}session_id=${stubSessionId}`,
+        url: `${successUrl}${sep}session_id=${stubSessionId}&booking_id=${booking.id}&payment_kind=${paymentKind}`,
         bookingId: booking.id,
+        bookingNo: booking.bookingNo,
         amountMinor: amount,
         currency: booking.currency,
+        paymentKind,
         mode: "payment",
         payment_intent_data: tenant.stripeConnectAccountId
           ? {
@@ -90,28 +194,25 @@ export class CheckoutService {
               transfer_data: { destination: tenant.stripeConnectAccountId },
             }
           : undefined,
-        message: "Stripe stub session (STRIPE_SECRET_KEY not set)",
+        message: "Stripe stub session (no live STRIPE_SECRET_KEY)",
       };
     }
 
-    // Connect destination-charge shaped Checkout Session
     const body = new URLSearchParams();
     body.set("mode", "payment");
-    body.set("success_url", input.successUrl);
-    body.set("cancel_url", input.cancelUrl);
+    body.set(
+      "success_url",
+      `${successUrl}${successUrl.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}&payment_kind=${paymentKind}`,
+    );
+    body.set("cancel_url", cancelUrl);
     body.set("client_reference_id", booking.id);
     body.set("metadata[bookingId]", booking.id);
     body.set("metadata[tenantId]", tenantId);
+    body.set("metadata[paymentKind]", paymentKind);
     body.set("line_items[0][quantity]", "1");
-    body.set(
-      "line_items[0][price_data][currency]",
-      booking.currency.toLowerCase(),
-    );
+    body.set("line_items[0][price_data][currency]", booking.currency.toLowerCase());
     body.set("line_items[0][price_data][unit_amount]", String(amount));
-    body.set(
-      "line_items[0][price_data][product_data][name]",
-      `Booking ${booking.bookingNo}`,
-    );
+    body.set("line_items[0][price_data][product_data][name]", lineName);
 
     if (tenant.stripeConnectAccountId) {
       body.set(
@@ -141,7 +242,10 @@ export class CheckoutService {
     const session = (await res.json()) as { id: string; url: string };
     await this.prisma.booking.update({
       where: { id: booking.id },
-      data: { stripeSessionId: session.id },
+      data:
+        paymentKind === "remainder"
+          ? { remainingSessionId: session.id }
+          : { stripeSessionId: session.id },
     });
 
     return {
@@ -149,8 +253,138 @@ export class CheckoutService {
       id: session.id,
       url: session.url,
       bookingId: booking.id,
+      bookingNo: booking.bookingNo,
       amountMinor: amount,
       currency: booking.currency,
+      paymentKind,
     };
+  }
+
+  async getBySession(sessionId: string) {
+    const tenantId = requireTenantId();
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        tenantId,
+        isDeleted: false,
+        OR: [{ stripeSessionId: sessionId }, { remainingSessionId: sessionId }],
+      },
+      include: { items: { include: { product: true } } },
+    });
+    if (!booking) throw new NotFoundException("Checkout session not found");
+    return booking;
+  }
+
+  async completeStub(sessionId: string) {
+    const tenantId = requireTenantId();
+    if (!sessionId.startsWith("cs_test_stub_")) {
+      throw new BadRequestException("Not a stub checkout session");
+    }
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        tenantId,
+        isDeleted: false,
+        OR: [{ stripeSessionId: sessionId }, { remainingSessionId: sessionId }],
+      },
+    });
+    if (!booking) throw new NotFoundException("Checkout session not found");
+
+    const isRemainder = booking.remainingSessionId === sessionId;
+    if (isRemainder) {
+      if (booking.remainingMinor > 0 && booking.statusKey !== "fully_paid") {
+        await this.prisma.booking.update({
+          where: { id: booking.id },
+          data: {
+            statusKey: "fully_paid",
+            remainingPaymentIntentId: `pi_stub_${sessionId}`,
+            remainingMinor: 0,
+          },
+        });
+      }
+    } else if (
+      booking.statusKey === "pending" ||
+      booking.statusKey === "awaiting_payment"
+    ) {
+      const nextStatus = booking.remainingMinor > 0 ? "deposit_paid" : "fully_paid";
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          statusKey: nextStatus,
+          stripePaymentIntentId: `pi_stub_${sessionId}`,
+        },
+      });
+      if (booking.couponCode) {
+        await this.coupons.redeem(booking.couponCode);
+      }
+      await this.notifications.enqueueBookingConfirmation({
+        tenantId,
+        bookingId: booking.id,
+        email: booking.email,
+        customerName: booking.customerName,
+        bookingNo: booking.bookingNo,
+      });
+    }
+
+    return this.prisma.booking.findFirstOrThrow({
+      where: { id: booking.id },
+      include: { items: { include: { product: true } } },
+    });
+  }
+
+  private requireCustomer(input: {
+    customerName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  }) {
+    if (!input.email || !input.customerName || !input.phone || !input.address) {
+      throw new BadRequestException("Customer details required for checkout");
+    }
+  }
+
+  private async createBookingFromItems(
+    input: {
+      customerName?: string;
+      email?: string;
+      phone?: string;
+      address?: string;
+      zipCode?: string;
+      city?: string;
+      deliveryType?: DeliveryType;
+      deliveryFeeMinor?: number;
+    },
+    items: CheckoutItem[],
+  ) {
+    this.requireCustomer(input);
+    const first = items[0]!;
+    const startDate = first.startDate;
+    const endDate = first.endDate;
+    if (!startDate || !endDate) {
+      throw new BadRequestException("Items require startDate and endDate");
+    }
+    for (const item of items) {
+      if (!item.startDate || !item.endDate) {
+        throw new BadRequestException("All items require startDate and endDate");
+      }
+      if (item.startDate !== startDate || item.endDate !== endDate) {
+        throw new BadRequestException(
+          "Multi-date carts are not supported yet — use matching start/end for all lines",
+        );
+      }
+    }
+
+    return this.bookings.create({
+      source: "ONLINE",
+      customerName: input.customerName!,
+      email: input.email!,
+      phone: input.phone!,
+      address: input.address!,
+      zipCode: input.zipCode ?? "",
+      city: input.city ?? "",
+      startDate,
+      endDate,
+      deliveryType: input.deliveryType ?? DeliveryType.PICKUP,
+      deliveryFeeMinor: input.deliveryFeeMinor,
+      items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    });
   }
 }

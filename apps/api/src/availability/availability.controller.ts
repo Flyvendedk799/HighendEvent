@@ -27,4 +27,9 @@ export class AvailabilityController {
   ) {
     return this.availability.calendar({ productId, startDate, endDate });
   }
+
+  @Get("occupancy")
+  occupancy(@Query("productId") productId: string) {
+    return this.availability.occupancy(productId);
+  }
 }

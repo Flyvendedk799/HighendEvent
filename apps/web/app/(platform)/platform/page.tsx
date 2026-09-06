@@ -1,8 +1,34 @@
 import Link from "next/link";
 import { Badge, Card, CardHeader } from "@rentora/ui";
 import { PageHeader } from "@/components/page-header";
+import { api } from "@/lib/api";
+import { formatMoney } from "@/lib/money";
 
-export default function PlatformHomePage() {
+type PlatformMetrics = {
+  tenants: number;
+  activeTenants: number;
+  suspended: number;
+  bookings: number;
+  gmvMinor: number;
+  mrrMinor: number;
+  attention: Array<{ slug: string; name: string; reason: string; tone: string }>;
+};
+
+export default async function PlatformHomePage() {
+  let metrics: PlatformMetrics | null = null;
+  try {
+    metrics = await api.get<PlatformMetrics>("/platform/metrics", { cache: "no-store" });
+  } catch {
+    metrics = null;
+  }
+
+  const cards = [
+    ["Active tenants", metrics ? String(metrics.activeTenants) : "—"],
+    ["MRR", metrics ? formatMoney(metrics.mrrMinor, "EUR", "en-IE") : "—"],
+    ["Bookings", metrics ? String(metrics.bookings) : "—"],
+    ["Suspended", metrics ? String(metrics.suspended) : "—"],
+  ] as const;
+
   return (
     <main>
       <PageHeader
@@ -10,12 +36,7 @@ export default function PlatformHomePage() {
         description="Operate every Rentora tenant from the control plane."
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          ["Active tenants", "42"],
-          ["MRR", "€18.4k"],
-          ["Trials", "7"],
-          ["Suspended", "1"],
-        ].map(([label, value]) => (
+        {cards.map(([label, value]) => (
           <Card key={label}>
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className="mt-2 font-display text-3xl font-semibold">{value}</p>
@@ -33,18 +54,28 @@ export default function PlatformHomePage() {
             }
           />
           <ul className="space-y-3 text-sm">
-            <li className="flex justify-between">
-              <span>highend-event · Connect incomplete</span>
-              <Badge tone="warning">Action</Badge>
-            </li>
-            <li className="flex justify-between">
-              <span>lumen-av · Past due invoice</span>
-              <Badge tone="danger">Billing</Badge>
-            </li>
-            <li className="flex justify-between">
-              <span>garden-hire · Domain SSL pending</span>
-              <Badge tone="accent">DNS</Badge>
-            </li>
+            {(metrics?.attention ?? []).length === 0 ? (
+              <li className="text-muted-foreground">All tenants look healthy.</li>
+            ) : (
+              metrics!.attention.map((item) => (
+                <li key={item.slug} className="flex justify-between gap-3">
+                  <Link href={`/platform/tenants/${item.slug}`} className="hover:underline">
+                    {item.name} · {item.reason}
+                  </Link>
+                  <Badge
+                    tone={
+                      item.tone === "danger"
+                        ? "danger"
+                        : item.tone === "warning"
+                          ? "warning"
+                          : "accent"
+                    }
+                  >
+                    Action
+                  </Badge>
+                </li>
+              ))
+            )}
           </ul>
         </Card>
         <Card>

@@ -12,4 +12,16 @@ export {
   type CardContentProps,
 } from "./card";
 export { Spinner, type SpinnerProps } from "./spinner";
+export {
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  EmptyState,
+  type EmptyStateProps,
+} from "./table";
 export { cx } from "./utils";
+
+export { Select, Textarea, Dialog, IconButton, type SelectProps, type TextareaProps, type DialogProps, type IconButtonProps } from "./forms-extra";

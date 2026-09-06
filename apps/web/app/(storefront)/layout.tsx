@@ -1,16 +1,90 @@
 import { StorefrontHeader } from "@/components/storefront-header";
+import { StorefrontProviders } from "@/components/storefront-providers";
+import { api } from "@/lib/api";
 import { getTenantSlug } from "@/lib/tenant";
+
+type ThemeTokens = {
+  primary?: string;
+  secondary?: string;
+  accent?: string;
+  background?: string;
+  foreground?: string;
+};
+
+type ThemeCurrent = {
+  name: string;
+  tokens?: ThemeTokens | null;
+  store?: { name?: string | null; logoUrl?: string | null } | null;
+};
+
+type TenantStatus = {
+  status: "ok" | "suspended" | "missing";
+  name?: string;
+  slug?: string;
+};
+
+function cssVars(tokens?: ThemeTokens | null): React.CSSProperties {
+  if (!tokens) return {};
+  return {
+    ...(tokens.primary ? { ["--color-primary" as string]: tokens.primary } : {}),
+    ...(tokens.accent ? { ["--color-accent" as string]: tokens.accent } : {}),
+    ...(tokens.background ? { ["--color-background" as string]: tokens.background } : {}),
+    ...(tokens.foreground ? { ["--color-foreground" as string]: tokens.foreground } : {}),
+  };
+}
+
+async function loadTheme(tenantSlug: string | null): Promise<ThemeCurrent | null> {
+  if (!tenantSlug) return null;
+  try {
+    return await api.get<ThemeCurrent>("/themes/current", {
+      tenantSlug,
+      cache: "no-store",
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function loadStatus(tenantSlug: string | null): Promise<TenantStatus | null> {
+  if (!tenantSlug) return null;
+  try {
+    return await api.get<TenantStatus>(
+      `/public/tenant-status?slug=${encodeURIComponent(tenantSlug)}`,
+      { cache: "no-store" },
+    );
+  } catch {
+    return null;
+  }
+}
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const slug = await getTenantSlug();
-  const storeName = slug
-    ? `${slug.charAt(0).toUpperCase()}${slug.slice(1)} Rentals`
-    : "Demo Rentals";
+  const status = await loadStatus(slug);
+  if (status?.status === "suspended") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 px-6 text-center">
+        <p className="font-display text-4xl font-semibold text-slate-900">
+          {status.name ?? "This store"}
+        </p>
+        <p className="mt-3 max-w-md text-slate-600">
+          This storefront is temporarily unavailable. Please check back soon or contact the shop
+          owner.
+        </p>
+      </div>
+    );
+  }
+
+  const theme = await loadTheme(slug ?? "demo");
+  const storeName =
+    theme?.store?.name ??
+    (slug ? `${slug.charAt(0).toUpperCase()}${slug.slice(1)} Rentals` : "Demo Rentals");
 
   return (
-    <div className="min-h-screen bg-mesh-light">
-      <StorefrontHeader storeName={storeName} />
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>
-    </div>
+    <StorefrontProviders>
+      <div className="min-h-screen bg-mesh-light" style={cssVars(theme?.tokens)}>
+        <StorefrontHeader storeName={storeName} />
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</div>
+      </div>
+    </StorefrontProviders>
   );
 }

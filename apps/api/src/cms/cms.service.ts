@@ -27,7 +27,7 @@ export class CmsService {
     const page = await this.prisma.cmsPage.findUnique({
       where: { tenantId_slug_locale: { tenantId, slug, locale } },
     });
-    if (!page) throw new NotFoundException("Page not found");
+    if (!page || !page.isPublished) throw new NotFoundException("Page not found");
     return page;
   }
 

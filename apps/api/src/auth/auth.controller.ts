@@ -1,7 +1,16 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from "@nestjs/common";
 import { IsEmail, IsIn, IsOptional, IsString, MinLength } from "class-validator";
 import { AuthService } from "./auth.service";
-import type { AuthRole } from "./password";
+import { CurrentUser } from "./current-user.decorator";
+import { JwtAuthGuard } from "./jwt-auth.guard";
+import type { AuthRole, JwtPayload } from "./password";
 
 class LoginDto {
   @IsEmail()
@@ -26,5 +35,12 @@ export class AuthController {
   @Post("login")
   login(@Body() body: LoginDto) {
     return this.auth.login(body);
+  }
+
+  @Get("me")
+  @UseGuards(JwtAuthGuard)
+  me(@CurrentUser() user?: JwtPayload) {
+    if (!user) throw new UnauthorizedException();
+    return user;
   }
 }

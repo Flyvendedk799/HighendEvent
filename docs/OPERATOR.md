@@ -68,6 +68,18 @@ Workers (`apps/worker`) consume Redis queues:
 
 Ensure `REDIS_URL` is set and workers restart cleanly on deploy (SIGINT/SIGTERM handled).
 
+## Web deploy (Vercel)
+
+In the Vercel project **Settings → General → Root Directory**, set **`apps/web`** (this cannot be set via `vercel.json`).
+
+With that root:
+
+- `apps/web/vercel.json` installs/builds from the monorepo root so `@rentora/domain` and `@rentora/ui` resolve.
+- Set `NEXT_PUBLIC_API_URL` to the public API base URL for the environment.
+- API and worker deploy separately (Fly/Render/Railway/etc.); Vercel only hosts Next.js.
+
+If Root Directory is left at the repository root instead, root `vercel.json` builds the web app with `outputDirectory: apps/web/.next`.
+
 ## Incident notes
 
 - Prefer tenant-scoped queries always (`tenantWhere(tenantId)`).

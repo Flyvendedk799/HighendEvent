@@ -3,6 +3,7 @@ import {
   availableQuantity,
   getAvailabilityCalendar,
   assertValidRange,
+  toIsoDate,
 } from "@rentora/domain";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
@@ -50,6 +51,20 @@ export class AvailabilityService {
       bookings,
       blackouts,
     });
+  }
+
+  async occupancy(productId: string) {
+    const tenantId = requireTenantId();
+    const { bookings } = await this.load(tenantId, productId);
+    return bookings.map((b) => ({
+      id: b.id,
+      bookingNo: b.bookingNo,
+      productId: b.productId,
+      quantity: b.quantity,
+      startDate: toIsoDate(b.startDate),
+      endDate: toIsoDate(b.endDate),
+      statusKey: b.statusKey,
+    }));
   }
 
   private async load(tenantId: string, productId: string) {

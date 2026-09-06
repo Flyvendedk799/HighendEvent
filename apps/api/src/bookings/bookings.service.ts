@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -13,6 +14,8 @@ import {
 } from "@rentora/domain";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { NotificationsService } from "../notifications/notifications.service";
+import type { JwtPayload } from "../auth/password";
 
 type BookingItemInput = {
   productId: string;
@@ -21,15 +24,19 @@ type BookingItemInput = {
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
-  list(filters?: { statusKey?: string; includeDeleted?: boolean }) {
+  list(filters?: { statusKey?: string; customerId?: string; includeDeleted?: boolean }) {
     const tenantId = requireTenantId();
     return this.prisma.booking.findMany({
       where: {
         tenantId,
         isDeleted: filters?.includeDeleted ? undefined : false,
         statusKey: filters?.statusKey,
+        customerId: filters?.customerId,
       },
       include: {
         items: { include: { product: true, upsells: true } },
@@ -39,7 +46,7 @@ export class BookingsService {
     });
   }
 
-  async get(id: string) {
+  async get(id: string, user?: JwtPayload) {
     const tenantId = requireTenantId();
     const booking = await this.prisma.booking.findFirst({
       where: { id, tenantId },
@@ -49,7 +56,142 @@ export class BookingsService {
       },
     });
     if (!booking) throw new NotFoundException("Booking not found");
+    if (user?.role === "customer" && booking.customerId !== user.sub) {
+      throw new ForbiddenException("Not your booking");
+    }
     return booking;
+  }
+
+  async getWithOps(id: string, user?: JwtPayload) {
+    const booking = await this.get(id, user);
+    return { ...booking, payments: this.buildPaymentTimeline(booking) };
+  }
+
+  buildPaymentTimeline(booking: {
+    id: string;
+    currency: string;
+    statusKey: string;
+    upfrontMinor: number;
+    remainingMinor: number;
+    depositMinor: number;
+    totalMinor: number;
+    stripeSessionId: string | null;
+    stripePaymentIntentId: string | null;
+    remainingSessionId: string | null;
+    remainingPaymentIntentId: string | null;
+    depositRefunded: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    const entries: Array<{
+      id: string;
+      kind: "status" | "upfront" | "remainder" | "refund";
+      label: string;
+      amountMinor: number | null;
+      currency: string;
+      status: string;
+      reference: string | null;
+      at: string;
+    }> = [
+      {
+        id: `${booking.id}-created`,
+        kind: "status",
+        label: "Booking created",
+        amountMinor: booking.totalMinor,
+        currency: booking.currency,
+        status: "recorded",
+        reference: null,
+        at: booking.createdAt.toISOString(),
+      },
+    ];
+
+    if (
+      booking.stripeSessionId ||
+      ["deposit_paid", "fully_paid"].includes(booking.statusKey)
+    ) {
+      entries.push({
+        id: `${booking.id}-upfront`,
+        kind: "upfront" as const,
+        label:
+          booking.remainingMinor > 0 && booking.statusKey === "deposit_paid"
+            ? "Deposit / upfront collected"
+            : "Upfront payment",
+        amountMinor: booking.upfrontMinor,
+        currency: booking.currency,
+        status:
+          booking.stripePaymentIntentId || booking.stripeSessionId
+            ? "succeeded"
+            : "pending",
+        reference: booking.stripePaymentIntentId ?? booking.stripeSessionId,
+        at: booking.updatedAt.toISOString(),
+      });
+    }
+
+    if (booking.remainingMinor > 0) {
+      entries.push({
+        id: `${booking.id}-remainder`,
+        kind: "remainder" as const,
+        label: "Remainder due",
+        amountMinor: booking.remainingMinor,
+        currency: booking.currency,
+        status:
+          booking.statusKey === "fully_paid"
+            ? "succeeded"
+            : booking.remainingSessionId
+              ? "checkout_open"
+              : "due",
+        reference:
+          booking.remainingPaymentIntentId ?? booking.remainingSessionId,
+        at: booking.updatedAt.toISOString(),
+      });
+    }
+
+    if (booking.depositRefunded) {
+      entries.push({
+        id: `${booking.id}-refund`,
+        kind: "refund" as const,
+        label: "Deposit refunded",
+        amountMinor: booking.depositMinor,
+        currency: booking.currency,
+        status: "refunded",
+        reference: null,
+        at: booking.updatedAt.toISOString(),
+      });
+    }
+
+    return entries;
+  }
+
+  async updateNotes(
+    id: string,
+    input: { notes?: string | null; internalNotes?: string | null },
+  ) {
+    await this.get(id);
+    return this.prisma.booking.update({
+      where: { id },
+      data: {
+        ...(input.notes !== undefined ? { notes: input.notes } : {}),
+        ...(input.internalNotes !== undefined
+          ? { internalNotes: input.internalNotes }
+          : {}),
+      },
+      include: {
+        items: { include: { product: true, upsells: true } },
+        customer: true,
+      },
+    });
+  }
+
+  async resendConfirmation(id: string) {
+    const booking = await this.get(id);
+    await this.notifications.enqueueBookingConfirmation({
+      tenantId: booking.tenantId,
+      bookingId: booking.id,
+      email: booking.email,
+      customerName: booking.customerName,
+      bookingNo: booking.bookingNo,
+    });
+    return { ok: true, bookingId: booking.id, emailedTo: booking.email };
   }
 
   async create(input: {
@@ -148,13 +290,22 @@ export class BookingsService {
       currency: store.currency,
     });
 
-    const bookingNo = generateBookingNo("RNT");
+    
+    let customerId = input.customerId;
+    if (!customerId && input.email) {
+      const existingCustomer = await this.prisma.customer.findUnique({
+        where: { tenantId_email: { tenantId, email: input.email.toLowerCase() } },
+      });
+      if (existingCustomer) customerId = existingCustomer.id;
+    }
+
+const bookingNo = generateBookingNo("RNT");
 
     return this.prisma.booking.create({
       data: {
         tenantId,
         bookingNo,
-        customerId: input.customerId,
+        customerId,
         source: input.source === "MANUAL" ? BookingSource.MANUAL : BookingSource.ONLINE,
         customerName: input.customerName,
         email: input.email,
@@ -270,6 +421,42 @@ export class BookingsService {
 
     lines.push("END:VCALENDAR");
     return lines.join("\r\n");
+  }
+
+  async toIcsOne(id: string): Promise<string> {
+    const booking = await this.get(id);
+    const dtStart = toIcsDate(booking.startDate);
+    const dtEnd = toIcsDate(addOneDay(booking.endDate));
+    const summary = escapeIcs(
+      `${booking.bookingNo} — ${booking.customerName} (${booking.statusKey})`,
+    );
+    const description = escapeIcs(
+      [
+        `Customer: ${booking.customerName}`,
+        `Email: ${booking.email}`,
+        `Phone: ${booking.phone}`,
+        `Items: ${booking.items.map((i) => `${i.nameSnapshot}×${i.quantity}`).join(", ")}`,
+        booking.notes ? `Notes: ${booking.notes}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+    return [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Rentora//Bookings//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      `UID:${booking.id}@rentora`,
+      `DTSTAMP:${toIcsDateTime(new Date())}`,
+      `DTSTART;VALUE=DATE:${dtStart}`,
+      `DTEND;VALUE=DATE:${dtEnd}`,
+      `SUMMARY:${summary}`,
+      `DESCRIPTION:${description}`,
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
   }
 }
 

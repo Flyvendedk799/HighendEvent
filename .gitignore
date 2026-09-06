@@ -15,3 +15,5 @@ apps/worker/dist
 packages/*/dist
 packages/db/node_modules
 *.db
+apps/web/tsconfig.tsbuildinfo
+dump.rdb

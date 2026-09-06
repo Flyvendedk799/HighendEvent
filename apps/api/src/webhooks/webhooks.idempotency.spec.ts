@@ -24,13 +24,25 @@ describe("WebhooksService Stripe idempotency", () => {
     },
     booking: {
       updateMany: jest.fn(async () => ({ count: 1 })),
+      findUnique: jest.fn(async ({ where }: { where: { id: string } }) => ({
+        id: where.id,
+        tenantId: "tenant_1",
+        email: "guest@example.com",
+        customerName: "Guest",
+        bookingNo: "RNT-1",
+      })),
+      findFirst: jest.fn(async () => null),
+      update: jest.fn(),
     },
     webhookEndpoint: {
       findMany: jest.fn(async () => []),
     },
   };
 
-  const service = new WebhooksService(prismaMock as never);
+  const service = new WebhooksService(
+    prismaMock as never,
+    { enqueueBookingConfirmation: jest.fn() } as never,
+  );
 
   beforeEach(() => {
     processed.clear();

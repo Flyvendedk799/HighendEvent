@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -27,6 +28,7 @@ class CategoryDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() imageUrl?: string;
   @IsOptional() @Type(() => Number) @IsInt() sortOrder?: number;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 class ProductDto {
@@ -45,6 +47,7 @@ class ProductDto {
   @IsOptional() @Type(() => Number) @IsInt() minRentalDays?: number;
   @IsOptional() @Type(() => Number) @IsInt() maxRentalDays?: number;
   @IsOptional() @IsString() heroImageUrl?: string;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 class ImageDto {
@@ -62,6 +65,7 @@ class UpsellDto {
   @IsOptional() @IsString() currency?: string;
   @IsOptional() @Type(() => Number) @IsInt() stockQty?: number;
   @IsOptional() @IsString() imageUrl?: string;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 class BlackoutDto {
@@ -103,6 +107,11 @@ export class CatalogController {
   @Get("products")
   listProducts() {
     return this.catalog.listProducts();
+  }
+
+  @Get("products/by-slug/:slug")
+  getProductBySlug(@Param("slug") slug: string) {
+    return this.catalog.getProductBySlug(slug);
   }
 
   @Get("products/:id")

@@ -45,7 +45,7 @@ export default function MarketingPage() {
             party hire, AV, and event equipment businesses.
           </p>
           <div className="animate-fade-up mt-8 flex flex-wrap gap-3 [animation-delay:320ms]">
-            <Link href="#pricing">
+            <Link href="/signup">
               <Button size="lg" className="bg-amber-400 text-slate-950 hover:bg-amber-300">
                 Start free trial
               </Button>
@@ -152,15 +152,17 @@ export default function MarketingPage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                className={`mt-8 w-full ${
-                  plan.featured
-                    ? "bg-amber-400 text-slate-950 hover:bg-amber-300"
-                    : "bg-teal-700 hover:bg-teal-600"
-                }`}
-              >
-                Choose {plan.name}
-              </Button>
+              <Link href="/signup">
+                <Button
+                  className={`mt-8 w-full ${
+                    plan.featured
+                      ? "bg-amber-400 text-slate-950 hover:bg-amber-300"
+                      : "bg-teal-700 hover:bg-teal-600"
+                  }`}
+                >
+                  Choose {plan.name}
+                </Button>
+              </Link>
             </div>
           ))}
         </div>

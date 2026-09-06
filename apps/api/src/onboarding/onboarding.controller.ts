@@ -1,7 +1,10 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength } from "class-validator";
 import { PlanTier } from "@prisma/client";
 import { OnboardingService } from "./onboarding.service";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
 
 class OnboardDto {
   @IsString()
@@ -46,5 +49,12 @@ export class OnboardingController {
   @Post()
   create(@Body() body: OnboardDto) {
     return this.onboarding.onboard(body);
+  }
+
+  @Get("go-live")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  goLive() {
+    return this.onboarding.goLiveChecklist();
   }
 }

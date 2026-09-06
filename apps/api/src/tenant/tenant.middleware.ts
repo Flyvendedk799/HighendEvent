@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware, NotFoundException } from "@nestjs/common";
+import { Injectable, NestMiddleware, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 import { tenantStorage, type TenantContextValue } from "./tenant.context";
@@ -11,8 +11,10 @@ export class TenantMiddleware implements NestMiddleware {
     const path = req.path ?? "";
     const skip =
       path.startsWith("/health") ||
+      path === "/onboarding" ||
+      path === "/onboarding/" ||
       path.startsWith("/platform") ||
-      path.startsWith("/onboarding") ||
+      path.startsWith("/public") ||
       path.startsWith("/auth") ||
       path.startsWith("/webhooks/stripe") ||
       path.startsWith("/billing/plans");
@@ -21,7 +23,7 @@ export class TenantMiddleware implements NestMiddleware {
       return next();
     }
 
-    const slug = this.resolveSlug(req);
+    const slug = await this.resolveSlug(req);
     if (!slug) {
       return next();
     }
@@ -31,8 +33,16 @@ export class TenantMiddleware implements NestMiddleware {
       include: { stores: { take: 1, orderBy: { createdAt: "asc" } } },
     });
 
-    if (!tenant || tenant.isSuspended) {
+    if (!tenant) {
       throw new NotFoundException(`Tenant '${slug}' not found`);
+    }
+
+    if (tenant.isSuspended) {
+      throw new ServiceUnavailableException({
+        status: "suspended",
+        message: `Tenant '${slug}' is temporarily unavailable`,
+        slug,
+      });
     }
 
     const ctx: TenantContextValue = {
@@ -44,7 +54,7 @@ export class TenantMiddleware implements NestMiddleware {
     tenantStorage.run(ctx, () => next());
   }
 
-  private resolveSlug(req: Request): string | undefined {
+  private async resolveSlug(req: Request): Promise<string | undefined> {
     const header = req.header("x-tenant-slug");
     if (header?.trim()) return header.trim().toLowerCase();
 
@@ -59,6 +69,15 @@ export class TenantMiddleware implements NestMiddleware {
 
     if (hostname === platformDomain || hostname === "localhost" || hostname === "127.0.0.1") {
       return undefined;
+    }
+
+    // Verified custom domains take precedence
+    const custom = await this.prisma.customDomain.findUnique({
+      where: { hostname },
+      include: { tenant: { select: { slug: true } } },
+    });
+    if (custom?.verified && custom.tenant) {
+      return custom.tenant.slug;
     }
 
     if (hostname.endsWith(`.${platformDomain}`)) {

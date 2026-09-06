@@ -22,9 +22,15 @@ import { DeliverySettingsModule } from "./delivery-settings/delivery-settings.mo
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
 import { EmailTemplatesModule } from "./email-templates/email-templates.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { BillingModule } from "./billing/billing.module";
+import { DomainsModule } from "./domains/domains.module";
+import { PublicModule } from "./public/public.module";
+import { CouponsModule } from "./coupons/coupons.module";
+import { StaffModule } from "./staff/staff.module";
+import { DeveloperModule } from "./developer/developer.module";
 
 @Module({
   imports: [
@@ -33,6 +39,11 @@ import { BillingModule } from "./billing/billing.module";
     AuthModule,
     HealthModule,
     PlatformModule,
+    PublicModule,
+    DomainsModule,
+    CouponsModule,
+    StaffModule,
+    DeveloperModule,
     OnboardingModule,
     CatalogModule,
     AvailabilityModule,
@@ -50,6 +61,7 @@ import { BillingModule } from "./billing/billing.module";
     AnalyticsModule,
     NewsletterModule,
     EmailTemplatesModule,
+    NotificationsModule,
     WebhooksModule,
     GdprModule,
     BillingModule,

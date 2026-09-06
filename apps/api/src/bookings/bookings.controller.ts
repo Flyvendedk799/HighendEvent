@@ -28,6 +28,8 @@ import { BookingsService } from "./bookings.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
+import type { JwtPayload } from "../auth/password";
 
 class BookingItemDto {
   @IsString() productId!: string;
@@ -63,6 +65,11 @@ class SoftDeleteDto {
   @IsOptional() @IsString() reason?: string;
 }
 
+class NotesDto {
+  @IsOptional() @IsString() notes?: string | null;
+  @IsOptional() @IsString() internalNotes?: string | null;
+}
+
 @Controller("bookings")
 export class BookingsController {
   constructor(private readonly bookings: BookingsService) {}
@@ -72,10 +79,12 @@ export class BookingsController {
   @Roles("staff", "platform")
   list(
     @Query("statusKey") statusKey?: string,
+    @Query("customerId") customerId?: string,
     @Query("includeDeleted") includeDeleted?: string,
   ) {
     return this.bookings.list({
       statusKey,
+      customerId,
       includeDeleted: includeDeleted === "true",
     });
   }
@@ -84,16 +93,32 @@ export class BookingsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform")
   @Header("Content-Type", "text/calendar; charset=utf-8")
-  @Header("Content-Disposition", "inline; filename=\"rentora-bookings.ics\"")
+  @Header("Content-Disposition", 'inline; filename="rentora-bookings.ics"')
   calendarIcs(@Query("statusKey") statusKey?: string) {
     return this.bookings.toIcs({ statusKey });
+  }
+
+  @Get("mine")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("customer")
+  mine(@CurrentUser() user: JwtPayload) {
+    return this.bookings.list({ customerId: user.sub });
+  }
+
+  @Get(":id/calendar.ics")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  @Header("Content-Type", "text/calendar; charset=utf-8")
+  @Header("Content-Disposition", 'inline; filename="booking.ics"')
+  bookingIcs(@Param("id") id: string) {
+    return this.bookings.toIcsOne(id);
   }
 
   @Get(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform", "customer")
-  get(@Param("id") id: string) {
-    return this.bookings.get(id);
+  get(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.bookings.getWithOps(id, user);
   }
 
   @Post()
@@ -106,6 +131,20 @@ export class BookingsController {
   @Roles("staff", "platform")
   createManual(@Body() body: CreateBookingDto) {
     return this.bookings.create({ ...body, source: "MANUAL" });
+  }
+
+  @Patch(":id/notes")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  updateNotes(@Param("id") id: string, @Body() body: NotesDto) {
+    return this.bookings.updateNotes(id, body);
+  }
+
+  @Post(":id/resend-confirmation")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  resend(@Param("id") id: string) {
+    return this.bookings.resendConfirmation(id);
   }
 
   @Patch(":id/status")
