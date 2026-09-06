@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -77,6 +78,15 @@ export class BookingsController {
       statusKey,
       includeDeleted: includeDeleted === "true",
     });
+  }
+
+  @Get("calendar.ics")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  @Header("Content-Type", "text/calendar; charset=utf-8")
+  @Header("Content-Disposition", "inline; filename=\"rentora-bookings.ics\"")
+  calendarIcs(@Query("statusKey") statusKey?: string) {
+    return this.bookings.toIcs({ statusKey });
   }
 
   @Get(":id")

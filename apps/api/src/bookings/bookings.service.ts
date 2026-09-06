@@ -227,4 +227,70 @@ export class BookingsService {
       },
     });
   }
+
+  /** ICS feed for staff calendars (Outlook/Google). Tenant-scoped. */
+  async toIcs(filters?: { statusKey?: string }): Promise<string> {
+    const bookings = await this.list(filters);
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Rentora//Bookings//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+    ];
+
+    for (const booking of bookings) {
+      const dtStart = toIcsDate(booking.startDate);
+      const dtEnd = toIcsDate(addOneDay(booking.endDate));
+      const summary = escapeIcs(
+        `${booking.bookingNo} — ${booking.customerName} (${booking.statusKey})`,
+      );
+      const description = escapeIcs(
+        [
+          `Customer: ${booking.customerName}`,
+          `Email: ${booking.email}`,
+          `Phone: ${booking.phone}`,
+          `Items: ${booking.items.map((i) => `${i.nameSnapshot}×${i.quantity}`).join(", ")}`,
+          booking.notes ? `Notes: ${booking.notes}` : "",
+        ]
+          .filter(Boolean)
+          .join("\\n"),
+      );
+      lines.push(
+        "BEGIN:VEVENT",
+        `UID:${booking.id}@rentora`,
+        `DTSTAMP:${toIcsDateTime(new Date())}`,
+        `DTSTART;VALUE=DATE:${dtStart}`,
+        `DTEND;VALUE=DATE:${dtEnd}`,
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:${description}`,
+        "END:VEVENT",
+      );
+    }
+
+    lines.push("END:VCALENDAR");
+    return lines.join("\r\n");
+  }
+}
+
+function toIcsDate(value: Date | string): string {
+  const d = value instanceof Date ? value : new Date(value);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${day}`;
+}
+
+function toIcsDateTime(value: Date): string {
+  return value.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function addOneDay(value: Date | string): Date {
+  const d = value instanceof Date ? new Date(value) : new Date(value);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d;
+}
+
+function escapeIcs(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }
