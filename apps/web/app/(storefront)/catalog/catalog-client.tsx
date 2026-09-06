@@ -3,18 +3,18 @@
 import { useMemo, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { PageHeader } from "@/components/page-header";
-import { Input } from "@rentora/ui";
-import { demoProducts } from "@/lib/demo-data";
+import { EmptyState, Input } from "@rentora/ui";
+import type { DemoProduct } from "@/lib/demo-data";
 
-export function CatalogClient() {
+export function CatalogClient({ products }: { products: DemoProduct[] }) {
   const categories = useMemo(
-    () => [...new Set(demoProducts.map((p) => p.category))],
-    [],
+    () => [...new Set(products.map((p) => p.category))],
+    [products],
   );
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string | null>(null);
 
-  const filtered = demoProducts.filter((product) => {
+  const filtered = products.filter((product) => {
     const q = query.trim().toLowerCase();
     const matchesQuery =
       !q ||
@@ -72,10 +72,16 @@ export function CatalogClient() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-border bg-surface/70 px-6 py-12 text-center text-muted-foreground">
-          No products match that filter.
-        </div>
+      {products.length === 0 ? (
+        <EmptyState
+          title="Catalog is empty"
+          description="No products were returned from the API for this tenant."
+        />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="No matches"
+          description="Try another search term or category filter."
+        />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((product) => (

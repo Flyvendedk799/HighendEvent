@@ -44,7 +44,11 @@ export default async function AdminProductsPage() {
       <PageHeader
         title="Products"
         description="Live inventory from the Rentora API — no demo fixtures."
-        action={<Button>Add product</Button>}
+        action={
+          <Link href="/admin/products/new">
+            <Button>Add product</Button>
+          </Link>
+        }
       />
       {products.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">

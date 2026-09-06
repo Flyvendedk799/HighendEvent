@@ -44,11 +44,11 @@ export class AnalyticsService {
       depositsMinor: revenue._sum.depositMinor ?? 0,
       activeCustomers: customers,
       activeProducts: products,
-      bookingsByStatus: byStatus.map((b) => ({
-        statusKey: b.statusKey,
-        count: b._count._all,
+      bookingsByStatus: byStatus.map((row) => ({
+        statusKey: row.statusKey,
+        count: row._count._all,
       })),
-      note: "KPI stubs from DB aggregates",
+      note: "KPI aggregates from tenant-scoped bookings",
     };
   }
 }

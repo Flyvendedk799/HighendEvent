@@ -23,3 +23,5 @@ export {
   type EmptyStateProps,
 } from "./table";
 export { cx } from "./utils";
+
+export { Select, Textarea, Dialog, IconButton, type SelectProps, type TextareaProps, type DialogProps, type IconButtonProps } from "./forms-extra";
