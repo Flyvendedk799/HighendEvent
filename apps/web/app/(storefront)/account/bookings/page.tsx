@@ -23,14 +23,7 @@ export default async function CustomerBookingsPage() {
       cache: "no-store",
     });
   } catch {
-    try {
-      bookings = await api.get<BookingRow[]>("/bookings", {
-        tenantSlug: slug,
-        cache: "no-store",
-      });
-    } catch {
-      bookings = [];
-    }
+    bookings = [];
   }
 
   return (

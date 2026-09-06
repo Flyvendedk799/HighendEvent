@@ -65,6 +65,11 @@ class SoftDeleteDto {
   @IsOptional() @IsString() reason?: string;
 }
 
+class NotesDto {
+  @IsOptional() @IsString() notes?: string | null;
+  @IsOptional() @IsString() internalNotes?: string | null;
+}
+
 @Controller("bookings")
 export class BookingsController {
   constructor(private readonly bookings: BookingsService) {}
@@ -88,7 +93,7 @@ export class BookingsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform")
   @Header("Content-Type", "text/calendar; charset=utf-8")
-  @Header("Content-Disposition", "inline; filename=\"rentora-bookings.ics\"")
+  @Header("Content-Disposition", 'inline; filename="rentora-bookings.ics"')
   calendarIcs(@Query("statusKey") statusKey?: string) {
     return this.bookings.toIcs({ statusKey });
   }
@@ -100,11 +105,20 @@ export class BookingsController {
     return this.bookings.list({ customerId: user.sub });
   }
 
+  @Get(":id/calendar.ics")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  @Header("Content-Type", "text/calendar; charset=utf-8")
+  @Header("Content-Disposition", 'inline; filename="booking.ics"')
+  bookingIcs(@Param("id") id: string) {
+    return this.bookings.toIcsOne(id);
+  }
+
   @Get(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform", "customer")
-  get(@Param("id") id: string) {
-    return this.bookings.get(id);
+  get(@Param("id") id: string, @CurrentUser() user: JwtPayload) {
+    return this.bookings.getWithOps(id, user);
   }
 
   @Post()
@@ -117,6 +131,20 @@ export class BookingsController {
   @Roles("staff", "platform")
   createManual(@Body() body: CreateBookingDto) {
     return this.bookings.create({ ...body, source: "MANUAL" });
+  }
+
+  @Patch(":id/notes")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  updateNotes(@Param("id") id: string, @Body() body: NotesDto) {
+    return this.bookings.updateNotes(id, body);
+  }
+
+  @Post(":id/resend-confirmation")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  resend(@Param("id") id: string) {
+    return this.bookings.resendConfirmation(id);
   }
 
   @Patch(":id/status")

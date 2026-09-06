@@ -42,10 +42,14 @@ export class CheckoutService {
     deliveryType?: DeliveryType;
     deliveryFeeMinor?: number;
     couponCode?: string;
+    customerId?: string;
+    paymentKind?: "upfront" | "remainder";
   }) {
     const tenantId = requireTenantId();
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException("Tenant not found");
+
+    const paymentKind = input.paymentKind ?? "upfront";
 
     let booking =
       input.bookingId != null
@@ -54,6 +58,26 @@ export class CheckoutService {
             include: { items: true },
           })
         : null;
+
+    if (paymentKind === "remainder") {
+      if (!booking) throw new BadRequestException("bookingId required for remainder checkout");
+      if (booking.remainingMinor <= 0) {
+        throw new BadRequestException("No remainder due on this booking");
+      }
+      if (booking.statusKey === "pending" || booking.statusKey === "awaiting_payment") {
+        throw new BadRequestException("Collect upfront payment before remainder");
+      }
+      return this.openStripeSession({
+        tenant,
+        tenantId,
+        booking,
+        amount: booking.remainingMinor,
+        paymentKind: "remainder",
+        successUrl: input.successUrl,
+        cancelUrl: input.cancelUrl,
+        lineName: `Remainder · ${booking.bookingNo}`,
+      });
+    }
 
     if (!booking && input.items?.length) {
       booking = await this.createBookingFromItems(input, input.items);
@@ -82,6 +106,7 @@ export class CheckoutService {
         endDate: first.endDate.toISOString().slice(0, 10),
         deliveryType: input.deliveryType ?? first.deliveryType,
         deliveryFeeMinor: input.deliveryFeeMinor,
+        customerId: input.customerId ?? cart.customerId ?? undefined,
         items: cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
       });
       await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
@@ -108,7 +133,32 @@ export class CheckoutService {
       });
     }
 
-    const amount = booking.upfrontMinor;
+    return this.openStripeSession({
+      tenant,
+      tenantId,
+      booking,
+      amount: booking.upfrontMinor,
+      paymentKind: "upfront",
+      successUrl: input.successUrl,
+      cancelUrl: input.cancelUrl,
+      lineName: `Booking ${booking.bookingNo}`,
+    });
+  }
+
+  private async openStripeSession(input: {
+    tenant: { stripeConnectAccountId: string | null; applicationFeeBps: number };
+    tenantId: string;
+    booking: { id: string; bookingNo: string; currency: string };
+    amount: number;
+    paymentKind: "upfront" | "remainder";
+    successUrl: string;
+    cancelUrl: string;
+    lineName: string;
+  }) {
+    const { tenant, tenantId, booking, amount, paymentKind, successUrl, cancelUrl, lineName } =
+      input;
+    if (amount <= 0) throw new BadRequestException("Checkout amount must be positive");
+
     const stripeKey = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
     const useStripeStub =
       !stripeKey ||
@@ -117,20 +167,24 @@ export class CheckoutService {
       process.env.STRIPE_CHECKOUT_STUB === "1";
 
     if (useStripeStub) {
-      const stubSessionId = `cs_test_stub_${randomUUID()}`;
+      const stubSessionId = `cs_test_stub_${paymentKind}_${randomUUID()}`;
       await this.prisma.booking.update({
         where: { id: booking.id },
-        data: { stripeSessionId: stubSessionId },
+        data:
+          paymentKind === "remainder"
+            ? { remainingSessionId: stubSessionId }
+            : { stripeSessionId: stubSessionId },
       });
-      const sep = input.successUrl.includes("?") ? "&" : "?";
+      const sep = successUrl.includes("?") ? "&" : "?";
       return {
         stub: true,
         id: stubSessionId,
-        url: `${input.successUrl}${sep}session_id=${stubSessionId}&booking_id=${booking.id}`,
+        url: `${successUrl}${sep}session_id=${stubSessionId}&booking_id=${booking.id}&payment_kind=${paymentKind}`,
         bookingId: booking.id,
         bookingNo: booking.bookingNo,
         amountMinor: amount,
         currency: booking.currency,
+        paymentKind,
         mode: "payment",
         payment_intent_data: tenant.stripeConnectAccountId
           ? {
@@ -146,21 +200,19 @@ export class CheckoutService {
 
     const body = new URLSearchParams();
     body.set("mode", "payment");
-    body.set("success_url", `${input.successUrl}${input.successUrl.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`);
-    body.set("cancel_url", input.cancelUrl);
+    body.set(
+      "success_url",
+      `${successUrl}${successUrl.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}&payment_kind=${paymentKind}`,
+    );
+    body.set("cancel_url", cancelUrl);
     body.set("client_reference_id", booking.id);
     body.set("metadata[bookingId]", booking.id);
     body.set("metadata[tenantId]", tenantId);
+    body.set("metadata[paymentKind]", paymentKind);
     body.set("line_items[0][quantity]", "1");
-    body.set(
-      "line_items[0][price_data][currency]",
-      booking.currency.toLowerCase(),
-    );
+    body.set("line_items[0][price_data][currency]", booking.currency.toLowerCase());
     body.set("line_items[0][price_data][unit_amount]", String(amount));
-    body.set(
-      "line_items[0][price_data][product_data][name]",
-      `Booking ${booking.bookingNo}`,
-    );
+    body.set("line_items[0][price_data][product_data][name]", lineName);
 
     if (tenant.stripeConnectAccountId) {
       body.set(
@@ -190,7 +242,10 @@ export class CheckoutService {
     const session = (await res.json()) as { id: string; url: string };
     await this.prisma.booking.update({
       where: { id: booking.id },
-      data: { stripeSessionId: session.id },
+      data:
+        paymentKind === "remainder"
+          ? { remainingSessionId: session.id }
+          : { stripeSessionId: session.id },
     });
 
     return {
@@ -201,13 +256,18 @@ export class CheckoutService {
       bookingNo: booking.bookingNo,
       amountMinor: amount,
       currency: booking.currency,
+      paymentKind,
     };
   }
 
   async getBySession(sessionId: string) {
     const tenantId = requireTenantId();
     const booking = await this.prisma.booking.findFirst({
-      where: { tenantId, stripeSessionId: sessionId, isDeleted: false },
+      where: {
+        tenantId,
+        isDeleted: false,
+        OR: [{ stripeSessionId: sessionId }, { remainingSessionId: sessionId }],
+      },
       include: { items: { include: { product: true } } },
     });
     if (!booking) throw new NotFoundException("Checkout session not found");
@@ -220,14 +280,37 @@ export class CheckoutService {
       throw new BadRequestException("Not a stub checkout session");
     }
     const booking = await this.prisma.booking.findFirst({
-      where: { tenantId, stripeSessionId: sessionId, isDeleted: false },
+      where: {
+        tenantId,
+        isDeleted: false,
+        OR: [{ stripeSessionId: sessionId }, { remainingSessionId: sessionId }],
+      },
     });
     if (!booking) throw new NotFoundException("Checkout session not found");
 
-    if (booking.statusKey === "pending" || booking.statusKey === "awaiting_payment") {
+    const isRemainder = booking.remainingSessionId === sessionId;
+    if (isRemainder) {
+      if (booking.remainingMinor > 0 && booking.statusKey !== "fully_paid") {
+        await this.prisma.booking.update({
+          where: { id: booking.id },
+          data: {
+            statusKey: "fully_paid",
+            remainingPaymentIntentId: `pi_stub_${sessionId}`,
+            remainingMinor: 0,
+          },
+        });
+      }
+    } else if (
+      booking.statusKey === "pending" ||
+      booking.statusKey === "awaiting_payment"
+    ) {
+      const nextStatus = booking.remainingMinor > 0 ? "deposit_paid" : "fully_paid";
       await this.prisma.booking.update({
         where: { id: booking.id },
-        data: { statusKey: "fully_paid" },
+        data: {
+          statusKey: nextStatus,
+          stripePaymentIntentId: `pi_stub_${sessionId}`,
+        },
       });
       if (booking.couponCode) {
         await this.coupons.redeem(booking.couponCode);

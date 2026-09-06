@@ -5,6 +5,7 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -41,6 +42,8 @@ class CheckoutDto {
   @IsOptional() @IsEnum(DeliveryType) deliveryType?: DeliveryType;
   @IsOptional() @Type(() => Number) @IsInt() deliveryFeeMinor?: number;
   @IsOptional() @IsString() couponCode?: string;
+  @IsOptional() @IsString() customerId?: string;
+  @IsOptional() @IsIn(["upfront", "remainder"]) paymentKind?: "upfront" | "remainder";
 }
 
 class CompleteStubDto {

@@ -5,6 +5,18 @@ import { PageHeader } from "@/components/page-header";
 import { api } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
 import { BookingStatusActions } from "./booking-status-actions";
+import { BookingOpsPanel } from "./booking-ops-panel";
+
+type PaymentEntry = {
+  id: string;
+  kind: string;
+  label: string;
+  amountMinor: number | null;
+  currency: string;
+  status: string;
+  reference: string | null;
+  at: string;
+};
 
 type BookingDetail = {
   id: string;
@@ -29,6 +41,8 @@ type BookingDetail = {
   remainingMinor: number;
   deliveryType: string;
   notes: string | null;
+  internalNotes: string | null;
+  payments?: PaymentEntry[];
   items: Array<{
     id: string;
     quantity: number;
@@ -122,6 +136,16 @@ export default async function AdminBookingDetailPage({
               <span>{formatMoney(booking.totalMinor, booking.currency)}</span>
             </div>
           </div>
+          <BookingOpsPanel
+            bookingId={booking.id}
+            tenantSlug={tenantSlug}
+            notes={booking.notes}
+            internalNotes={booking.internalNotes}
+            remainingMinor={booking.remainingMinor}
+            currency={booking.currency}
+            statusKey={booking.statusKey}
+            payments={booking.payments ?? []}
+          />
         </Card>
         <Card className="space-y-3">
           <CardHeader title="Status" action={<Badge tone="success">{booking.statusKey}</Badge>} />
@@ -141,9 +165,6 @@ export default async function AdminBookingDetailPage({
               {booking.address}, {booking.zipCode} {booking.city}
             </p>
           </div>
-          {booking.notes ? (
-            <p className="text-sm text-muted-foreground">Notes: {booking.notes}</p>
-          ) : null}
           <BookingStatusActions
             bookingId={booking.id}
             statusKey={booking.statusKey}
