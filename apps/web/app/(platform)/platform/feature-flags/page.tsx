@@ -1,74 +1,67 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 import { Badge, Card } from "@rentora/ui";
 import { PageHeader } from "@/components/page-header";
+import { api } from "@/lib/api";
 
-const initialFlags = [
-  {
-    key: "storefront.v2_checkout",
-    description: "New multi-step checkout on tenant shops",
-    enabled: true,
-  },
-  {
-    key: "admin.manual_pricing",
-    description: "Allow managers to override line totals",
-    enabled: true,
-  },
-  {
-    key: "platform.usage_metering",
-    description: "Collect usage events for metered billing",
-    enabled: false,
-  },
-  {
-    key: "delivery.mapbox_eta",
-    description: "Show Mapbox ETA on delivery quotes",
-    enabled: false,
-  },
-];
+type TenantRow = {
+  id: string;
+  slug: string;
+  name: string;
+  featureFlags?: Record<string, unknown> | null;
+};
 
-export default function PlatformFeatureFlagsPage() {
-  const [flags, setFlags] = useState(initialFlags);
+export default async function PlatformFeatureFlagsPage() {
+  let tenants: TenantRow[] = [];
+  try {
+    tenants = await api.get<TenantRow[]>("/platform/tenants", { cache: "no-store" });
+  } catch {
+    tenants = [];
+  }
 
   return (
     <main>
       <PageHeader
         title="Feature flags"
-        description="Stub toggles for gradual rollouts across tenants."
+        description="Flags are persisted per tenant. Open a tenant to toggle and save."
       />
       <div className="space-y-3">
-        {flags.map((flag) => (
-          <Card key={flag.key} className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="font-mono text-sm font-medium">{flag.key}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{flag.description}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                setFlags((prev) =>
-                  prev.map((f) => (f.key === flag.key ? { ...f, enabled: !f.enabled } : f)),
-                )
-              }
-              className="flex items-center gap-3"
-            >
-              <Badge tone={flag.enabled ? "success" : "neutral"}>
-                {flag.enabled ? "On" : "Off"}
-              </Badge>
-              <span
-                className={`relative h-6 w-11 rounded-full transition ${
-                  flag.enabled ? "bg-teal-600" : "bg-slate-300"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
-                    flag.enabled ? "left-5" : "left-0.5"
-                  }`}
-                />
-              </span>
-            </button>
+        {tenants.length === 0 ? (
+          <Card>
+            <p className="text-sm text-muted-foreground">No tenants found.</p>
           </Card>
-        ))}
+        ) : (
+          tenants.map((t) => {
+            const flags = t.featureFlags ?? {};
+            const entries = Object.entries(flags);
+            return (
+              <Card key={t.id} className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <Link
+                    href={`/platform/tenants/${t.slug}`}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {t.name}
+                  </Link>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{t.slug}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {entries.length === 0 ? (
+                      <span className="text-sm text-muted-foreground">No flags set</span>
+                    ) : (
+                      entries.map(([key, value]) => (
+                        <Badge key={key} tone={value ? "success" : "neutral"}>
+                          {key}: {String(value)}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <Link href={`/platform/tenants/${t.slug}`} className="text-sm text-primary hover:underline">
+                  Edit
+                </Link>
+              </Card>
+            );
+          })
+        )}
       </div>
     </main>
   );

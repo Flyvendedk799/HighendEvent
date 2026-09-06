@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { assertProductLimit } from "../common/plan-limits";
 
 @Injectable()
 export class CatalogService {
@@ -82,7 +83,7 @@ export class CatalogService {
     return product;
   }
 
-  createProduct(data: {
+  async createProduct(data: {
     categoryId: string;
     name: string;
     slug: string;
@@ -100,6 +101,7 @@ export class CatalogService {
     heroImageUrl?: string;
   }) {
     const tenantId = requireTenantId();
+    await assertProductLimit(this.prisma, tenantId);
     return this.prisma.product.create({ data: { tenantId, ...data } });
   }
 

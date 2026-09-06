@@ -26,6 +26,8 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { BillingModule } from "./billing/billing.module";
+import { DomainsModule } from "./domains/domains.module";
+import { PublicModule } from "./public/public.module";
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { BillingModule } from "./billing/billing.module";
     AuthModule,
     HealthModule,
     PlatformModule,
+    PublicModule,
+    DomainsModule,
     OnboardingModule,
     CatalogModule,
     AvailabilityModule,

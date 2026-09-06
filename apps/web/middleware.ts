@@ -12,7 +12,7 @@ function hostnameOf(hostHeader: string): string {
   return hostHeader.toLowerCase().split(":")[0] ?? hostHeader.toLowerCase();
 }
 
-function resolveTenantSlug(host: string, hostWithPort: string): string | null {
+async function resolveTenantSlug(host: string, hostWithPort: string): Promise<string | null> {
   if (PLATFORM_HOSTS.has(host) || PLATFORM_HOSTS.has(hostWithPort)) {
     return null;
   }
@@ -46,7 +46,22 @@ function resolveTenantSlug(host: string, hostWithPort: string): string | null {
     return null;
   }
 
-  return host.replace(/\./g, "-");
+  // Custom domain: ask API for verified hostname → tenant slug
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const res = await fetch(`${apiUrl}/public/resolve-host?host=${encodeURIComponent(host)}`, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 60 },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { slug?: string | null; status?: string };
+      if (data.slug && data.status !== "missing") return data.slug;
+    }
+  } catch {
+    // fall through
+  }
+
+  return null;
 }
 
 function redirectToLogin(request: NextRequest, loginPath: string) {
@@ -56,7 +71,7 @@ function redirectToLogin(request: NextRequest, loginPath: string) {
   return NextResponse.redirect(url);
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const hostWithPort = request.headers.get("host") ?? "localhost:3000";
   const host = hostnameOf(hostWithPort);
   const { pathname } = request.nextUrl;
@@ -94,7 +109,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  const tenantSlug = resolveTenantSlug(host, hostWithPort);
+  const tenantSlug = await resolveTenantSlug(host, hostWithPort);
 
   if (tenantSlug) {
     requestHeaders.set("x-tenant-slug", tenantSlug);

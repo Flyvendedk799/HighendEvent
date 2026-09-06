@@ -17,6 +17,12 @@ type ThemeCurrent = {
   store?: { name?: string | null; logoUrl?: string | null } | null;
 };
 
+type TenantStatus = {
+  status: "ok" | "suspended" | "missing";
+  name?: string;
+  slug?: string;
+};
+
 function cssVars(tokens?: ThemeTokens | null): React.CSSProperties {
   if (!tokens) return {};
   return {
@@ -39,8 +45,35 @@ async function loadTheme(tenantSlug: string | null): Promise<ThemeCurrent | null
   }
 }
 
+async function loadStatus(tenantSlug: string | null): Promise<TenantStatus | null> {
+  if (!tenantSlug) return null;
+  try {
+    return await api.get<TenantStatus>(
+      `/public/tenant-status?slug=${encodeURIComponent(tenantSlug)}`,
+      { cache: "no-store" },
+    );
+  } catch {
+    return null;
+  }
+}
+
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const slug = await getTenantSlug();
+  const status = await loadStatus(slug);
+  if (status?.status === "suspended") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 px-6 text-center">
+        <p className="font-display text-4xl font-semibold text-slate-900">
+          {status.name ?? "This store"}
+        </p>
+        <p className="mt-3 max-w-md text-slate-600">
+          This storefront is temporarily unavailable. Please check back soon or contact the shop
+          owner.
+        </p>
+      </div>
+    );
+  }
+
   const theme = await loadTheme(slug ?? "demo");
   const storeName =
     theme?.store?.name ??

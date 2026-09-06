@@ -9,6 +9,7 @@ import {
 import { DEFAULT_BOOKING_STATUSES } from "@rentora/domain";
 import { PrismaService } from "../prisma/prisma.service";
 import { hashPassword } from "../auth/password";
+import { requireTenantId } from "../common/tenant.util";
 
 export type OnboardInput = {
   tenantName: string;
@@ -36,6 +37,11 @@ export class OnboardingService {
           name: input.tenantName,
           slug: input.slug.toLowerCase(),
           plan: input.plan ?? PlanTier.STARTER,
+          featureFlags: {
+            customDomains: (input.plan ?? PlanTier.STARTER) !== PlanTier.STARTER,
+            upsells: true,
+            deliveryZones: true,
+          },
         },
       });
 
@@ -108,7 +114,114 @@ export class OnboardingService {
         ],
       });
 
-      return { tenant, store, theme, owner: { id: owner.id, email: owner.email, role: owner.role } };
+      await tx.emailTemplate.create({
+        data: {
+          tenantId: tenant.id,
+          key: "booking_confirmation",
+          locale: "en",
+          subject: "Booking confirmed — {{bookingNo}}",
+          bodyHtml: "<p>Thanks for your booking {{bookingNo}}.</p>",
+        },
+      });
+
+      return {
+        tenant,
+        store,
+        theme,
+        owner: { id: owner.id, email: owner.email, role: owner.role },
+      };
     });
+  }
+
+  async goLiveChecklist(tenantId?: string) {
+    const tid = requireTenantId(tenantId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tid },
+      include: {
+        _count: {
+          select: {
+            products: true,
+            staff: true,
+            themes: true,
+            domains: true,
+            emailTemplates: true,
+          },
+        },
+        deliverySettings: true,
+        domains: true,
+        stores: { take: 1 },
+      },
+    });
+    if (!tenant) {
+      return { items: [], done: 0, total: 0, ready: false };
+    }
+
+    const productsWithImages = await this.prisma.product.count({
+      where: {
+        tenantId: tid,
+        OR: [{ heroImageUrl: { not: null } }, { images: { some: {} } }],
+      },
+    });
+
+    const items = [
+      {
+        key: "connect",
+        item: "Connect Stripe account",
+        done: tenant.connectOnboarded,
+        href: "/admin/settings",
+      },
+      {
+        key: "products",
+        item: "Add at least 5 products with images",
+        done: productsWithImages >= 5,
+        href: "/admin/products",
+      },
+      {
+        key: "delivery",
+        item: "Configure delivery zones",
+        done: tenant.deliverySettings.length > 0,
+        href: "/admin/delivery",
+      },
+      {
+        key: "tax",
+        item: "Set tax & deposit model",
+        done: Boolean(tenant.stores[0]?.taxMode && tenant.stores[0]?.paymentModel),
+        href: "/admin/settings",
+      },
+      {
+        key: "domain",
+        item: "Verify custom domain DNS (optional)",
+        done: tenant.domains.some((d) => d.verified) || tenant.plan === PlanTier.STARTER,
+        optional: true,
+        href: "/admin/settings",
+      },
+      {
+        key: "email",
+        item: "Configure booking confirmation email",
+        done: tenant._count.emailTemplates > 0,
+        href: "/admin/emails",
+      },
+      {
+        key: "staff",
+        item: "Invite a staff member",
+        done: tenant._count.staff > 1,
+        href: "/admin/staff",
+      },
+      {
+        key: "theme",
+        item: "Publish theme & logo",
+        done: tenant._count.themes > 0,
+        href: "/admin/theme",
+      },
+    ];
+
+    const required = items.filter((i) => !("optional" in i && i.optional));
+    const done = required.filter((i) => i.done).length;
+    return {
+      items,
+      done,
+      total: required.length,
+      ready: required.every((i) => i.done),
+    };
   }
 }

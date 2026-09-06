@@ -30,7 +30,10 @@ describe("WebhooksService Stripe idempotency", () => {
     },
   };
 
-  const service = new WebhooksService(prismaMock as never);
+  const service = new WebhooksService(
+    prismaMock as never,
+    { enqueueBookingConfirmation: jest.fn() } as never,
+  );
 
   beforeEach(() => {
     processed.clear();
