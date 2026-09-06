@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import {
   PrismaClient,
   PlanTier,
@@ -10,14 +10,21 @@ import {
 
 const prisma = new PrismaClient();
 
+/** Matches apps/api hashPassword: sha256$salt$hash (non-legacy verify path). */
 function hashPassword(password: string): string {
-  return createHash("sha256").update(password).digest("hex");
+  const salt = randomBytes(16).toString("hex");
+  const hash = createHash("sha256").update(`${salt}:${password}`).digest("hex");
+  return `sha256$${salt}$${hash}`;
 }
 
 async function main() {
   await prisma.platformUser.upsert({
     where: { email: "admin@rentora.app" },
-    update: {},
+    update: {
+      passwordHash: hashPassword("admin123"),
+      name: "Platform Admin",
+      isActive: true,
+    },
     create: {
       email: "admin@rentora.app",
       name: "Platform Admin",
