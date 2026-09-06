@@ -13,14 +13,14 @@ import {
   type DateRange,
 } from "@/components/availability-calendar";
 import { useCart } from "@/lib/cart";
+import { formatMoney } from "@/lib/money";
 import {
-  formatPrice,
   productAvailabilityInput,
   productPricingInput,
-  type DemoBlackout,
-  type DemoOccupancy,
-  type DemoProduct,
-} from "@/lib/demo-data";
+  type StoreBlackout,
+  type StoreOccupancy,
+  type StoreProduct,
+} from "@/lib/product-model";
 
 const tones = {
   teal: "from-teal-800 via-teal-600 to-teal-400",
@@ -33,9 +33,9 @@ export function ProductDetailClient({
   blackouts = [],
   occupancy = [],
 }: {
-  product: DemoProduct;
-  blackouts?: DemoBlackout[];
-  occupancy?: DemoOccupancy[];
+  product: StoreProduct;
+  blackouts?: StoreBlackout[];
+  occupancy?: StoreOccupancy[];
 }) {
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
@@ -210,27 +210,27 @@ export function ProductDetailClient({
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <PriceTile
                 label="Weekday"
-                value={formatPrice(product.priceFrom, product.currency)}
+                value={formatMoney(product.priceFrom, product.currency)}
                 hint="per day"
               />
               {product.weekendPrice ? (
                 <PriceTile
                   label="Weekend"
-                  value={formatPrice(product.weekendPrice, product.currency)}
+                  value={formatMoney(product.weekendPrice, product.currency)}
                   hint="Sat–Sun day rate"
                 />
               ) : null}
               {product.weekendPackage ? (
                 <PriceTile
                   label="Fri–Sun package"
-                  value={formatPrice(product.weekendPackage, product.currency)}
+                  value={formatMoney(product.weekendPackage, product.currency)}
                   hint="3-day bundle"
                 />
               ) : null}
               {product.deposit ? (
                 <PriceTile
                   label="Deposit"
-                  value={formatPrice(product.deposit, product.currency)}
+                  value={formatMoney(product.deposit, product.currency)}
                   hint="refundable hold"
                 />
               ) : null}
@@ -275,24 +275,24 @@ export function ProductDetailClient({
                       {days} day{days === 1 ? "" : "s"} · {qty} unit{qty === 1 ? "" : "s"}
                     </span>
                     <span className="font-semibold">
-                      {formatPrice(quote.subtotalMinor, product.currency)}
+                      {formatMoney(quote.subtotalMinor, product.currency)}
                     </span>
                   </div>
                   {quote.depositMinor > 0 ? (
                     <div className="flex justify-between gap-3">
                       <span className="text-muted-foreground">Deposit hold</span>
-                      <span>{formatPrice(quote.depositMinor, product.currency)}</span>
+                      <span>{formatMoney(quote.depositMinor, product.currency)}</span>
                     </div>
                   ) : null}
                   <div className="flex justify-between gap-3 border-t border-border pt-2 text-base">
                     <span className="font-medium">Due now</span>
                     <span className="font-semibold text-teal-800">
-                      {formatPrice(quote.upfrontMinor, product.currency)}
+                      {formatMoney(quote.upfrontMinor, product.currency)}
                     </span>
                   </div>
                   {quote.remainingMinor > 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      Remainder {formatPrice(quote.remainingMinor, product.currency)} before
+                      Remainder {formatMoney(quote.remainingMinor, product.currency)} before
                       delivery
                     </p>
                   ) : null}

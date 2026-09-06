@@ -29,6 +29,8 @@ import { BillingModule } from "./billing/billing.module";
 import { DomainsModule } from "./domains/domains.module";
 import { PublicModule } from "./public/public.module";
 import { CouponsModule } from "./coupons/coupons.module";
+import { StaffModule } from "./staff/staff.module";
+import { DeveloperModule } from "./developer/developer.module";
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { CouponsModule } from "./coupons/coupons.module";
     PublicModule,
     DomainsModule,
     CouponsModule,
+    StaffModule,
+    DeveloperModule,
     OnboardingModule,
     CatalogModule,
     AvailabilityModule,

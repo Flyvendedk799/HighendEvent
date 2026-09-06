@@ -8,21 +8,21 @@ import {
   type DayAvailability,
 } from "@rentora/domain";
 import {
-  blackoutsForProduct,
-  bookingsForProduct,
   productAvailabilityInput,
-  type DemoProduct,
-} from "@/lib/demo-data";
+  type StoreBlackout,
+  type StoreOccupancy,
+  type StoreProduct,
+} from "@/lib/product-model";
 
 export type DateRange = { start: string | null; end: string | null };
 
 type Props = {
-  product: DemoProduct;
+  product: StoreProduct;
   value: DateRange;
   onChange: (range: DateRange) => void;
   quantity?: number;
-  bookings?: ReturnType<typeof bookingsForProduct>;
-  blackouts?: ReturnType<typeof blackoutsForProduct>;
+  bookings?: StoreOccupancy[];
+  blackouts?: StoreBlackout[];
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -85,8 +85,8 @@ export function AvailabilityCalendar({
   const gridStartIso = toIsoDate(gridStart);
   const gridEndIso = toIsoDate(gridEnd);
 
-  const effectiveBookings = bookings ?? bookingsForProduct(product.id);
-  const effectiveBlackouts = blackouts ?? blackoutsForProduct(product.id);
+  const effectiveBookings = bookings ?? [];
+  const effectiveBlackouts = blackouts ?? [];
 
   const dayMap = useMemo(() => {
     const days = getAvailabilityCalendar({

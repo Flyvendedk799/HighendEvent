@@ -1,5 +1,5 @@
 import type { ProductCardModel } from "@/components/product-card";
-import type { DemoProduct } from "@/lib/demo-data";
+import type { StoreProduct } from "@/lib/product-model";
 
 export type ApiProduct = {
   id: string;
@@ -35,10 +35,10 @@ export function mapApiProductToCard(product: ApiProduct): ProductCardModel {
   };
 }
 
-const tones: Array<DemoProduct["imageTone"]> = ["teal", "amber", "slate"];
+const tones: Array<StoreProduct["imageTone"]> = ["teal", "amber", "slate"];
 
-/** Detail view still uses DemoProduct-shaped helpers for pricing/availability. */
-export function mapApiProductToDetail(product: ApiProduct, index = 0): DemoProduct {
+/** Map API product into storefront detail model for pricing/availability helpers. */
+export function mapApiProductToDetail(product: ApiProduct, index = 0): StoreProduct {
   const attrs = product.attributes ?? {};
   const specs = Object.entries(attrs).map(([label, value]) => ({
     label,

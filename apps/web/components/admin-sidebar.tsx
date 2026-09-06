@@ -21,6 +21,7 @@ const items = [
   { href: "/admin/emails", key: "emails" as const },
   { href: "/admin/newsletter", key: "newsletter" as const },
   { href: "/admin/staff", key: "staff" as const },
+  { href: "/admin/developer", key: "developer" as const },
   { href: "/admin/go-live", key: "goLive" as const },
 ];
 

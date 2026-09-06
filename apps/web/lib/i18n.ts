@@ -70,6 +70,7 @@ const dictionaries = {
       emails: "Email templates",
       newsletter: "Newsletter",
       staff: "Staff",
+      developer: "Developer",
       goLive: "Go-live checklist",
     },
     platform: {
@@ -147,6 +148,7 @@ const dictionaries = {
       emails: "E-mailskabeloner",
       newsletter: "Nyhedsbrev",
       staff: "Personale",
+      developer: "Udvikler",
       goLive: "Go-live tjekliste",
     },
     platform: {

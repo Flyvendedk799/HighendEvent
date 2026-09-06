@@ -109,9 +109,14 @@ export class CheckoutService {
     }
 
     const amount = booking.upfrontMinor;
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const stripeKey = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
+    const useStripeStub =
+      !stripeKey ||
+      stripeKey === "sk_test_stub" ||
+      stripeKey.startsWith("sk_test_stub") ||
+      process.env.STRIPE_CHECKOUT_STUB === "1";
 
-    if (!stripeKey) {
+    if (useStripeStub) {
       const stubSessionId = `cs_test_stub_${randomUUID()}`;
       await this.prisma.booking.update({
         where: { id: booking.id },
@@ -135,7 +140,7 @@ export class CheckoutService {
               transfer_data: { destination: tenant.stripeConnectAccountId },
             }
           : undefined,
-        message: "Stripe stub session (STRIPE_SECRET_KEY not set)",
+        message: "Stripe stub session (no live STRIPE_SECRET_KEY)",
       };
     }
 
