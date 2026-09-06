@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@rentora/ui"],
+  transpilePackages: ["@rentora/domain", "@rentora/ui"],
   experimental: {
     optimizePackageImports: ["@rentora/ui"],
   },
