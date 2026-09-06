@@ -1,8 +1,6 @@
 import type { Job } from "bullmq";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@rentora/db";
 import type { DomainSslJobData } from "../queues.js";
-
-const prisma = new PrismaClient();
 
 export async function processDomainSsl(job: Job<DomainSslJobData>): Promise<{ ok: true }> {
   console.log(
