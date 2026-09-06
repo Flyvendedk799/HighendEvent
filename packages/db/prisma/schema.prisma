@@ -1,0 +1,723 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanTier {
+  STARTER
+  GROWTH
+  SCALE
+}
+
+enum StaffRole {
+  OWNER
+  MANAGER
+  STAFF
+  READONLY
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentModel {
+  FULL_UPFRONT
+  DEPOSIT_REMAINDER
+}
+
+enum TaxMode {
+  INCLUSIVE
+  EXCLUSIVE
+}
+
+enum BookingSource {
+  ONLINE
+  MANUAL
+}
+
+enum PrincipalType {
+  PLATFORM
+  STAFF
+  CUSTOMER
+}
+
+model PlatformUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  name         String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Tenant {
+  id                    String    @id @default(cuid())
+  name                  String
+  slug                  String    @unique
+  plan                  PlanTier  @default(STARTER)
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?
+  stripeConnectAccountId String?
+  connectOnboarded      Boolean   @default(false)
+  applicationFeeBps     Int       @default(0)
+  isSuspended           Boolean   @default(false)
+  featureFlags          Json      @default("{}")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  stores           Store[]
+  staff            StaffUser[]
+  customers        Customer[]
+  categories       Category[]
+  products         Product[]
+  upsellProducts   UpsellProduct[]
+  bookings         Booking[]
+  locations        Location[]
+  deliverySettings DeliverySetting[]
+  deliveryZones    DeliveryZone[]
+  cmsPages         CmsPage[]
+  themes           Theme[]
+  mediaAssets      MediaAsset[]
+  emailTemplates   EmailTemplate[]
+  notificationRules NotificationRule[]
+  statusDefs       BookingStatusDefinition[]
+  auditLogs        AuditLog[]
+  webhooks         WebhookEndpoint[]
+  apiKeys          ApiKey[]
+  newsletters      NewsletterSubscription[]
+  carts            Cart[]
+  coupons          Coupon[]
+  domains          CustomDomain[]
+}
+
+model Store {
+  id              String   @id @default(cuid())
+  tenantId        String
+  name            String
+  tagline         String?
+  localeDefault   String   @default("en")
+  locales         String[] @default(["en", "da"])
+  currency        String   @default("USD")
+  timezone        String   @default("UTC")
+  country         String   @default("US")
+  taxMode         TaxMode  @default(INCLUSIVE)
+  taxPercentBps   Int      @default(0)
+  paymentModel    PaymentModel @default(FULL_UPFRONT)
+  depositPercentBps Int    @default(0)
+  logoUrl         String?
+  faviconUrl      String?
+  brandColors     Json     @default("{\"primary\":\"#0F766E\",\"secondary\":\"#134E4A\",\"accent\":\"#F59E0B\",\"background\":\"#F8FAFC\",\"foreground\":\"#0F172A\"}")
+  fonts           Json     @default("{\"display\":\"Fraunces\",\"body\":\"DM Sans\"}")
+  supportEmail    String?
+  supportPhone    String?
+  seoTitle        String?
+  seoDescription  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  theme  Theme?
+
+  @@index([tenantId])
+}
+
+model CustomDomain {
+  id         String   @id @default(cuid())
+  tenantId   String
+  hostname   String   @unique
+  verified   Boolean  @default(false)
+  sslStatus  String   @default("pending")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model StaffUser {
+  id           String    @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String?
+  name         String?
+  role         StaffRole @default(STAFF)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  tenantId       String
+  email          String
+  passwordHash   String?
+  firstName      String
+  lastName       String
+  phone          String?
+  address        String?
+  zipCode        String?
+  city           String?
+  country        String?
+  iban           String?
+  bankLocalRef   String?
+  isGuest        Boolean  @default(false)
+  emailVerified  Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  carts    Cart[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  address   String
+  zipCode   String
+  city      String
+  country   String   @default("US")
+  latitude  Float?
+  longitude Float?
+  isPrimary Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  slug        String
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products       Product[]
+  upsellProducts UpsellProduct[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  tenantId         String
+  categoryId       String
+  name             String
+  slug             String
+  description      String?
+  dailyPriceMinor  Int
+  weekendPriceMinor Int?
+  weekendPackageMinor Int?
+  depositMinor     Int      @default(0)
+  currency         String   @default("USD")
+  stockQty         Int      @default(1)
+  prepBufferDays   Int      @default(0)
+  cleanupBufferDays Int     @default(0)
+  minRentalDays    Int      @default(1)
+  maxRentalDays    Int?
+  heroImageUrl     String?
+  attributes       Json     @default("{}")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category     Category       @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]
+  units        ProductUnit[]
+  pricingRules PricingRule[]
+  blackouts    BlackoutDate[]
+  upsells      ProductUpsell[]
+  bookingItems BookingItem[]
+  cartItems    CartItem[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([categoryId])
+}
+
+model ProductUnit {
+  id        String   @id @default(cuid())
+  productId String
+  sku       String?
+  serial    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  alt       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model PricingRule {
+  id        String   @id @default(cuid())
+  productId String
+  ruleType  String
+  valueJson Json
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model BlackoutDate {
+  id        String   @id @default(cuid())
+  productId String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, startDate, endDate])
+}
+
+model UpsellProduct {
+  id          String   @id @default(cuid())
+  tenantId    String
+  categoryId  String?
+  name        String
+  slug        String
+  description String?
+  priceMinor  Int
+  currency    String   @default("USD")
+  stockQty    Int?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category     Category?       @relation(fields: [categoryId], references: [id])
+  productLinks ProductUpsell[]
+  cartUpsells  CartUpsellItem[]
+  bookingUpsells BookingUpsellItem[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model ProductUpsell {
+  id              String @id @default(cuid())
+  productId       String
+  upsellProductId String
+  sortOrder       Int    @default(0)
+
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  upsellProduct UpsellProduct @relation(fields: [upsellProductId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, upsellProductId])
+}
+
+model DeliverySetting {
+  id              String       @id @default(cuid())
+  tenantId        String
+  type            DeliveryType
+  baseFeeMinor    Int
+  perKmFeeMinor   Int          @default(0)
+  freeDeliveryKm  Int          @default(0)
+  maxDeliveryKm   Int?
+  currency        String       @default("USD")
+  notes           String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+}
+
+model DeliveryZone {
+  id           String   @id @default(cuid())
+  tenantId     String
+  name         String
+  feeMinor     Int
+  currency     String   @default("USD")
+  polygonGeoJson Json?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Cart {
+  id         String   @id @default(cuid())
+  tenantId   String
+  customerId String?
+  sessionId  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer?  @relation(fields: [customerId], references: [id])
+  items    CartItem[]
+
+  @@index([tenantId, sessionId])
+  @@index([tenantId, customerId])
+}
+
+model CartItem {
+  id           String       @id @default(cuid())
+  cartId       String
+  productId    String
+  quantity     Int          @default(1)
+  deliveryType DeliveryType @default(PICKUP)
+  startDate    DateTime?    @db.Date
+  endDate      DateTime?    @db.Date
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  cart    Cart             @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product          @relation(fields: [productId], references: [id])
+  upsells CartUpsellItem[]
+
+  @@index([cartId])
+}
+
+model CartUpsellItem {
+  id              String   @id @default(cuid())
+  cartItemId      String
+  upsellProductId String
+  quantity        Int      @default(1)
+  createdAt       DateTime @default(now())
+
+  cartItem      CartItem      @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  upsellProduct UpsellProduct @relation(fields: [upsellProductId], references: [id])
+
+  @@index([cartItemId])
+}
+
+model BookingStatusDefinition {
+  id          String   @id @default(cuid())
+  tenantId    String
+  key         String
+  label       String
+  color       String   @default("#64748B")
+  sortOrder   Int      @default(0)
+  isTerminal  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+model Booking {
+  id                     String        @id @default(cuid())
+  tenantId               String
+  bookingNo              String
+  customerId             String?
+  source                 BookingSource @default(ONLINE)
+  customerName            String
+  email                  String
+  phone                  String
+  address                String
+  zipCode                String
+  city                   String
+  country                String        @default("US")
+  startDate              DateTime      @db.Date
+  endDate                DateTime      @db.Date
+  currency               String        @default("USD")
+  subtotalMinor          Int
+  taxMinor               Int           @default(0)
+  depositMinor           Int           @default(0)
+  deliveryFeeMinor       Int           @default(0)
+  deliveryBreakdown      Json?
+  totalMinor             Int
+  upfrontMinor           Int
+  remainingMinor         Int           @default(0)
+  statusKey              String        @default("pending")
+  deliveryType           DeliveryType  @default(PICKUP)
+  stripeSessionId        String?
+  stripePaymentIntentId  String?
+  remainingSessionId     String?
+  remainingPaymentIntentId String?
+  depositRefunded        Boolean       @default(false)
+  returnCondition        String?
+  damageFeeMinor         Int           @default(0)
+  notes                  String?
+  internalNotes          String?
+  iban                   String?
+  bankLocalRef           String?
+  couponCode             String?
+  discountMinor          Int           @default(0)
+  isDeleted              Boolean       @default(false)
+  deletedAt              DateTime?
+  deletionReason         String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer Customer?     @relation(fields: [customerId], references: [id])
+  items    BookingItem[]
+
+  @@unique([tenantId, bookingNo])
+  @@index([tenantId, statusKey])
+  @@index([tenantId, startDate, endDate])
+  @@index([stripeSessionId])
+}
+
+model BookingItem {
+  id             String   @id @default(cuid())
+  bookingId      String
+  productId      String
+  quantity       Int
+  unitPriceMinor Int
+  nameSnapshot   String
+  createdAt      DateTime @default(now())
+
+  booking Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  product Product             @relation(fields: [productId], references: [id])
+  upsells BookingUpsellItem[]
+
+  @@index([bookingId])
+  @@index([productId])
+}
+
+model BookingUpsellItem {
+  id              String   @id @default(cuid())
+  bookingItemId   String
+  upsellProductId String
+  quantity        Int      @default(1)
+  unitPriceMinor  Int
+  nameSnapshot    String
+  createdAt       DateTime @default(now())
+
+  bookingItem   BookingItem   @relation(fields: [bookingItemId], references: [id], onDelete: Cascade)
+  upsellProduct UpsellProduct @relation(fields: [upsellProductId], references: [id])
+
+  @@index([bookingItemId])
+}
+
+model Theme {
+  id        String   @id @default(cuid())
+  tenantId  String
+  storeId   String   @unique
+  name      String   @default("Default")
+  tokens    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store  Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model CmsPage {
+  id          String   @id @default(cuid())
+  tenantId    String
+  slug        String
+  title       String
+  locale      String   @default("en")
+  sections    Json     @default("[]")
+  seoTitle    String?
+  seoDescription String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug, locale])
+  @@index([tenantId])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  tenantId  String
+  url       String
+  key       String
+  mimeType  String?
+  width     Int?
+  height    Int?
+  alt       String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  key       String
+  locale    String   @default("en")
+  subject   String
+  bodyHtml  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key, locale])
+  @@index([tenantId])
+}
+
+model NotificationRule {
+  id        String   @id @default(cuid())
+  tenantId  String
+  eventKey  String
+  channel   String   @default("email")
+  templateKey String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model NewsletterSubscription {
+  id             String    @id @default(cuid())
+  tenantId       String
+  email          String
+  isActive       Boolean   @default(true)
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Coupon {
+  id              String    @id @default(cuid())
+  tenantId        String
+  code            String
+  percentOffBps   Int?
+  amountOffMinor  Int?
+  currency        String?
+  maxRedemptions  Int?
+  redeemedCount   Int       @default(0)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  actorType  PrincipalType
+  actorId    String?
+  action     String
+  entityType String?
+  entityId   String?
+  meta       Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+}
+
+model WebhookEndpoint {
+  id        String   @id @default(cuid())
+  tenantId  String
+  url       String
+  secret    String
+  events    String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  tenantId   String
+  name       String
+  keyHash    String
+  lastUsedAt DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model ProcessedWebhook {
+  id          String   @id @default(cuid())
+  provider    String
+  eventId     String
+  processedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+model ConsentLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  subject   String
+  kind      String
+  granted   Boolean
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, subject])
+}
