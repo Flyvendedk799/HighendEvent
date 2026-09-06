@@ -21,6 +21,8 @@ type Props = {
   value: DateRange;
   onChange: (range: DateRange) => void;
   quantity?: number;
+  bookings?: ReturnType<typeof bookingsForProduct>;
+  blackouts?: ReturnType<typeof blackoutsForProduct>;
 };
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -64,7 +66,14 @@ function resolveStatus(
   return "available";
 }
 
-export function AvailabilityCalendar({ product, value, onChange, quantity = 1 }: Props) {
+export function AvailabilityCalendar({
+  product,
+  value,
+  onChange,
+  quantity = 1,
+  bookings,
+  blackouts,
+}: Props) {
   const [cursor, setCursor] = useState(() => startOfMonthUtc(new Date()));
 
   const monthStart = startOfMonthUtc(cursor);
@@ -76,16 +85,19 @@ export function AvailabilityCalendar({ product, value, onChange, quantity = 1 }:
   const gridStartIso = toIsoDate(gridStart);
   const gridEndIso = toIsoDate(gridEnd);
 
+  const effectiveBookings = bookings ?? bookingsForProduct(product.id);
+  const effectiveBlackouts = blackouts ?? blackoutsForProduct(product.id);
+
   const dayMap = useMemo(() => {
     const days = getAvailabilityCalendar({
       product: productAvailabilityInput(product),
       startDate: gridStartIso,
       endDate: gridEndIso,
-      bookings: bookingsForProduct(product.id),
-      blackouts: blackoutsForProduct(product.id),
+      bookings: effectiveBookings,
+      blackouts: effectiveBlackouts,
     });
     return new Map(days.map((d) => [d.date, d] as const));
-  }, [product, gridStartIso, gridEndIso]);
+  }, [product, gridStartIso, gridEndIso, effectiveBookings, effectiveBlackouts]);
 
   const cells: Array<{ date: string; inMonth: boolean; meta?: DayAvailability }> = [];
   for (let d = new Date(gridStart); d.getTime() <= gridEnd.getTime(); d = addDays(d, 1)) {
@@ -117,8 +129,8 @@ export function AvailabilityCalendar({ product, value, onChange, quantity = 1 }:
       product: productAvailabilityInput(product),
       startDate: start,
       endDate: end,
-      bookings: bookingsForProduct(product.id),
-      blackouts: blackoutsForProduct(product.id),
+      bookings: effectiveBookings,
+      blackouts: effectiveBlackouts,
     });
     const blocked = span.some(
       (day) => day.isBlackedOut || !day.isAvailable || day.availableQuantity < quantity,

@@ -67,6 +67,21 @@ export class CatalogService {
     return product;
   }
 
+  async getProductBySlug(slug: string) {
+    const tenantId = requireTenantId();
+    const product = await this.prisma.product.findFirst({
+      where: { slug, tenantId },
+      include: {
+        category: true,
+        images: { orderBy: { sortOrder: "asc" } },
+        blackouts: true,
+        upsells: { include: { upsellProduct: true } },
+      },
+    });
+    if (!product) throw new NotFoundException("Product not found");
+    return product;
+  }
+
   createProduct(data: {
     categoryId: string;
     name: string;

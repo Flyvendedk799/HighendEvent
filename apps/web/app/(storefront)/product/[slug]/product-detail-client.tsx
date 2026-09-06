@@ -14,11 +14,11 @@ import {
 } from "@/components/availability-calendar";
 import { useCart } from "@/lib/cart";
 import {
-  blackoutsForProduct,
-  bookingsForProduct,
   formatPrice,
   productAvailabilityInput,
   productPricingInput,
+  type DemoBlackout,
+  type DemoOccupancy,
   type DemoProduct,
 } from "@/lib/demo-data";
 
@@ -28,7 +28,15 @@ const tones = {
   slate: "from-slate-800 via-slate-600 to-slate-400",
 };
 
-export function ProductDetailClient({ product }: { product: DemoProduct }) {
+export function ProductDetailClient({
+  product,
+  blackouts = [],
+  occupancy = [],
+}: {
+  product: DemoProduct;
+  blackouts?: DemoBlackout[];
+  occupancy?: DemoOccupancy[];
+}) {
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -44,10 +52,10 @@ export function ProductDetailClient({ product }: { product: DemoProduct }) {
       product: productAvailabilityInput(product),
       startDate,
       endDate,
-      bookings: bookingsForProduct(product.id),
-      blackouts: blackoutsForProduct(product.id),
+      bookings: occupancy,
+      blackouts,
     });
-  }, [product, startDate, endDate]);
+  }, [product, startDate, endDate, occupancy, blackouts]);
 
   const quote = useMemo(() => {
     if (!startDate || !endDate) return null;
@@ -317,6 +325,8 @@ export function ProductDetailClient({ product }: { product: DemoProduct }) {
         value={range}
         onChange={setRange}
         quantity={qty}
+        bookings={occupancy}
+        blackouts={blackouts}
       />
     </main>
   );

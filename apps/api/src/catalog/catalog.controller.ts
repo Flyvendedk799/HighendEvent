@@ -105,6 +105,11 @@ export class CatalogController {
     return this.catalog.listProducts();
   }
 
+  @Get("products/by-slug/:slug")
+  getProductBySlug(@Param("slug") slug: string) {
+    return this.catalog.getProductBySlug(slug);
+  }
+
   @Get("products/:id")
   getProduct(@Param("id") id: string) {
     return this.catalog.getProduct(id);
