@@ -7,6 +7,7 @@ import { DeliveryType } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { requireTenantId } from "../common/tenant.util";
 
 type CheckoutItem = {
@@ -21,6 +22,7 @@ export class CheckoutService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bookings: BookingsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createSession(input: {
@@ -199,6 +201,13 @@ export class CheckoutService {
       await this.prisma.booking.update({
         where: { id: booking.id },
         data: { statusKey: "fully_paid" },
+      });
+      await this.notifications.enqueueBookingConfirmation({
+        tenantId,
+        bookingId: booking.id,
+        email: booking.email,
+        customerName: booking.customerName,
+        bookingNo: booking.bookingNo,
       });
     }
 

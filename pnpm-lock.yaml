@@ -53,12 +53,18 @@ importers:
       '@rentora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      bullmq:
+        specifier: ^5.34.5
+        version: 5.81.4
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
       class-validator:
         specifier: ^0.14.1
         version: 0.14.4
+      ioredis:
+        specifier: ^5.4.2
+        version: 5.11.1
       passport:
         specifier: ^0.7.0
         version: 0.7.0

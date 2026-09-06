@@ -5,11 +5,15 @@ import {
 } from "@nestjs/common";
 import { createHmac, randomBytes } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { requireTenantId } from "../common/tenant.util";
 
 @Injectable()
 export class WebhooksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   listEndpoints() {
     const tenantId = requireTenantId();
@@ -114,22 +118,46 @@ export class WebhooksService {
         ((obj.metadata as Record<string, string> | undefined)?.bookingId);
 
       if (bookingId) {
-        await this.prisma.booking.updateMany({
-          where: { id: bookingId },
+        const updated = await this.prisma.booking.updateMany({
+          where: { id: bookingId, statusKey: { not: "fully_paid" } },
           data: {
             statusKey: "fully_paid",
             stripeSessionId: sessionId,
             stripePaymentIntentId: (obj.payment_intent as string) ?? undefined,
           },
         });
+        if (updated.count > 0) {
+          const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+          if (booking) {
+            await this.notifications.enqueueBookingConfirmation({
+              tenantId: booking.tenantId,
+              bookingId: booking.id,
+              email: booking.email,
+              customerName: booking.customerName,
+              bookingNo: booking.bookingNo,
+            });
+          }
+        }
       } else if (sessionId) {
-        await this.prisma.booking.updateMany({
+        const existing = await this.prisma.booking.findFirst({
           where: { stripeSessionId: sessionId },
-          data: {
-            statusKey: "fully_paid",
-            stripePaymentIntentId: (obj.payment_intent as string) ?? undefined,
-          },
         });
+        if (existing && existing.statusKey !== "fully_paid") {
+          await this.prisma.booking.update({
+            where: { id: existing.id },
+            data: {
+              statusKey: "fully_paid",
+              stripePaymentIntentId: (obj.payment_intent as string) ?? undefined,
+            },
+          });
+          await this.notifications.enqueueBookingConfirmation({
+            tenantId: existing.tenantId,
+            bookingId: existing.id,
+            email: existing.email,
+            customerName: existing.customerName,
+            bookingNo: existing.bookingNo,
+          });
+        }
       }
     }
 

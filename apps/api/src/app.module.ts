@@ -22,6 +22,7 @@ import { DeliverySettingsModule } from "./delivery-settings/delivery-settings.mo
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
 import { EmailTemplatesModule } from "./email-templates/email-templates.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { BillingModule } from "./billing/billing.module";
@@ -50,6 +51,7 @@ import { BillingModule } from "./billing/billing.module";
     AnalyticsModule,
     NewsletterModule,
     EmailTemplatesModule,
+    NotificationsModule,
     WebhooksModule,
     GdprModule,
     BillingModule,

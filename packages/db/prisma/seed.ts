@@ -239,8 +239,64 @@ async function main() {
       key: "booking_confirmation",
       locale: "en",
       subject: "Your booking is confirmed",
-      bodyHtml: "<p>Thanks for booking with {{storeName}}.</p>",
+      bodyHtml: "<p>Thanks for booking with {{storeName}}.</p><p>Booking {{bookingNo}} for {{customerName}}.</p>",
     },
+  });
+
+  await prisma.cmsPage.createMany({
+    data: [
+      {
+        tenantId: tenant.id,
+        slug: "about",
+        title: "About us",
+        locale: "en",
+        isPublished: true,
+        seoTitle: "About",
+        seoDescription: "About our rental company",
+        sections: [
+          {
+            type: "text",
+            heading: "We rent the good stuff",
+            body: "Demo Rentals supplies marquees, furniture, and event gear across Denmark.",
+          },
+        ],
+      },
+      {
+        tenantId: tenant.id,
+        slug: "faq",
+        title: "FAQ",
+        locale: "en",
+        isPublished: true,
+        seoTitle: "FAQ",
+        sections: [
+          {
+            type: "text",
+            heading: "How does delivery work?",
+            body: "Choose delivery at checkout. Fees are calculated from your address.",
+          },
+          {
+            type: "text",
+            heading: "Can I change dates?",
+            body: "Contact support before the prep buffer starts and we will re-check availability.",
+          },
+        ],
+      },
+      {
+        tenantId: tenant.id,
+        slug: "terms",
+        title: "Terms",
+        locale: "en",
+        isPublished: true,
+        seoTitle: "Terms of rental",
+        sections: [
+          {
+            type: "text",
+            heading: "Rental terms",
+            body: "Equipment must be returned clean and undamaged. Deposits may be withheld for damage.",
+          },
+        ],
+      },
+    ],
   });
 
   console.log("Seeded platform user admin@rentora.app / admin123");
