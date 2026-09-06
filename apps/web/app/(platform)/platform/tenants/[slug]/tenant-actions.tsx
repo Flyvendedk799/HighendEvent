@@ -100,8 +100,14 @@ export function TenantActions({
         tenant: { slug: string };
         note: string;
       }>(`/platform/tenants/${tenantId}/impersonate`, { method: "POST" });
-      window.sessionStorage.setItem("rentora_token", res.accessToken);
-      window.sessionStorage.setItem("rentora_tenant", res.tenant.slug);
+      const sessionRes = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken: res.accessToken, maxAgeSeconds: 60 * 60 }),
+      });
+      if (!sessionRes.ok) {
+        throw new Error("Could not establish impersonation session cookie");
+      }
       setMessage(res.note);
       window.location.href = res.adminUrl;
     } catch (err) {

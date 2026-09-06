@@ -23,13 +23,14 @@ type BookingItemInput = {
 export class BookingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(filters?: { statusKey?: string; includeDeleted?: boolean }) {
+  list(filters?: { statusKey?: string; customerId?: string; includeDeleted?: boolean }) {
     const tenantId = requireTenantId();
     return this.prisma.booking.findMany({
       where: {
         tenantId,
         isDeleted: filters?.includeDeleted ? undefined : false,
         statusKey: filters?.statusKey,
+        customerId: filters?.customerId,
       },
       include: {
         items: { include: { product: true, upsells: true } },

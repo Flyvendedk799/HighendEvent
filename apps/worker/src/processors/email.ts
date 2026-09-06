@@ -45,11 +45,41 @@ export function renderEmailHtml(data: EmailJobData): string {
 </html>`;
 }
 
-export async function processEmail(job: Job<EmailJobData>): Promise<{ htmlLength: number }> {
+export async function processEmail(job: Job<EmailJobData>): Promise<{
+  htmlLength: number;
+  provider: "resend" | "stub";
+  id?: string;
+}> {
   const html = renderEmailHtml(job.data);
-  console.log(
-    `[email] job=${job.id} to=${job.data.to} subject=${JSON.stringify(job.data.subject)} htmlBytes=${html.length}`,
-  );
-  // Stub: wire to Resend / SMTP in a follow-up.
-  return { htmlLength: html.length };
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.EMAIL_FROM?.trim() || "Rentora <onboarding@resend.dev>";
+
+  if (!apiKey) {
+    console.log(
+      `[email] stub job=${job.id} to=${job.data.to} subject=${JSON.stringify(job.data.subject)} htmlBytes=${html.length}`,
+    );
+    return { htmlLength: html.length, provider: "stub" };
+  }
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [job.data.to],
+      subject: job.data.subject,
+      html,
+    }),
+  });
+
+  const payload = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+  if (!res.ok) {
+    throw new Error(payload.message ?? `Resend failed (${res.status})`);
+  }
+
+  console.log(`[email] resend job=${job.id} id=${payload.id} to=${job.data.to}`);
+  return { htmlLength: html.length, provider: "resend", id: payload.id };
 }

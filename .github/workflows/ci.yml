@@ -59,6 +59,9 @@ jobs:
       - name: Domain package tests
         run: pnpm --filter @rentora/domain test
 
+      - name: API unit tests
+        run: pnpm --filter @rentora/api test
+
       - name: Build packages
         run: pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui --filter @rentora/worker build
 

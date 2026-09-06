@@ -70,9 +70,14 @@ export default async function AdminProductsPage() {
               {products.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-medium">
-                    <Link href={`/product/${p.slug}`} className="hover:text-primary">
+                    <Link href={`/admin/products/${p.id}`} className="hover:text-primary">
                       {p.name}
                     </Link>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      <Link href={`/product/${p.slug}`} className="hover:underline">
+                        View storefront
+                      </Link>
+                    </div>
                   </td>
                   <td className="px-4 py-3">{p.category?.name ?? "—"}</td>
                   <td className="px-4 py-3">{formatPrice(p.dailyPriceMinor, p.currency)}</td>

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { ProductDetailClient } from "./product-detail-client";
 import { api } from "@/lib/api";
 import { mapApiProductToDetail, type ApiProduct } from "@/lib/catalog-map";
+import type { StoreOccupancy } from "@/lib/product-model";
 
 type ApiProductDetail = ApiProduct & {
   blackouts?: Array<{
@@ -42,11 +43,17 @@ export default async function ProductDetailPage({
     reason: b.reason ?? undefined,
   }));
 
+  let occupancy: StoreOccupancy[] = [];
+  try {
+    occupancy = await api.get<StoreOccupancy[]>(
+      `/availability/occupancy?productId=${encodeURIComponent(apiProduct.id)}`,
+      { tenantSlug, cache: "no-store" },
+    );
+  } catch {
+    occupancy = [];
+  }
+
   return (
-    <ProductDetailClient
-      product={product}
-      blackouts={blackouts}
-      occupancy={[]}
-    />
+    <ProductDetailClient product={product} blackouts={blackouts} occupancy={occupancy} />
   );
 }

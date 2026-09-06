@@ -72,10 +72,12 @@ export class BookingsController {
   @Roles("staff", "platform")
   list(
     @Query("statusKey") statusKey?: string,
+    @Query("customerId") customerId?: string,
     @Query("includeDeleted") includeDeleted?: string,
   ) {
     return this.bookings.list({
       statusKey,
+      customerId,
       includeDeleted: includeDeleted === "true",
     });
   }

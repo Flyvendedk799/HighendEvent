@@ -4,15 +4,15 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Select, Textarea } from "@rentora/ui";
 import { PageHeader } from "@/components/page-header";
+import { clientApi } from "@/lib/client-api";
 
 type Category = { id: string; name: string };
 
 export function ProductCreateForm({
   categories,
-  tenantSlug,
 }: {
   categories: Category[];
-  tenantSlug: string;
+  tenantSlug?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function ProductCreateForm({
       categoryId: String(form.get("categoryId") || ""),
       name: String(form.get("name") || ""),
       slug: String(form.get("slug") || ""),
-      description: String(form.get("description") || ""),
+      description: String(form.get("description") || "") || undefined,
       dailyPriceMinor: Math.round(Number(form.get("dailyPrice") || 0) * 100),
       stockQty: Number(form.get("stockQty") || 1),
       currency: String(form.get("currency") || "DKK"),
@@ -36,23 +36,14 @@ export function ProductCreateForm({
     };
 
     try {
-      const res = await fetch("/api/proxy/catalog/products", {
+      const product = await clientApi<{ id: string }>("/catalog/products", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tenant-slug": tenantSlug,
-        },
         body: JSON.stringify(payload),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(typeof data.message === "string" ? data.message : "Create failed");
-        return;
-      }
-      router.push("/admin/products");
+      router.push(`/admin/products/${product.id}`);
       router.refresh();
-    } catch {
-      setError("Could not create product");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create product");
     } finally {
       setLoading(false);
     }
