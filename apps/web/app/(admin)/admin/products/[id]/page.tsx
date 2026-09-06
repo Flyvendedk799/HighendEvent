@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { Badge, Button, Card, Input, Select, Textarea } from "@rentora/ui";
 import { PageHeader } from "@/components/page-header";
 import { clientApi } from "@/lib/client-api";
+import { uploadMediaFile } from "@/lib/media-upload";
 
 type Category = { id: string; name: string };
 type Blackout = { id: string; startDate: string; endDate: string; reason: string | null };
@@ -98,17 +99,31 @@ export default function AdminProductEditPage() {
     e.preventDefault();
     if (!product) return;
     setBusy(true);
-    const fd = new FormData(e.currentTarget);
+    setError(null);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const file = (fd.get("file") as File | null) ?? null;
+    const alt = String(fd.get("alt") || product.name);
     try {
+      let url = String(fd.get("url") || "").trim();
+      if (file && file.size > 0) {
+        const uploaded = await uploadMediaFile(file, { alt });
+        url = uploaded.publicUrl;
+      }
+      if (!url) throw new Error("Choose a file or paste an image URL");
       await clientApi(`/catalog/products/${product.id}/images`, {
         method: "POST",
-        body: JSON.stringify({
-          url: String(fd.get("url") || ""),
-          alt: String(fd.get("alt") || product.name),
-        }),
+        body: JSON.stringify({ url, alt }),
       });
-      e.currentTarget.reset();
+      if (!product.heroImageUrl) {
+        await clientApi(`/catalog/products/${product.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ heroImageUrl: url }),
+        });
+      }
+      form.reset();
       await load();
+      setMessage("Image attached to product.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Image add failed");
     } finally {
@@ -285,7 +300,16 @@ export default function AdminProductEditPage() {
               )}
             </ul>
             <form className="grid gap-3" onSubmit={addImage}>
-              <Input name="url" label="Image URL" required placeholder="https://..." />
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-slate-700">Upload file</span>
+                <input
+                  name="file"
+                  type="file"
+                  accept="image/*"
+                  className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-teal-800 file:px-3 file:py-1.5 file:text-white"
+                />
+              </label>
+              <Input name="url" label="Or paste image URL" placeholder="https://..." />
               <Input name="alt" label="Alt text" defaultValue={product.name} />
               <Button type="submit" disabled={busy}>
                 Add image
