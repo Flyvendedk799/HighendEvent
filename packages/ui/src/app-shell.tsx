@@ -48,7 +48,9 @@ export function AppShell({
       {groups.map((group, i) => (
         <div key={group.label ?? i}>
           {group.label ? (
-            <p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
+            // slate-400 rather than slate-500: at 11px this is normal text, and slate-500 on
+            // the slate-900 sidebar is 3.75:1, below the 4.5:1 AA floor.
+            <p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
               {group.label}
             </p>
           ) : null}
