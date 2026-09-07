@@ -60,8 +60,21 @@ export function Button({
       )}
       {...props}
     >
-      {loading ? <ButtonSpinner /> : null}
-      {children}
+      {/*
+        Slot merges this button's props onto exactly one child element, so it must receive exactly
+        one. Rendering the spinner slot alongside `children` hands it an array — `[null, <Link/>]`
+        even when not loading — and Radix throws "Slot failed to slot onto its children", turning
+        every page with a link-styled button into a 500. When `asChild` is set the caller owns the
+        content, so pass it through untouched; `loading` is a button-only affordance.
+      */}
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {loading ? <ButtonSpinner /> : null}
+          {children}
+        </>
+      )}
     </Component>
   );
 }
