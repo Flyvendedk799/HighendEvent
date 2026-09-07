@@ -105,7 +105,14 @@ export class AvailabilityService {
     });
 
     if (products.length === 0) {
-      return { startDate: input.startDate, endDate: input.endDate, products: [] };
+      // `bookings` must be present even when empty: with no products there is
+      // nothing to book, but the shape still has to match the success path
+      // below. Omitting it left `overview.bookings` undefined, and the admin
+      // console iterates it directly (`for (const booking of overview.bookings)`
+      // in overviewToBoard) — which threw "bookings is not iterable" and
+      // surfaced to staff as "Could not reach the API" on every store that had
+      // no active products yet.
+      return { startDate: input.startDate, endDate: input.endDate, products: [], bookings: [] };
     }
 
     const productIds = products.map((p) => p.id);
