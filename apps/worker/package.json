@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "echo \"no worker unit tests\""
+    "test": "echo \"no worker unit tests\"",
+    "prebuild": "pnpm --filter @rentora/domain --filter @rentora/db build"
   },
   "dependencies": {
     "@rentora/db": "workspace:^",
