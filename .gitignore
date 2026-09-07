@@ -15,3 +15,7 @@ apps/worker/dist
 packages/*/dist
 packages/db/node_modules
 *.db
+
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/

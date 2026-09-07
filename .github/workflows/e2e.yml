@@ -1,0 +1,86 @@
+name: End-to-end
+
+# Kept separate from the gating CI job on purpose: this boots Postgres, the API and the web app
+# together, so it is slower and has more moving parts than a unit-test run. Trigger it before a
+# release, or on a schedule, rather than on every push.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * 1"
+
+env:
+  DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+  JWT_SECRET: e2e-secret-not-used-in-production
+  PLATFORM_DOMAIN: localhost:3100
+  NEXT_PUBLIC_API_URL: http://localhost:4000
+  CORS_ORIGIN: http://localhost:3100
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rentora
+          POSTGRES_PASSWORD: rentora
+          POSTGRES_DB: rentora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rentora"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare the database
+        run: |
+          pnpm db:generate
+          pnpm db:deploy
+          pnpm db:seed
+
+      - name: Build
+        run: |
+          pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui build
+          pnpm --filter @rentora/api build
+          pnpm --filter @rentora/web build
+
+      - name: Start the API
+        run: |
+          node apps/api/dist/main.js &
+          # The API must answer before Playwright starts driving the web app.
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4000/health && break
+            sleep 2
+          done
+
+      - name: Install browsers
+        run: pnpm --filter @rentora/web exec playwright install --with-deps chromium
+
+      - name: Run the smoke suite
+        run: pnpm --filter @rentora/web test:e2e -- --project=chromium
+
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
