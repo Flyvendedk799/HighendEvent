@@ -1,14 +1,14 @@
 import { AdminShell } from "@/components/admin-shell";
 import { logoutAction } from "@/lib/auth-actions";
 import { requireStaff } from "@/lib/session";
-import { serverGet } from "@/lib/server-api";
+import { serverGet, serverGetList } from "@/lib/server-api";
 import { isApiError } from "@/lib/api";
 import type { Booking, StorefrontBootstrap } from "@/lib/types";
 
 /** Bookings starting or ending today are what staff need to see the moment they log in. */
 async function attentionCount(): Promise<number> {
   try {
-    const bookings = await serverGet<Booking[]>("/bookings", { cache: "no-store" });
+    const bookings = await serverGetList<Booking>("/bookings", { cache: "no-store" });
     const today = new Date().toISOString().slice(0, 10);
     return bookings.filter(
       (b) =>
