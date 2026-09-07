@@ -44,6 +44,32 @@ export async function serverApiOrNull<T = unknown>(
 export const serverGet = <T>(path: string, options?: Parameters<typeof serverApi>[1]) =>
   serverApi<T>(path, { ...options, method: "GET" });
 
+/** The envelope the paginated staff list endpoints answer with. */
+export type Paginated<T> = { items: T[]; total: number };
+
+function isPaginated<T>(value: unknown): value is Paginated<T> {
+  return typeof value === "object" && value !== null && Array.isArray((value as Paginated<T>).items);
+}
+
+/**
+ * Reads a list endpoint and always hands back the rows.
+ *
+ * The API is not consistent here: `/bookings` answers `{items, total}` because the list screen
+ * pages through it, while `/bookings/mine` answers a bare array. A caller that guesses wrong
+ * gets no type error — `serverGet<Booking[]>` will happily annotate an envelope — and instead
+ * fails at render with "x.filter is not a function", which surfaces to staff as "could not
+ * reach the API". Unwrapping in one place is the only version of this that cannot rot.
+ */
+export async function serverGetList<T>(
+  path: string,
+  options?: Parameters<typeof serverApi>[1],
+): Promise<T[]> {
+  const body = await serverApi<T[] | Paginated<T>>(path, { ...options, method: "GET" });
+  if (Array.isArray(body)) return body;
+  if (isPaginated<T>(body)) return body.items;
+  return [];
+}
+
 export const serverPost = <T>(
   path: string,
   body?: unknown,

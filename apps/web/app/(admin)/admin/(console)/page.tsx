@@ -15,7 +15,7 @@ import {
   StatusText,
   cx,
 } from "@rentora/ui";
-import { serverGet } from "@/lib/server-api";
+import { serverGet, serverGetList } from "@/lib/server-api";
 import { isApiError } from "@/lib/api";
 import { overviewToBoard, utilisationOf, weekWindow } from "@/lib/board";
 import type {
@@ -87,7 +87,7 @@ function needsAttention(bookings: Booking[]): Attention[] {
 export default async function AdminOverviewPage() {
   const [kpis, bookings, bootstrap] = await Promise.all([
     serverGet<AnalyticsKpis>("/analytics/kpis", { cache: "no-store" }).catch(() => null),
-    serverGet<Booking[]>("/bookings", { cache: "no-store" }).catch(() => [] as Booking[]),
+    serverGetList<Booking>("/bookings", { cache: "no-store" }).catch(() => [] as Booking[]),
     serverGet<StorefrontBootstrap>("/storefront/bootstrap").catch((err) => {
       if (isApiError(err)) return null;
       throw err;
