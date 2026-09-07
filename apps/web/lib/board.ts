@@ -94,7 +94,12 @@ export function overviewToBoard(
   const last = window.days[window.days.length - 1]!;
 
   const byProduct = new Map<string, AvailabilityOverview["bookings"]>();
-  for (const booking of overview.bookings) {
+  // Defensive: the API's empty-store path once omitted `bookings` entirely, and
+  // iterating undefined here threw during render — which staff saw as "Could
+  // not reach the API", pointing every investigation at the network instead of
+  // at a response shape. The API is fixed; this keeps a missing list from being
+  // able to take the whole console down again.
+  for (const booking of overview.bookings ?? []) {
     // Ignore anything that finished before the window or starts after it.
     if (booking.endDate.slice(0, 10) < first || booking.startDate.slice(0, 10) > last) continue;
     const list = byProduct.get(booking.productId) ?? [];
