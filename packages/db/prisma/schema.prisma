@@ -175,6 +175,12 @@ model Customer {
   bankLocalRef   String?
   isGuest        Boolean  @default(false)
   emailVerified  Boolean  @default(false)
+  // Set only while a verification mail is outstanding, and cleared on success so
+  // a spent token can never be replayed. Both stay null while
+  // AUTH_EMAIL_VERIFICATION is off, which is the default — see
+  // AuthService.registerCustomer.
+  verifyToken          String?   @unique
+  verifyTokenExpiresAt DateTime?
   isActive       Boolean  @default(true)
   lastLoginAt    DateTime?
   createdAt      DateTime @default(now())
