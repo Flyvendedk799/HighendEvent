@@ -58,6 +58,13 @@ jobs:
       - name: Check migrations match the schema
         run: pnpm db:check-migrations
 
+      # Must come before anything that imports @rentora/db: the package resolves through its
+      # built dist, so an unbuilt workspace fails with "Cannot find module".
+      - name: Build packages
+        run: >
+          pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui
+          --filter @rentora/worker build
+
       - name: Seed the database
         run: pnpm db:seed
 
@@ -67,11 +74,6 @@ jobs:
 
       - name: Domain package tests
         run: pnpm --filter @rentora/domain test
-
-      - name: Build packages
-        run: >
-          pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui
-          --filter @rentora/worker build
 
       - name: API tests
         run: pnpm --filter @rentora/api test
