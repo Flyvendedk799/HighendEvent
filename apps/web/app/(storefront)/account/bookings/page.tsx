@@ -44,8 +44,8 @@ export default async function AccountBookingsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">{t.account.yourBookings}</h1>
-      <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
+      <h1 className="text-[clamp(28px,4vw,44px)] font-semibold leading-[0.98] tracking-[-0.04em]">{t.account.yourBookings}</h1>
+      <p className="mt-1 text-[13.5px] text-paper-mute">
         {bookings.length} booking{bookings.length === 1 ? "" : "s"}
       </p>
 
@@ -55,8 +55,8 @@ export default async function AccountBookingsPage() {
             <Card>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-display text-lg font-semibold">{booking.bookingNo}</p>
-                  <p className="mt-0.5 text-sm text-[var(--color-muted-foreground)]">
+                  <p className="font-mono text-[17px] font-medium tabular-nums">{booking.bookingNo}</p>
+                  <p className="mt-0.5 text-[13.5px] text-paper-mute">
                     <DateRange
                       start={booking.startDate}
                       end={booking.endDate}
@@ -72,7 +72,7 @@ export default async function AccountBookingsPage() {
                 </div>
               </div>
 
-              <ul className="mt-4 space-y-1 border-t border-[var(--color-border)] pt-4 text-sm">
+              <ul className="mt-4 space-y-1 border-t border-line pt-4 text-[13.5px]">
                 {booking.items.map((item) => (
                   <li key={item.id} className="flex justify-between gap-3">
                     <span>
@@ -87,9 +87,9 @@ export default async function AccountBookingsPage() {
                 ))}
               </ul>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
-                <div className="text-sm">
-                  <span className="text-[var(--color-muted-foreground)]">{t.common.total} </span>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+                <div className="text-[13.5px]">
+                  <span className="text-paper-mute">{t.common.total} </span>
                   <span className="font-semibold">
                     <Money
                       amountMinor={booking.totalMinor}
@@ -99,7 +99,7 @@ export default async function AccountBookingsPage() {
                   </span>
                 </div>
                 {booking.remainingMinor > 0 ? (
-                  <p className="text-sm font-medium text-amber-700">
+                  <p className="text-[13.5px] font-medium text-warn">
                     <Money
                       amountMinor={booking.remainingMinor}
                       currency={booking.currency}
@@ -108,12 +108,12 @@ export default async function AccountBookingsPage() {
                     due before your dates
                   </p>
                 ) : (
-                  <p className="text-sm text-[var(--color-muted-foreground)]">Paid in full</p>
+                  <p className="text-[13.5px] text-paper-mute">Paid in full</p>
                 )}
               </div>
 
               {booking.notes ? (
-                <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+                <p className="mt-3 font-mono text-[11px] text-paper-faint">
                   Your note: {booking.notes}
                 </p>
               ) : null}

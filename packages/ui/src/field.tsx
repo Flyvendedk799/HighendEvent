@@ -1,5 +1,5 @@
 import type { HTMLAttributes, LabelHTMLAttributes, ReactNode } from "react";
-import { cx } from "./utils";
+import { cx, monoLabel } from "./utils";
 
 export type FieldProps = HTMLAttributes<HTMLDivElement> & {
   label?: ReactNode;
@@ -27,30 +27,34 @@ export function Field({
   return (
     <div className={cx("flex w-full flex-col gap-1.5", className)} {...props}>
       {label ? (
-        <Label htmlFor={htmlFor}>
+        <Label htmlFor={htmlFor} tone={error ? "error" : "default"}>
           {label}
-          {required ? <span className="ml-0.5 text-red-600">*</span> : null}
+          {required ? <span className="ml-1 text-danger">*</span> : null}
         </Label>
       ) : null}
       {children}
       {error ? (
-        <p className="text-xs font-medium text-red-600">{error}</p>
+        <p className="font-mono text-[11px] leading-snug text-danger">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-[var(--color-muted-foreground,#64748b)]">{hint}</p>
+        <p className="text-[12px] leading-snug text-paper-mute">{hint}</p>
       ) : null}
     </div>
   );
 }
 
+/** Field labels are machine voice: they name a column of data, not a sentence. */
 export function Label({
   className,
+  tone = "default",
   children,
   ...props
-}: LabelHTMLAttributes<HTMLLabelElement>) {
+}: LabelHTMLAttributes<HTMLLabelElement> & { tone?: "default" | "error" }) {
   return (
     <label
       className={cx(
-        "text-[13px] font-medium text-[var(--color-foreground,#0f172a)]",
+        "text-[10px] font-medium leading-none",
+        monoLabel,
+        tone === "error" ? "text-danger" : "text-paper-dim",
         className,
       )}
       {...props}
@@ -60,7 +64,7 @@ export function Label({
   );
 }
 
-/** Groups related fields under a heading inside a card. */
+/** Groups related fields under a heading inside a panel. */
 export function FieldGroup({
   title,
   description,
@@ -73,14 +77,10 @@ export function FieldGroup({
       {title || description ? (
         <div>
           {title ? (
-            <h3 className="text-sm font-semibold text-[var(--color-foreground,#0f172a)]">
-              {title}
-            </h3>
+            <h3 className="text-[15px] font-semibold tracking-[-0.015em] text-paper">{title}</h3>
           ) : null}
           {description ? (
-            <p className="mt-0.5 text-xs text-[var(--color-muted-foreground,#64748b)]">
-              {description}
-            </p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-paper-mute">{description}</p>
           ) : null}
         </div>
       ) : null}

@@ -82,7 +82,7 @@ export function BookingReturn({ booking }: { booking: Booking }) {
         />
 
         {booking.damageFeeMinor > 0 ? (
-          <p className="text-xs text-[var(--color-muted-foreground)]">
+          <p className="font-mono text-[11px] text-paper-faint">
             Currently charging{" "}
             <Money amountMinor={booking.damageFeeMinor} currency={booking.currency} /> for damage.
           </p>

@@ -116,11 +116,11 @@ export default async function PlatformTenantsPage({
                   <Td>
                     <Link
                       href={`/platform/tenants/${tenant.slug}`}
-                      className="font-medium hover:underline"
+                      className="font-mono text-[12.5px] transition-colors duration-instant hover:text-signal"
                     >
                       {tenant.name}
                     </Link>
-                    <span className="block text-xs text-[var(--color-muted-foreground)]">
+                    <span className="block font-mono text-[11px] text-paper-faint">
                       {tenant.primaryDomain ?? tenantSubdomain(tenant.slug)}
                     </span>
                   </Td>

@@ -122,12 +122,12 @@ export function SignupForm({ platformDomain }: { platformDomain: string }) {
         />
         <p
           className={cx(
-            "mt-1 flex items-center gap-1.5 text-xs",
+            "mt-1 flex items-center gap-1.5 text-[11.5px]",
             slugState.available === true
-              ? "text-teal-700"
+              ? "text-signal"
               : slugState.available === false
-                ? "text-red-600"
-                : "text-[var(--color-muted-foreground)]",
+                ? "text-danger"
+                : "text-paper-mute",
           )}
         >
           {slugState.checking ? (
@@ -201,7 +201,7 @@ export function SignupForm({ platformDomain }: { platformDomain: string }) {
         Create my store
       </Button>
 
-      <p className="text-center text-xs text-[var(--color-muted-foreground)]">
+      <p className="text-center text-[12px] leading-relaxed text-paper-faint">
         No card needed. You can add products and see how it looks before you take a booking.
       </p>
     </form>

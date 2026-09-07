@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, EmptyState } from "@rentora/ui";
+import { EmptyState, LiveDot } from "@rentora/ui";
 import { ProductCard } from "@/components/product-card";
 import { serverGet } from "@/lib/server-api";
 import { getBootstrap } from "@/lib/tenant";
@@ -31,44 +31,58 @@ export default async function StorefrontHomePage() {
 
   return (
     <div className="space-y-16">
-      <section className="rounded-3xl bg-[var(--color-foreground)] px-6 py-14 text-white sm:px-12 sm:py-20">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/60">
-          {bootstrap?.store.name}
-        </p>
-        <h1 className="mt-3 max-w-2xl font-display text-4xl font-semibold leading-tight tracking-tight text-balance sm:text-5xl">
-          {bootstrap?.store.tagline ?? t.home.heroFallback}
-        </h1>
-        <p className="mt-4 max-w-xl text-white/70">{t.home.heroBody}</p>
-        <div className="mt-7 flex flex-wrap gap-3">
-          <Button size="lg" asChild>
-            <Link href="/catalog">{t.home.browseCatalog}</Link>
-          </Button>
-          {bootstrap?.store.supportPhone ? (
-            <Button size="lg" variant="secondary" asChild>
-              <a href={`tel:${bootstrap.store.supportPhone.replace(/\s/g, "")}`}>
+      {/* The shop's own claim, on the blueprint ground rather than a photograph nobody supplied. */}
+      <section className="relative overflow-hidden border border-line-raised px-6 py-16 sm:px-12 sm:py-20">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-blueprint bg-[length:64px_64px]"
+        />
+        <div className="relative">
+          <p className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
+            <LiveDot />
+            {bootstrap?.store.name}
+          </p>
+          <h1 className="mt-6 max-w-[20ch] text-balance text-[clamp(34px,5.6vw,64px)] font-semibold leading-[0.94] tracking-[-0.04em]">
+            {bootstrap?.store.tagline ?? t.home.heroFallback}
+          </h1>
+          <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-paper-dim">
+            {t.home.heroBody}
+          </p>
+          <div className="mt-8 flex flex-wrap gap-2.5">
+            <Link
+              href="/catalog"
+              className="bg-signal px-6 py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.14em] text-signal-ink transition-colors duration-instant hover:bg-signal-press"
+            >
+              {t.home.browseCatalog} →
+            </Link>
+            {bootstrap?.store.supportPhone ? (
+              <a
+                href={`tel:${bootstrap.store.supportPhone.replace(/\s/g, "")}`}
+                className="border border-line-strong px-6 py-4 font-mono text-[12px] uppercase tracking-[0.14em] text-paper transition-colors duration-instant hover:border-signal hover:text-signal"
+              >
                 {bootstrap.store.supportPhone}
               </a>
-            </Button>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </section>
 
       {categories.length > 0 ? (
         <section>
-          <h2 className="font-display text-2xl font-semibold tracking-tight">
+          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
             {t.home.browseByType}
           </h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-px border border-line bg-line [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
             {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/catalog?category=${category.slug}`}
-                className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition hover:border-[var(--color-primary)]"
+                className="group bg-ink-raised p-6 transition-colors duration-instant hover:bg-ink-hover"
               >
-                <p className="font-display text-lg font-semibold group-hover:text-[var(--color-primary)]">
+                <p className="text-[19px] font-semibold tracking-[-0.02em] transition-colors duration-instant group-hover:text-signal">
                   {category.name}
                 </p>
-                <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
+                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
                   {t.home.seeWhatIsAvailable} →
                 </p>
               </Link>
@@ -79,21 +93,23 @@ export default async function StorefrontHomePage() {
 
       <section>
         <div className="flex items-end justify-between gap-4">
-          <h2 className="font-display text-2xl font-semibold tracking-tight">{t.home.popular}</h2>
+          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
+            {t.home.popular}
+          </h2>
           <Link
             href="/catalog"
-            className="text-sm font-medium text-[var(--color-primary)] hover:underline"
+            className="font-mono text-[10px] uppercase tracking-[0.14em] text-signal transition-colors duration-instant hover:text-paper"
           >
-            {t.home.viewAll}
+            {t.home.viewAll} →
           </Link>
         </div>
 
         {featured.length === 0 ? (
-          <div className="mt-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8">
+          <div className="mt-4 border border-line bg-ink-raised p-8">
             <EmptyState title={t.catalog.emptyTitle} description={t.catalog.emptyBody} />
           </div>
         ) : (
-          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-px border border-line bg-line [grid-template-columns:repeat(auto-fill,minmax(268px,1fr))]">
             {featured.map((product) => (
               <ProductCard
                 key={product.id}
@@ -110,18 +126,17 @@ export default async function StorefrontHomePage() {
       </section>
 
       <section>
-        <h2 className="font-display text-2xl font-semibold tracking-tight">{t.home.howItWorks}</h2>
-        <ol className="mt-5 grid gap-5 sm:grid-cols-3">
+        <h2 className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
+          {t.home.howItWorks}
+        </h2>
+        <ol className="mt-4 grid gap-px border border-line bg-line [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
           {steps.map((step, i) => (
-            <li
-              key={step.title}
-              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-primary)] text-sm font-semibold text-white">
-                {i + 1}
+            <li key={step.title} className="bg-ink-raised p-6">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-signal">
+                {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="mt-3 font-display text-lg font-semibold">{step.title}</h3>
-              <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">{step.body}</p>
+              <h3 className="mt-3.5 text-[17px] font-semibold tracking-[-0.02em]">{step.title}</h3>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-paper-mute">{step.body}</p>
             </li>
           ))}
         </ol>

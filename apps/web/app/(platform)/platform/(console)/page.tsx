@@ -35,7 +35,7 @@ export default async function PlatformOverviewPage() {
       <Page>
         <PageHeader title="Overview" />
         <Banner tone="danger" title="Could not reach the API">
-          Platform metrics are unavailable. Check that the Rentora API is running.
+          Platform metrics are unavailable. Check that the alarent API is running.
         </Banner>
       </Page>
     );
@@ -90,7 +90,7 @@ export default async function PlatformOverviewPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Plan mix" description="Where the subscription revenue comes from." />
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2 text-[13.5px]">
             {metrics.byPlan.map((row) => (
               <li key={row.plan} className="flex items-baseline justify-between gap-3">
                 <span>{row.plan}</span>
@@ -113,11 +113,11 @@ export default async function PlatformOverviewPage() {
               description="Suspensions, plan changes and support access all appear here."
             />
           ) : (
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-[13.5px]">
               {audit.slice(0, 8).map((entry) => (
                 <li key={entry.id} className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0 truncate">{entry.action.replace(/[._]/g, " ")}</span>
-                  <span className="shrink-0 text-xs text-[var(--color-muted-foreground)]">
+                  <span className="shrink-0 font-mono text-[11px] text-paper-faint">
                     {new Date(entry.createdAt).toLocaleString()}
                   </span>
                 </li>
@@ -128,7 +128,7 @@ export default async function PlatformOverviewPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold">Newest tenants</h2>
+        <h2 className="mb-3 text-[13.5px] font-semibold">Newest tenants</h2>
         <TableContainer>
           <Table>
             <THead>
@@ -156,11 +156,11 @@ export default async function PlatformOverviewPage() {
                     <Td>
                       <Link
                         href={`/platform/tenants/${tenant.slug}`}
-                        className="font-medium hover:underline"
+                        className="font-mono text-[12.5px] transition-colors duration-instant hover:text-signal"
                       >
                         {tenant.name}
                       </Link>
-                      <span className="block text-xs text-[var(--color-muted-foreground)]">
+                      <span className="block font-mono text-[11px] text-paper-faint">
                         {tenant.primaryDomain ?? tenantSubdomain(tenant.slug)}
                       </span>
                     </Td>

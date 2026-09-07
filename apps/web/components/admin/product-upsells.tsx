@@ -65,7 +65,7 @@ export function ProductUpsells({
           }
         />
       ) : (
-        <ul className="divide-y divide-[var(--color-border)]">
+        <ul className="divide-y divide-line-soft">
           {allUpsells.map((upsell) => (
             <li key={upsell.id} className="flex items-center justify-between gap-4 py-3">
               <Checkbox
@@ -75,7 +75,7 @@ export function ProductUpsells({
                 label={upsell.name}
                 description={upsell.description ?? undefined}
               />
-              <span className="shrink-0 text-sm font-medium">
+              <span className="shrink-0 text-[13.5px] font-medium">
                 <Money amountMinor={upsell.priceMinor} currency={upsell.currency ?? currency} />
               </span>
             </li>

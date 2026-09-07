@@ -37,7 +37,7 @@ export default async function PlatformLoginPage({
 
   return (
     <AuthCard
-      eyebrow="Rentora platform"
+      eyebrow="alarent platform"
       title="Operator sign in"
       description="Tenant administration, plans, and platform health."
     >

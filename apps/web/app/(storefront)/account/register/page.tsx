@@ -53,7 +53,7 @@ export default async function CustomerRegisterPage({
           Already have an account?{" "}
           <Link
             href="/account/login"
-            className="font-medium text-[var(--color-primary)] hover:underline"
+            className="font-medium text-signal hover:underline"
           >
             Log in
           </Link>

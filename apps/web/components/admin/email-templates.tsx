@@ -48,13 +48,13 @@ export function EmailTemplates({
               onClick={() => setActiveKey(item.key)}
               className={
                 activeKey === item.key
-                  ? "w-full rounded-lg bg-[var(--color-muted)] px-3 py-2 text-left text-sm font-medium"
-                  : "w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[var(--color-muted)]"
+                  ? "w-full bg-ink-hover px-3 py-2 text-left text-[13.5px] font-medium"
+                  : "w-full px-3 py-2 text-left text-[13.5px] hover:bg-ink-hover"
               }
             >
               <span className="block">{item.name}</span>
-              <span className="mt-0.5 block text-xs text-[var(--color-muted-foreground)]">
-                {item.customised ? "Customised" : "Rentora default"}
+              <span className="mt-0.5 block font-mono text-[11px] text-paper-faint">
+                {item.customised ? "Customised" : "alarent default"}
               </span>
             </button>
           </li>
@@ -171,12 +171,12 @@ function TemplateForm({
             rows={10}
             value={bodyHtml}
             onChange={(e) => setBodyHtml(e.target.value)}
-            className="font-mono text-xs"
-            hint="Simple HTML. Rentora wraps this in your branding automatically."
+            className="font-mono text-[11.5px]"
+            hint="Simple HTML. alarent wraps this in your branding automatically."
           />
 
           <div>
-            <p className="text-xs font-medium text-[var(--color-muted-foreground)]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-mute">
               Available placeholders
             </p>
             <div className="mt-1.5 flex flex-wrap gap-1">
@@ -185,7 +185,7 @@ function TemplateForm({
                   key={variable}
                   type="button"
                   onClick={() => setBodyHtml((current) => `${current}{{${variable}}}`)}
-                  className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-[11px] hover:bg-[var(--color-border)]"
+                  className="bg-ink-hover px-1.5 py-0.5 font-mono text-[11px] hover:bg-line"
                 >
                   {`{{${variable}}}`}
                 </button>
@@ -197,7 +197,7 @@ function TemplateForm({
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
             label="Send this email"
-            description="Turn it off and Rentora falls back to its built-in copy."
+            description="Turn it off and alarent falls back to its built-in copy."
           />
         </div>
 
@@ -219,12 +219,12 @@ function TemplateForm({
               These placeholders will render empty: {preview.unknownVariables.join(", ")}
             </Banner>
           ) : null}
-          <p className="mb-3 text-sm">
-            <span className="text-[var(--color-muted-foreground)]">Subject: </span>
+          <p className="mb-3 text-[13.5px]">
+            <span className="text-paper-mute">Subject: </span>
             <strong>{preview.subject}</strong>
           </p>
           <div
-            className="rounded-lg border border-[var(--color-border)] bg-white p-4 text-sm leading-relaxed"
+            className="border border-line bg-ink-sunk p-4 text-[13.5px] leading-relaxed"
             dangerouslySetInnerHTML={{ __html: preview.bodyHtml }}
           />
         </Card>

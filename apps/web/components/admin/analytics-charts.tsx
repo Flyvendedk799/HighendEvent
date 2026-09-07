@@ -162,7 +162,7 @@ export function AnalyticsCharts({
             ]}
           />
           {conversion.bookingsCancelled > 0 ? (
-            <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+            <p className="mt-3 font-mono text-[11px] text-paper-faint">
               {conversion.bookingsCancelled} booking
               {conversion.bookingsCancelled === 1 ? " was" : "s were"} cancelled in this window.
             </p>

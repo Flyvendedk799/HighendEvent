@@ -17,7 +17,7 @@ export function LocaleSwitcher({
   if (locales.length < 2) return null;
 
   return (
-    <div className="flex items-center gap-0.5" role="group" aria-label="Language">
+    <div className="flex items-center" role="group" aria-label="Language">
       {locales.map((locale) => (
         <button
           key={locale}
@@ -26,10 +26,8 @@ export function LocaleSwitcher({
           aria-current={locale === current}
           onClick={() => startTransition(() => setLocaleAction(locale))}
           className={cx(
-            "rounded px-1.5 py-1 text-xs font-medium uppercase transition",
-            locale === current
-              ? "bg-[var(--color-muted)] text-[var(--color-foreground)]"
-              : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]",
+            "px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors duration-instant",
+            locale === current ? "text-signal" : "text-paper-faint hover:text-paper",
           )}
           title={LOCALE_NAMES[locale]}
         >

@@ -10,14 +10,16 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  ShellBrand,
   type NavGroup,
 } from "@rentora/ui";
 import { Building2, CreditCard, Flag, LayoutDashboard } from "lucide-react";
 
-const iconProps = { size: 15, strokeWidth: 1.75 } as const;
+const iconProps = { size: 14, strokeWidth: 1.75 } as const;
 
 const NAV: NavGroup[] = [
   {
+    label: "Control plane",
     items: [
       { href: "/platform", label: "Overview", icon: <LayoutDashboard {...iconProps} /> },
       { href: "/platform/tenants", label: "Tenants", icon: <Building2 {...iconProps} /> },
@@ -38,26 +40,38 @@ export function PlatformShell({
 }) {
   const pathname = usePathname() ?? "/platform";
 
+  const renderLink = ({
+    href,
+    className,
+    children: linkChildren,
+  }: {
+    href: string;
+    className: string;
+    children: ReactNode;
+  }) => (
+    <Link href={href} className={className}>
+      {linkChildren}
+    </Link>
+  );
+
   return (
     <AppShell
       activePath={pathname}
       groups={NAV}
-      renderLink={({ href, className, children }) => (
-        <Link href={href} className={className}>
-          {children}
-        </Link>
-      )}
+      renderLink={renderLink}
       brand={
-        <div>
-          <p className="text-sm font-semibold text-white">Rentora</p>
-          <p className="mt-0.5 text-[11px] text-slate-400">Control plane</p>
-        </div>
+        <ShellBrand
+          name="alarent"
+          context="control plane"
+          href="/platform"
+          renderLink={renderLink}
+        />
       }
       topbar={
         <div className="flex items-center justify-end">
           <DropdownMenu
             trigger={
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="normal-case tracking-normal">
                 {userEmail}
               </Button>
             }

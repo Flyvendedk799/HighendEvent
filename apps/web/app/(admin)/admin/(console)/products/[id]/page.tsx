@@ -89,7 +89,7 @@ export default async function ProductDetailPage({
         }
         description={
           <>
-            Storefront address: <code className="text-xs">/product/{product.slug}</code>
+            Storefront address: <code className="text-[11.5px]">/product/{product.slug}</code>
           </>
         }
         action={<ProductActions product={product} />}
@@ -138,7 +138,7 @@ export default async function ProductDetailPage({
         </TabsContent>
       </Tabs>
 
-      <p className="mt-8 text-center text-xs text-[var(--color-muted-foreground)]">
+      <p className="mt-8 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
         <Link href={`/product/${product.slug}`} className="hover:underline">
           View this product on your storefront →
         </Link>

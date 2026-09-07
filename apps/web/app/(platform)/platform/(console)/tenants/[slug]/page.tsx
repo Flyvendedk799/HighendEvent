@@ -167,11 +167,11 @@ export default async function PlatformTenantPage({
             <Card>
               <CardHeader title="Domains" />
               {tenant.domains.length === 0 ? (
-                <p className="text-sm text-[var(--color-muted-foreground)]">
+                <p className="text-[13.5px] text-paper-mute">
                   Using {tenantSubdomain(tenant.slug)}
                 </p>
               ) : (
-                <ul className="space-y-2 text-sm">
+                <ul className="space-y-2 text-[13.5px]">
                   {tenant.domains.map((domain) => (
                     <li key={domain.id} className="flex items-center justify-between gap-2">
                       <span className="min-w-0 truncate">{domain.hostname}</span>
@@ -190,7 +190,7 @@ export default async function PlatformTenantPage({
           <div className="px-5 pt-5">
             <CardHeader title="Recent bookings" />
           </div>
-          <TableContainer className="rounded-none border-0 shadow-none">
+          <TableContainer className="border-0 shadow-none">
             <Table>
               <THead>
                 <Tr>
@@ -237,12 +237,12 @@ export default async function PlatformTenantPage({
               description="This store has nobody who can sign in, which will need fixing."
             />
           ) : (
-            <ul className="divide-y divide-[var(--color-border)] text-sm">
+            <ul className="divide-y divide-line-soft text-[13.5px]">
               {tenant.staff.map((member) => (
                 <li key={member.id} className="flex items-center justify-between gap-3 py-2">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{member.name ?? member.email}</p>
-                    <p className="truncate text-xs text-[var(--color-muted-foreground)]">
+                    <p className="truncate font-mono text-[11px] text-paper-faint">
                       {member.email}
                     </p>
                   </div>
@@ -250,7 +250,7 @@ export default async function PlatformTenantPage({
                     <Badge tone={member.role === "OWNER" ? "success" : "neutral"}>
                       {member.role}
                     </Badge>
-                    <span className="text-xs text-[var(--color-muted-foreground)]">
+                    <span className="font-mono text-[11px] text-paper-faint">
                       {member.lastLoginAt
                         ? new Date(member.lastLoginAt).toLocaleDateString()
                         : "Never"}
@@ -273,11 +273,11 @@ export default async function PlatformTenantPage({
               description="No operator has acted on this tenant."
             />
           ) : (
-            <ul className="divide-y divide-[var(--color-border)] text-sm">
+            <ul className="divide-y divide-line-soft text-[13.5px]">
               {audit.map((entry) => (
                 <li key={entry.id} className="flex items-baseline justify-between gap-3 py-2">
                   <span>{entry.action.replace(/[._]/g, " ")}</span>
-                  <span className="shrink-0 text-xs text-[var(--color-muted-foreground)]">
+                  <span className="shrink-0 font-mono text-[11px] text-paper-faint">
                     {new Date(entry.createdAt).toLocaleString()}
                   </span>
                 </li>
@@ -287,7 +287,7 @@ export default async function PlatformTenantPage({
         </Card>
       </DetailLayout>
 
-      <p className="mt-8 text-center text-xs text-[var(--color-muted-foreground)]">
+      <p className="mt-8 text-center font-mono text-[11px] text-paper-faint">
         <Link href="/platform/tenants" className="hover:underline">
           ← All tenants
         </Link>

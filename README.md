@@ -101,8 +101,10 @@ Rentora degrades honestly rather than pretending. With no external credentials:
 - **`@rentora/domain`** — availability with prep/cleanup buffers, weekday/weekend/package
   pricing, delivery distance fees, booking status transitions. No I/O, fully unit-tested.
 - **`@rentora/db`** — Prisma schema, committed migrations, client singleton, seed.
-- **`@rentora/ui`** — the design system: app shell, tables, dialogs, toasts, filters, money and
-  status formatting, and the availability calendar shared by storefront and admin.
+- **`@rentora/ui`** — the design system ("Dispatch"): near-black ground, hairline grid, zero
+  radius, IBM Plex Sans for human copy and Plex Mono for machine data, one acid signal colour a
+  tenant may re-point. App shell, tables, dialogs, toasts, filters, money and status formatting,
+  and the occupancy board and availability calendar shared by storefront and console.
 - **`@rentora/worker`** — BullMQ consumers on `REDIS_URL`.
 
 ## Tenant isolation

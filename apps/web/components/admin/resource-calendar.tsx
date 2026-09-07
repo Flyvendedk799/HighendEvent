@@ -2,35 +2,28 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { cx, statusTone, statusLabel } from "@rentora/ui";
+import { cx, statusLabel, statusTone } from "@rentora/ui";
 import type { AvailabilityOverview } from "@/lib/types";
-
-const MS_DAY = 86_400_000;
-
-function eachDay(start: string, end: string): string[] {
-  const out: string[] = [];
-  let cursor = new Date(`${start}T00:00:00Z`).getTime();
-  const last = new Date(`${end}T00:00:00Z`).getTime();
-  while (cursor <= last) {
-    out.push(new Date(cursor).toISOString().slice(0, 10));
-    cursor += MS_DAY;
-  }
-  return out;
-}
-
-const TONE_BAR: Record<string, string> = {
-  success: "bg-teal-500",
-  warning: "bg-amber-500",
-  danger: "bg-red-500",
-  info: "bg-sky-500",
-  neutral: "bg-slate-400",
-  accent: "bg-amber-500",
-};
+import { eachDay } from "@/lib/board";
 
 /**
- * One row per product, one column per day. Occupancy comes from the same availability engine
- * the storefront calendar uses, so what staff see here is exactly what shoppers can book.
+ * One row per product, one column per day, for a whole month.
+ *
+ * This is the occupancy board run at its densest: thirty-one columns leaves no room for a
+ * labelled bar, so each cell carries a number instead — the quantity on a booking, or how many
+ * units are still free that day. Same four colours as the week board and the storefront
+ * calendar, because occupancy comes from the same availability engine all three read.
  */
+const CELL_TONES: Record<string, string> = {
+  success: "bg-signal-tint text-signal",
+  accent: "bg-signal-tint text-signal",
+  info: "bg-[rgba(237,238,234,0.10)] text-paper",
+  warning: "bg-warn-tint text-warn",
+  danger: "bg-danger-tint text-danger",
+  neutral: "bg-[rgba(237,238,234,0.06)] text-paper-dim",
+  quiet: "bg-transparent text-paper-faint",
+};
+
 export function ResourceCalendar({
   overview,
   locale = "en",
@@ -49,7 +42,7 @@ export function ResourceCalendar({
   const dayLabel = new Intl.DateTimeFormat(intlLocale, { day: "numeric", timeZone: "UTC" });
   const weekdayLabel = new Intl.DateTimeFormat(intlLocale, { weekday: "narrow", timeZone: "UTC" });
 
-  // Bookings grouped by product so each row can draw its own bars.
+  // Bookings grouped by product so each row can draw its own cells.
   const bookingsByProduct = useMemo(() => {
     const map = new Map<string, AvailabilityOverview["bookings"]>();
     for (const booking of overview.bookings) {
@@ -62,20 +55,23 @@ export function ResourceCalendar({
 
   if (overview.products.length === 0) {
     return (
-      <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-8 text-center text-sm text-[var(--color-muted-foreground)]">
+      <p className="border border-dashed border-line-strong p-8 text-center font-mono text-[10.5px] uppercase tracking-[0.14em] text-paper-faint">
         No published products to show. Add inventory and it will appear here.
       </p>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+    <div className="border border-line bg-ink">
+      <div className="overflow-x-auto [overscroll-behavior-x:contain]">
+        <table className="w-full border-collapse text-[12px]">
           <thead>
-            <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
-              <th className="sticky left-0 z-10 min-w-[180px] bg-[var(--color-muted)] px-4 py-2 text-left text-[12px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
-                Product
+            <tr className="border-b border-line bg-ink-sunk">
+              <th
+                scope="col"
+                className="sticky left-0 z-10 min-w-[190px] bg-ink-sunk px-3 py-2 text-left font-mono text-[9px] uppercase tracking-[0.14em] text-paper-ghost"
+              >
+                Item
               </th>
               {days.map((day) => {
                 const date = new Date(`${day}T00:00:00Z`);
@@ -83,21 +79,19 @@ export function ResourceCalendar({
                 return (
                   <th
                     key={day}
+                    scope="col"
                     className={cx(
-                      "w-9 px-0 py-1 text-center text-[11px] font-medium",
-                      weekend ? "bg-slate-100" : null,
-                      day === todayIso ? "bg-[var(--color-primary)]/10" : null,
+                      "w-8 border-l border-line-soft px-0 py-1.5 text-center font-mono",
+                      weekend ? "bg-ink" : null,
                     )}
                   >
-                    <span className="block text-[9px] uppercase text-[var(--color-muted-foreground)]">
+                    <span className="block text-[8.5px] uppercase tracking-[0.1em] text-paper-ghost">
                       {weekdayLabel.format(date)}
                     </span>
                     <span
                       className={cx(
-                        "block tabular",
-                        day === todayIso
-                          ? "font-bold text-[var(--color-primary)]"
-                          : "text-[var(--color-foreground)]",
+                        "block tabular-nums",
+                        day === todayIso ? "text-signal" : "text-paper-mute",
                       )}
                     >
                       {dayLabel.format(date)}
@@ -107,70 +101,62 @@ export function ResourceCalendar({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--color-border)]">
+          <tbody>
             {overview.products.map((product) => {
               const byDate = new Map(product.days.map((day) => [day.date, day]));
               const bookings = bookingsByProduct.get(product.id) ?? [];
 
               return (
-                <tr key={product.id}>
+                <tr key={product.id} className="border-b border-line-soft last:border-b-0">
                   <th
                     scope="row"
-                    className="sticky left-0 z-10 min-w-[180px] max-w-[220px] bg-[var(--color-surface)] px-4 py-2 text-left font-medium"
+                    className="sticky left-0 z-10 min-w-[190px] max-w-[240px] bg-ink px-3 py-2 text-left font-normal"
                   >
                     <Link
                       href={`/admin/products/${product.id}`}
-                      className="block truncate hover:underline"
+                      className="block truncate text-[12.5px] text-paper-soft transition-colors duration-instant hover:text-signal"
                     >
                       {product.name}
                     </Link>
-                    <span className="block text-[11px] font-normal text-[var(--color-muted-foreground)]">
-                      {product.stockQty} in stock
+                    <span className="mt-0.5 block font-mono text-[9.5px] text-paper-faint">
+                      ×{product.stockQty} in fleet
                     </span>
                   </th>
 
                   {days.map((day) => {
                     const state = byDate.get(day);
-                    const booking = bookings.find(
-                      (b) => day >= b.startDate && day <= b.endDate,
-                    );
-                    const date = new Date(`${day}T00:00:00Z`);
-                    const weekend = date.getUTCDay() === 0 || date.getUTCDay() === 6;
+                    const booking = bookings.find((b) => day >= b.startDate && day <= b.endDate);
+                    const free = state?.availableQuantity ?? 0;
+                    const partly = !!state && free > 0 && free < product.stockQty;
 
                     const title = booking
                       ? `${booking.bookingNo} — ${booking.customerName} (${statusLabel(booking.statusKey)})`
                       : state?.isBlackedOut
                         ? `${day}: blocked`
-                        : `${day}: ${state?.availableQuantity ?? 0} of ${product.stockQty} free`;
+                        : `${day}: ${free} of ${product.stockQty} free`;
 
                     const cell = (
                       <span
                         title={title}
                         className={cx(
-                          "flex h-7 items-center justify-center text-[10px] font-medium",
+                          "flex h-7 items-center justify-center font-mono text-[10px] tabular-nums",
                           booking
-                            ? cx(TONE_BAR[statusTone(booking.statusKey)], "text-white")
+                            ? CELL_TONES[statusTone(booking.statusKey)]
                             : state?.isBlackedOut
-                              ? "bg-[repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9_3px,#e2e8f0_3px,#e2e8f0_6px)]"
-                              : (state?.availableQuantity ?? 0) === 0
-                                ? "bg-slate-200 text-slate-500"
-                                : (state?.availableQuantity ?? 0) < product.stockQty
-                                  ? "bg-amber-100 text-amber-800"
-                                  : weekend
-                                    ? "bg-slate-50"
-                                    : null,
+                              ? "bg-[repeating-linear-gradient(45deg,#15181C,#15181C_3px,#23251F_3px,#23251F_6px)] text-paper-ghost"
+                              : free === 0
+                                ? "bg-[rgba(237,238,234,0.06)] text-paper-mute"
+                                : partly
+                                  ? "bg-warn-tint text-warn"
+                                  : null,
                         )}
                       >
-                        {booking
-                          ? booking.quantity
-                          : state && state.availableQuantity < product.stockQty && !state.isBlackedOut
-                            ? state.availableQuantity
-                            : ""}
+                        {booking ? booking.quantity : partly && !state?.isBlackedOut ? free : ""}
                       </span>
                     );
 
                     return (
-                      <td key={day} className="border-l border-[var(--color-border)]/50 p-0">
+                      <td key={day} className="border-l border-line-soft p-0">
                         {booking ? (
                           <Link href={`/admin/bookings/${booking.bookingId}`}>{cell}</Link>
                         ) : (
@@ -186,13 +172,17 @@ export function ResourceCalendar({
         </table>
       </div>
 
-      <ul className="flex flex-wrap gap-4 border-t border-[var(--color-border)] px-4 py-2.5 text-[11px] text-[var(--color-muted-foreground)]">
-        <Legend className="bg-teal-500">Paid</Legend>
-        <Legend className="bg-amber-500">Awaiting payment</Legend>
-        <Legend className="bg-sky-500">Out for delivery</Legend>
-        <Legend className="bg-amber-100">Partly booked</Legend>
-        <Legend className="bg-slate-200">Fully booked</Legend>
-        <Legend className="bg-[repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9_3px,#e2e8f0_3px,#e2e8f0_6px)]">
+      {/*
+        A bespoke legend rather than the board's: at this density a cell means something slightly
+        different — amber here is "partly booked", not "unpaid" — and a legend that is nearly
+        right is worse than none.
+      */}
+      <ul className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line px-4 py-3 font-mono text-[9.5px] uppercase tracking-[0.14em] text-paper-faint">
+        <Legend className="bg-signal-tint border-signal-line">Confirmed</Legend>
+        <Legend className="bg-warn-tint border-warn-line">Unpaid / partly booked</Legend>
+        <Legend className="bg-danger-tint border-danger-line">Damaged</Legend>
+        <Legend className="bg-[rgba(237,238,234,0.06)] border-line-strong">Fully booked</Legend>
+        <Legend className="border-line-strong bg-[repeating-linear-gradient(45deg,#15181C,#15181C_3px,#23251F_3px,#23251F_6px)]">
           Blocked
         </Legend>
       </ul>
@@ -202,11 +192,8 @@ export function ResourceCalendar({
 
 function Legend({ className, children }: { className: string; children: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-1.5">
-      <span
-        aria-hidden="true"
-        className={cx("h-3 w-3 rounded border border-[var(--color-border)]", className)}
-      />
+    <li className="flex items-center gap-2">
+      <span aria-hidden="true" className={cx("h-2.5 w-2.5 border", className)} />
       {children}
     </li>
   );

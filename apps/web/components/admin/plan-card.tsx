@@ -24,7 +24,7 @@ export function PlanCard({ usage }: { usage: PlanUsage | null }) {
     return (
       <Card>
         <CardHeader title="Plan" />
-        <p className="text-sm text-[var(--color-muted-foreground)]">
+        <p className="text-[13.5px] text-paper-mute">
           Plan details could not be loaded.
         </p>
       </Card>

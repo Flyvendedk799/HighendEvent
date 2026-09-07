@@ -200,7 +200,7 @@ export function CheckoutForm({
               ) : null}
 
               {!quote && !quoteError ? (
-                <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+                <p className="mt-2 font-mono text-[11px] text-paper-faint">
                   {t.checkout.quotePrompt}
                 </p>
               ) : null}
@@ -259,12 +259,12 @@ export function CheckoutForm({
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <Card>
           <CardHeader title={t.cart.summary} />
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2 text-[13.5px]">
             {summary.cart.items.map((item) => (
               <li key={item.id} className="flex justify-between gap-3">
                 <span className="min-w-0">
                   <span className="block truncate">{item.product.name}</span>
-                  <span className="text-xs text-[var(--color-muted-foreground)]">
+                  <span className="font-mono text-[11px] text-paper-faint">
                     × {item.quantity}
                   </span>
                 </span>
@@ -273,7 +273,7 @@ export function CheckoutForm({
           </ul>
 
           {summary.pricing ? (
-            <dl className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-4 text-sm">
+            <dl className="mt-4 space-y-1.5 border-t border-line pt-4 text-[13.5px]">
               <Row
                 label={t.common.subtotal}
                 value={
@@ -312,7 +312,7 @@ export function CheckoutForm({
                 <Row
                   label={`Discount (${coupon.code})`}
                   value={
-                    <span className="text-teal-700">
+                    <span className="text-signal">
                       −
                       <Money
                         amountMinor={discountMinor}
@@ -334,23 +334,23 @@ export function CheckoutForm({
                         locale={locale}
                       />
                     ) : (
-                      <span className="text-[var(--color-muted-foreground)]">Not quoted yet</span>
+                      <span className="text-paper-mute">Not quoted yet</span>
                     )
                   ) : (
-                    <span className="text-[var(--color-muted-foreground)]">Collection</span>
+                    <span className="text-paper-mute">Collection</span>
                   )
                 }
               />
 
-              <div className="mt-3 flex items-baseline justify-between border-t border-[var(--color-border)] pt-3">
+              <div className="mt-3 flex items-baseline justify-between border-t border-line pt-3">
                 <dt className="font-semibold">{t.common.total}</dt>
-                <dd className="text-lg font-semibold">
+                <dd className="font-mono text-[17px] font-medium tabular-nums">
                   <Money amountMinor={total} currency={summary.currency} locale={locale} />
                 </dd>
               </div>
 
               {summary.pricing.remainingMinor > 0 ? (
-                <p className="pt-1 text-xs text-[var(--color-muted-foreground)]">
+                <p className="pt-1 font-mono text-[11px] text-paper-faint">
                   You pay{" "}
                   <Money
                     amountMinor={summary.pricing.upfrontMinor + deliveryFeeMinor}
@@ -391,7 +391,7 @@ function PayButton({
         {t.checkout.pay}
       </Button>
       {deliveryPending ? (
-        <p className="mt-2 text-center text-xs text-[var(--color-muted-foreground)]">
+        <p className="mt-2 text-center font-mono text-[11px] text-paper-faint">
           {t.checkout.quoteFirst}
         </p>
       ) : null}
@@ -402,7 +402,7 @@ function PayButton({
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[var(--color-muted-foreground)]">{label}</dt>
+      <dt className="text-paper-mute">{label}</dt>
       <dd className="tabular">{value}</dd>
     </div>
   );

@@ -1,5 +1,5 @@
 /**
- * Response shapes returned by the Rentora API.
+ * Response shapes returned by the alarent API.
  *
  * These are hand-maintained rather than generated: the API is a separate deploy target, so the
  * web app treats it as a contract. Anything the web app reads must appear here.

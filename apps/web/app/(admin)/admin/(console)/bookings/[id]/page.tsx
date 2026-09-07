@@ -196,21 +196,21 @@ export default async function BookingDetailPage({
                     label: "Outstanding",
                     value:
                       booking.remainingMinor > 0 ? (
-                        <span className="text-amber-700">
+                        <span className="text-warn">
                           <Money
                             amountMinor={booking.remainingMinor}
                             currency={booking.currency}
                           />
                         </span>
                       ) : (
-                        <span className="text-[var(--color-muted-foreground)]">Settled</span>
+                        <span className="text-paper-mute">Settled</span>
                       ),
                   },
                 ]}
               />
 
               {booking.stripePaymentIntentId ? (
-                <p className="mt-3 truncate text-[11px] text-[var(--color-muted-foreground)]">
+                <p className="mt-3 truncate text-[11px] text-paper-mute">
                   Stripe: {booking.stripePaymentIntentId}
                 </p>
               ) : null}
@@ -219,12 +219,12 @@ export default async function BookingDetailPage({
             <Card>
               <CardHeader title="Customer" />
               <p className="font-medium">{booking.customerName}</p>
-              <p className="mt-0.5 text-sm">
+              <p className="mt-0.5 text-[13.5px]">
                 <a href={`mailto:${booking.email}`} className="hover:underline">
                   {booking.email}
                 </a>
               </p>
-              <p className="text-sm">
+              <p className="text-[13.5px]">
                 <a href={`tel:${booking.phone.replace(/\s/g, "")}`} className="hover:underline">
                   {booking.phone}
                 </a>
@@ -232,7 +232,7 @@ export default async function BookingDetailPage({
               {booking.customerId ? (
                 <Link
                   href={`/admin/customers/${booking.customerId}`}
-                  className="mt-3 inline-block text-sm font-medium text-[var(--color-primary)] hover:underline"
+                  className="mt-3 inline-block text-[13.5px] font-medium text-signal hover:underline"
                 >
                   View customer history →
                 </Link>
@@ -244,7 +244,7 @@ export default async function BookingDetailPage({
               <Badge tone={booking.deliveryType === "DELIVERY" ? "info" : "neutral"}>
                 {booking.deliveryType === "DELIVERY" ? "We deliver" : "Customer collects"}
               </Badge>
-              <address className="mt-2 not-italic text-sm text-[var(--color-muted-foreground)]">
+              <address className="mt-2 not-italic text-[13.5px] text-paper-mute">
                 {booking.address}
                 <br />
                 {booking.zipCode} {booking.city}
@@ -253,7 +253,7 @@ export default async function BookingDetailPage({
               </address>
               {booking.deliveryType === "DELIVERY" ? (
                 <a
-                  className="mt-2 inline-block text-sm font-medium text-[var(--color-primary)] hover:underline"
+                  className="mt-2 inline-block text-[13.5px] font-medium text-signal hover:underline"
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                     `${booking.address}, ${booking.zipCode} ${booking.city}`,
                   )}`}
@@ -269,7 +269,7 @@ export default async function BookingDetailPage({
       >
         <Card>
           <CardHeader title="Schedule" />
-          <p className="text-lg font-medium">
+          <p className="font-mono text-[19px] font-medium tabular-nums">
             <DateRange start={booking.startDate} end={booking.endDate} />
           </p>
           <BookingSchedule booking={booking} />
@@ -279,7 +279,7 @@ export default async function BookingDetailPage({
           <div className="px-5 pt-5">
             <CardHeader title="Items" />
           </div>
-          <TableContainer className="rounded-none border-0 shadow-none">
+          <TableContainer className="border-0 shadow-none">
             <Table>
               <THead>
                 <Tr>
@@ -306,7 +306,7 @@ export default async function BookingDetailPage({
                       <Td>
                         <span className="font-medium">{item.nameSnapshot}</span>
                         {upsells.length > 0 ? (
-                          <ul className="mt-1 space-y-0.5 text-xs text-[var(--color-muted-foreground)]">
+                          <ul className="mt-1 space-y-0.5 font-mono text-[11px] text-paper-faint">
                             {upsells.map((upsell) => (
                               <li key={upsell.id}>
                                 + {upsell.nameSnapshot} × {upsell.quantity} (

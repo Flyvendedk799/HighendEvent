@@ -35,7 +35,7 @@ export default async function AdminDeliveryPage() {
           </Link>
         </Banner>
       ) : (
-        <p className="mb-6 text-sm text-[var(--color-muted-foreground)]">
+        <p className="mb-6 text-[13.5px] text-paper-mute">
           Distances are measured from <strong>{origin!.name}</strong>, {origin!.zipCode}{" "}
           {origin!.city}.
         </p>

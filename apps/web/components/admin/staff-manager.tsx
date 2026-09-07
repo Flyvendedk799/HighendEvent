@@ -72,7 +72,7 @@ export function StaffManager({
     <>
       <div className="mb-4 flex items-center justify-end gap-3">
         {atSeatLimit ? (
-          <p className="text-xs text-amber-700">You have used every seat on your plan.</p>
+          <p className="font-mono text-[11px] text-warn">You have used every seat on your plan.</p>
         ) : null}
         <Button onClick={() => setInviteOpen(true)} disabled={!canManage || atSeatLimit}>
           Invite someone
@@ -107,7 +107,7 @@ export function StaffManager({
                   <Td>
                     <span className="font-medium">{member.name ?? "—"}</span>
                     {member.id === currentUserId ? (
-                      <span className="ml-2 text-xs text-[var(--color-muted-foreground)]">
+                      <span className="ml-2 font-mono text-[11px] text-paper-faint">
                         (you)
                       </span>
                     ) : null}
@@ -151,13 +151,13 @@ export function StaffManager({
         </Table>
       </TableContainer>
 
-      <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <p className="text-sm font-semibold">What each role can do</p>
-        <dl className="mt-2 space-y-1.5 text-sm">
+      <div className="mt-5 border border-line bg-ink-raised p-4">
+        <p className="text-[13.5px] font-semibold">What each role can do</p>
+        <dl className="mt-2 space-y-1.5 text-[13.5px]">
           {Object.entries(ROLE_DESCRIPTIONS).map(([role, description]) => (
             <div key={role} className="flex gap-3">
               <dt className="w-24 shrink-0 font-medium">{ROLE_LABELS[role]}</dt>
-              <dd className="text-[var(--color-muted-foreground)]">{description}</dd>
+              <dd className="text-paper-mute">{description}</dd>
             </div>
           ))}
         </dl>
@@ -189,9 +189,9 @@ export function StaffManager({
           readOnly
           value={temporaryPassword ?? ""}
           onFocus={(e) => e.currentTarget.select()}
-          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 font-mono text-sm"
+          className="w-full border border-line bg-ink-hover px-3 py-2 font-mono text-[13.5px]"
         />
-        <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+        <p className="mt-2 font-mono text-[11px] text-paper-faint">
           They should change it after signing in. This is the only time it is shown.
         </p>
       </Modal>
@@ -278,7 +278,7 @@ function DeactivateStaff({ member }: { member: StaffMember }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="text-red-600">
+        <Button size="sm" variant="ghost" className="text-danger">
           Deactivate
         </Button>
       }

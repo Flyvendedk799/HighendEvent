@@ -157,7 +157,7 @@ function DeleteCoupon({ coupon }: { coupon: Coupon }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="text-red-600">
+        <Button size="sm" variant="ghost" className="text-danger">
           Delete
         </Button>
       }

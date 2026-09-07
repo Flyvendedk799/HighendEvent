@@ -52,13 +52,13 @@ export default async function AdminLoginPage({
 
   return (
     <AuthCard
-      eyebrow="Rentora"
+      eyebrow="alarent"
       title="Sign in to your console"
       description="Manage bookings, inventory, and your storefront."
       footer={
         <span>
           Renting from this store instead?{" "}
-          <a className="font-medium text-[var(--color-primary)] hover:underline" href="/account/login">
+          <a className="font-medium text-signal hover:underline" href="/account/login">
             Customer login
           </a>
         </span>

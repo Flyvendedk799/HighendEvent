@@ -19,9 +19,9 @@ export default function AdminError({
     <div className="mx-auto max-w-lg px-6 py-16">
       <Banner tone="danger" title="This screen could not load">
         {/* The API is a separate deploy target, so an unreachable API is the likeliest cause. */}
-        Rentora could not reach its API, or the API returned an error. Your data is untouched.
+        alarent could not reach its API, or the API returned an error. Your data is untouched.
         {error.digest ? (
-          <span className="mt-2 block font-mono text-xs">{error.digest}</span>
+          <span className="mt-2 block font-mono text-[11.5px]">{error.digest}</span>
         ) : null}
       </Banner>
 

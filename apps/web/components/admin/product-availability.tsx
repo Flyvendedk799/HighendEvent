@@ -45,7 +45,7 @@ export function ProductAvailability({
           title="Turnaround buffers"
           description="These come from the General tab and apply to every booking of this product."
         />
-        <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-4 text-[13.5px] sm:grid-cols-4">
           <Stat label="Units owned" value={product.stockQty} />
           <Stat label="Prep buffer" value={`${product.prepBufferDays} d`} />
           <Stat label="Cleanup buffer" value={`${product.cleanupBufferDays} d`} />
@@ -58,7 +58,7 @@ export function ProductAvailability({
             }
           />
         </dl>
-        <p className="mt-4 text-xs text-[var(--color-muted-foreground)]">
+        <p className="mt-4 font-mono text-[11px] text-paper-faint">
           A booking blocks {product.prepBufferDays} day(s) before and {product.cleanupBufferDays}{" "}
           day(s) after its dates, so the calendar never sells stock that is still in the van.
         </p>
@@ -111,7 +111,7 @@ export function ProductAvailability({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-red-600"
+                        className="text-danger"
                         disabled={pending}
                         onClick={() =>
                           startTransition(async () => {
@@ -150,8 +150,8 @@ function AddBlackoutButton() {
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs text-[var(--color-muted-foreground)]">{label}</dt>
-      <dd className="mt-0.5 text-lg font-semibold tabular">{value}</dd>
+      <dt className="font-mono text-[11px] text-paper-faint">{label}</dt>
+      <dd className="mt-0.5 font-mono text-[19px] font-medium tracking-[-0.02em] tabular-nums">{value}</dd>
     </div>
   );
 }

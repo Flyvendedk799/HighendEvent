@@ -57,7 +57,9 @@ export default async function CmsPageRoute({ params }: { params: Promise<{ slug:
 
   return (
     <article className="mx-auto max-w-3xl">
-      <h1 className="font-display text-4xl font-semibold tracking-tight">{page.title}</h1>
+      <h1 className="text-[clamp(30px,4.4vw,50px)] font-semibold leading-[0.98] tracking-[-0.04em]">
+        {page.title}
+      </h1>
       <div className="mt-8">
         <PageSections sections={Array.isArray(page.sections) ? page.sections : []} />
       </div>

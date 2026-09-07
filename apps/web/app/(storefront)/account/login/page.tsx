@@ -49,7 +49,7 @@ export default async function CustomerLoginPage({
           No account yet?{" "}
           <Link
             href="/account/register"
-            className="font-medium text-[var(--color-primary)] hover:underline"
+            className="font-medium text-signal hover:underline"
           >
             Create one
           </Link>

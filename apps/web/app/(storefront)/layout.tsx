@@ -46,7 +46,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
   return (
     <>
       <ThemeTokens brandColors={bootstrap.store.brandColors} tokens={bootstrap.theme.tokens} />
-      <div className="rentora-storefront flex min-h-screen flex-col">
+      <div className="alarent-store flex min-h-screen flex-col">
         <StorefrontHeader
           storeName={bootstrap.store.name}
           logoUrl={bootstrap.store.logoUrl}
@@ -57,7 +57,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
           locales={locales}
           t={t}
         />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</div>
+        <div className="mx-auto w-full max-w-measure flex-1 px-5 py-8 md:px-gutter md:py-10">{children}</div>
         <StorefrontFooter
           storeName={bootstrap.store.name}
           tagline={bootstrap.store.tagline}

@@ -46,8 +46,8 @@ export function LocationsManager({ locations }: { locations: Location[] }) {
               <Card>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-display text-lg font-semibold">{location.name}</p>
-                    <address className="mt-1 not-italic text-sm text-[var(--color-muted-foreground)]">
+                    <p className="text-[17px] font-semibold tracking-[-0.02em]">{location.name}</p>
+                    <address className="mt-1.5 not-italic text-[13px] leading-relaxed text-paper-mute">
                       {location.address}
                       <br />
                       {location.zipCode} {location.city}, {location.country}
@@ -59,7 +59,7 @@ export function LocationsManager({ locations }: { locations: Location[] }) {
                   </div>
                 </div>
 
-                <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+                <p className="mt-3 font-mono text-[11px] text-paper-faint">
                   {location.latitude && location.longitude
                     ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
                     : "No coordinates — delivery cannot be quoted from here"}
@@ -98,7 +98,7 @@ function DeleteLocation({ location }: { location: Location }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="text-red-600">
+        <Button size="sm" variant="ghost" className="text-danger">
           Delete
         </Button>
       }

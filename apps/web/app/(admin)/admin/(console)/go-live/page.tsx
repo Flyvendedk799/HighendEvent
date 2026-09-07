@@ -18,7 +18,7 @@ export default async function GoLivePage({
   return (
     <Page className="max-w-3xl">
       <PageHeader
-        title={welcome ? "Welcome to Rentora" : "Go live"}
+        title={welcome ? "Welcome to alarent" : "Go live"}
         description={
           welcome
             ? "Your store exists. Here is what is left before you can take a booking."
@@ -39,7 +39,7 @@ export default async function GoLivePage({
             </Button>
           }
         >
-          Share <strong>{checklist.storefrontUrl}</strong> and start selling.
+          Share <span className="font-mono text-signal">{checklist.storefrontUrl}</span> and start selling.
         </Banner>
       ) : (
         <Banner tone="warning" title="Not quite ready" className="mb-6">
@@ -55,34 +55,34 @@ export default async function GoLivePage({
         />
 
         <div
-          className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-muted)]"
+          className="mb-5 h-1.5 w-full border border-line-soft bg-ink-hover"
           role="progressbar"
           aria-valuenow={percent}
           aria-valuemin={0}
           aria-valuemax={100}
         >
           <div
-            className="h-full rounded-full bg-[var(--color-primary)] transition-all"
+            className="h-full bg-signal transition-[width] duration-surface ease-out"
             style={{ width: `${percent}%` }}
           />
         </div>
 
-        <ul className="divide-y divide-[var(--color-border)]">
+        <ul className="divide-y divide-line-soft">
           {checklist.items.map((item) => (
             <li key={item.key} className="flex items-start gap-3 py-3">
               <span
                 aria-hidden="true"
                 className={
                   item.done
-                    ? "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-white"
-                    : "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-[var(--color-border)]"
+                    ? "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-signal text-signal-ink"
+                    : "mt-0.5 h-5 w-5 shrink-0 border border-line-strong"
                 }
               >
                 {item.done ? <Check size={12} strokeWidth={3} /> : null}
               </span>
 
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                <p className="flex flex-wrap items-center gap-2.5 text-[13.5px] text-paper">
                   {item.label}
                   {!item.required ? (
                     <Badge tone="neutral" className="font-normal">
@@ -90,7 +90,7 @@ export default async function GoLivePage({
                     </Badge>
                   ) : null}
                 </p>
-                <p className="mt-0.5 truncate text-xs text-[var(--color-muted-foreground)]">
+                <p className="mt-0.5 truncate font-mono text-[11px] text-paper-faint">
                   {item.detail}
                 </p>
               </div>
@@ -110,10 +110,12 @@ export default async function GoLivePage({
           title="Your storefront address"
           description="This is where your customers go."
         />
-        <p className="font-mono text-sm">{checklist.storefrontUrl}</p>
-        <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+        <p className="border border-line-soft bg-ink-sunk px-3 py-2.5 font-mono text-[13px] text-signal">
+          {checklist.storefrontUrl}
+        </p>
+        <p className="mt-3 text-[12.5px] leading-relaxed text-paper-faint">
           Want your own domain instead?{" "}
-          <Link href="/admin/settings" className="text-[var(--color-primary)] hover:underline">
+          <Link href="/admin/settings" className="text-signal hover:underline">
             Connect one in settings
           </Link>
           .

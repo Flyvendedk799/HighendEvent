@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { cx, focusRing } from "./utils";
+import { cx, focusRing, monoLabel } from "./utils";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "link";
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
@@ -15,22 +15,27 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
 };
 
+/*
+ * Square corners, no shadow, no lift on hover. Primary inverts to paper on hover rather than
+ * dimming, because a lime button going darker reads as disabled.
+ */
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--color-primary,#0f766e)] text-white shadow-sm hover:bg-[var(--color-primary-hover,#0d9488)] active:translate-y-px",
+    "bg-signal text-signal-ink font-semibold hover:bg-signal-press disabled:bg-line disabled:text-paper-ghost",
   secondary:
-    "border border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#fff)] text-[var(--color-foreground,#0f172a)] shadow-sm hover:bg-[var(--color-muted,#f1f5f9)]",
+    "border border-line-strong text-paper hover:border-signal hover:text-signal disabled:border-line disabled:text-paper-ghost",
   ghost:
-    "bg-transparent text-[var(--color-foreground,#0f172a)] hover:bg-[var(--color-muted,#f1f5f9)]",
-  danger: "bg-red-600 text-white shadow-sm hover:bg-red-700 active:translate-y-px",
-  link: "bg-transparent text-[var(--color-primary,#0f766e)] underline-offset-4 hover:underline px-0 h-auto",
+    "text-paper-dim hover:bg-ink-hover hover:text-paper disabled:text-paper-ghost",
+  danger:
+    "border border-danger-border text-danger hover:bg-danger-tint disabled:border-line disabled:text-paper-ghost",
+  link: "text-signal hover:text-paper underline-offset-4 hover:underline px-0 h-auto",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "h-8 gap-1.5 px-2.5 text-[13px]",
-  md: "h-9 gap-2 px-3.5 text-sm",
-  lg: "h-11 gap-2 px-5 text-[15px]",
-  icon: "h-9 w-9 shrink-0",
+  sm: "h-8 gap-1.5 px-3 text-[10px]",
+  md: "h-9 gap-2 px-4 text-[11px]",
+  lg: "h-12 gap-2.5 px-6 text-[12px]",
+  icon: "h-9 w-9 shrink-0 text-[11px]",
 };
 
 export function Button({
@@ -52,7 +57,9 @@ export function Button({
       aria-busy={loading || undefined}
       disabled={asChild ? undefined : disabled || loading}
       className={cx(
-        "inline-flex select-none items-center justify-center whitespace-nowrap rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex select-none items-center justify-center whitespace-nowrap transition-colors duration-instant",
+        "disabled:pointer-events-none",
+        variant === "link" ? "font-mono text-[12px]" : monoLabel,
         focusRing,
         variantClasses[variant],
         variant === "link" ? null : sizeClasses[size],
@@ -79,21 +86,20 @@ export function Button({
   );
 }
 
+/**
+ * Drawn in `currentColor` so it is ink on the primary button and paper on the others without a
+ * second variant map.
+ */
 function ButtonSpinner() {
   return (
     <svg
-      className="h-3.5 w-3.5 shrink-0 animate-spin"
+      className="h-3 w-3 shrink-0 animate-spin"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
     >
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-      <path
-        d="M22 12a10 10 0 0 0-10-10"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.3" />
+      <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="3" />
     </svg>
   );
 }

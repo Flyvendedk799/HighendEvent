@@ -79,7 +79,7 @@ export default async function ConfirmationPage({
   return (
     <div className="mx-auto max-w-2xl">
       <div className="text-center">
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary)] text-white">
+        <span className="inline-flex h-12 w-12 items-center justify-center bg-signal text-signal-ink">
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="m5 12 5 5L19 7"
@@ -90,11 +90,11 @@ export default async function ConfirmationPage({
             />
           </svg>
         </span>
-        <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight">
+        <h1 className="mt-6 text-[clamp(28px,4.2vw,46px)] font-semibold leading-[0.98] tracking-[-0.04em]">
           {t.confirmation.thanks}, {booking.customerName.split(" ")[0]}
         </h1>
-        <p className="mt-2 text-[var(--color-muted-foreground)]">
-          {t.confirmation.bookingIs} <strong>{booking.bookingNo}</strong>. {t.confirmation.sentTo}{" "}
+        <p className="mt-2 text-paper-mute">
+          {t.confirmation.bookingIs} <span className="font-mono text-paper">{booking.bookingNo}</span>. {t.confirmation.sentTo}{" "}
           {booking.email}.
         </p>
       </div>
@@ -106,10 +106,10 @@ export default async function ConfirmationPage({
         </Banner>
       ) : null}
 
-      <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+      <div className="mt-9 border border-line-raised bg-ink-raised p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)]">
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-faint">
               {t.confirmation.yourDates}
             </p>
             <p className="mt-1 font-medium">
@@ -121,18 +121,18 @@ export default async function ConfirmationPage({
           </Badge>
         </div>
 
-        <div className="mt-5 border-t border-[var(--color-border)] pt-5">
-          <p className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)]">
+        <div className="mt-5 border-t border-line-soft pt-5">
+          <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-faint">
             {booking.deliveryType === "DELIVERY" ? t.confirmation.deliveringTo : t.confirmation.collectFromUs}
           </p>
-          <p className="mt-1 text-sm">
+          <p className="mt-1 text-[13.5px]">
             {booking.deliveryType === "DELIVERY"
               ? `${booking.address}, ${booking.zipCode} ${booking.city}`
               : t.confirmation.collectPrompt}
           </p>
         </div>
 
-        <ul className="mt-5 space-y-2 border-t border-[var(--color-border)] pt-5 text-sm">
+        <ul className="mt-5 space-y-2.5 border-t border-line-soft pt-5 text-[13.5px]">
           {booking.items.map((item) => (
             <li key={item.name}>
               <div className="flex justify-between gap-3">
@@ -148,7 +148,7 @@ export default async function ConfirmationPage({
               {item.upsells.map((upsell) => (
                 <div
                   key={upsell.name}
-                  className="flex justify-between gap-3 pl-4 text-xs text-[var(--color-muted-foreground)]"
+                  className="flex justify-between gap-3 pl-4 text-[11.5px] text-paper-faint"
                 >
                   <span>+ {upsell.name}</span>
                   <Money
@@ -162,7 +162,7 @@ export default async function ConfirmationPage({
           ))}
         </ul>
 
-        <dl className="mt-5 space-y-1.5 border-t border-[var(--color-border)] pt-5 text-sm">
+        <dl className="mt-5 flex flex-col gap-2.5 border-t border-line-soft pt-5 text-[13px]">
           {booking.deliveryFeeMinor > 0 ? (
             <Row
               label={t.common.delivery}
@@ -187,8 +187,8 @@ export default async function ConfirmationPage({
               }
             />
           ) : null}
-          <div className="flex items-baseline justify-between border-t border-[var(--color-border)] pt-2">
-            <dt className="font-semibold">{t.common.total}</dt>
+          <div className="mt-1 flex items-baseline justify-between border-t border-line-soft pt-3">
+            <dt className="text-paper">{t.common.total}</dt>
             <dd className="font-semibold">
               <Money amountMinor={booking.totalMinor} currency={booking.currency} locale={locale} />
             </dd>
@@ -208,7 +208,7 @@ export default async function ConfirmationPage({
         </dl>
       </div>
 
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <div className="mt-7 flex flex-wrap justify-center gap-2.5">
         <Button variant="secondary" asChild>
           <Link href="/catalog">{t.nav.keepBrowsing}</Link>
         </Button>
@@ -229,8 +229,8 @@ export default async function ConfirmationPage({
 function Row({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[var(--color-muted-foreground)]">{label}</dt>
-      <dd className="tabular">{value}</dd>
+      <dt className="text-paper-mute">{label}</dt>
+      <dd className="font-mono text-[12.5px] tabular-nums text-paper-dim">{value}</dd>
     </div>
   );
 }

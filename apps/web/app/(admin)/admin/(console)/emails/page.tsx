@@ -17,7 +17,7 @@ export default async function AdminEmailsPage() {
     <Page>
       <PageHeader
         title="Emails"
-        description="What Rentora sends your customers, in your words and your branding."
+        description="What alarent sends your customers, in your words and your branding."
       />
       <EmailTemplates
         templates={templates}

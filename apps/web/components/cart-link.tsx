@@ -11,14 +11,18 @@ export async function CartLink({ label }: { label: string }) {
   return (
     <Link
       href="/cart"
-      className="relative rounded-lg px-3 py-1.5 hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+      className="flex items-center gap-2 border border-line-strong px-3.5 py-2 transition-colors duration-instant hover:border-signal hover:text-signal"
     >
       {label}
-      {itemCount > 0 ? (
-        <span className="ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-md bg-[var(--color-accent)] px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
-          {itemCount}
-        </span>
-      ) : null}
+      <span
+        className={
+          itemCount > 0
+            ? "tabular-nums text-signal"
+            : "tabular-nums text-paper-ghost"
+        }
+      >
+        {itemCount}
+      </span>
     </Link>
   );
 }
