@@ -3,14 +3,32 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
 
+export type CmsPageInput = {
+  slug: string;
+  title: string;
+  locale?: string;
+  sections?: unknown;
+  seoTitle?: string;
+  seoDescription?: string;
+  isPublished?: boolean;
+};
+
 @Injectable()
 export class CmsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(locale?: string) {
+  /**
+   * Drafts are only ever returned to staff. A public read that leaked unpublished pages would
+   * put half-finished copy on the open web.
+   */
+  list(options: { locale?: string; includeDrafts?: boolean } = {}) {
     const tenantId = requireTenantId();
     return this.prisma.cmsPage.findMany({
-      where: { tenantId, ...(locale ? { locale } : {}) },
+      where: {
+        tenantId,
+        ...(options.locale ? { locale: options.locale } : {}),
+        ...(options.includeDrafts ? {} : { isPublished: true }),
+      },
       orderBy: { slug: "asc" },
     });
   }
@@ -22,24 +40,28 @@ export class CmsService {
     return page;
   }
 
-  async getBySlug(slug: string, locale = "en") {
+  async getBySlug(slug: string, options: { locale?: string; includeDrafts?: boolean } = {}) {
     const tenantId = requireTenantId();
-    const page = await this.prisma.cmsPage.findUnique({
-      where: { tenantId_slug_locale: { tenantId, slug, locale } },
-    });
+    const locale = options.locale ?? "en";
+
+    const page =
+      (await this.prisma.cmsPage.findUnique({
+        where: { tenantId_slug_locale: { tenantId, slug, locale } },
+      })) ??
+      // Fall back to the store default language rather than 404ing a translated page.
+      (await this.prisma.cmsPage.findFirst({ where: { tenantId, slug } }));
+
     if (!page) throw new NotFoundException("Page not found");
+
+    // An unpublished page is indistinguishable from a missing one to the public.
+    if (!page.isPublished && !options.includeDrafts) {
+      throw new NotFoundException("Page not found");
+    }
+
     return page;
   }
 
-  create(data: {
-    slug: string;
-    title: string;
-    locale?: string;
-    sections?: unknown;
-    seoTitle?: string;
-    seoDescription?: string;
-    isPublished?: boolean;
-  }) {
+  create(data: CmsPageInput) {
     const tenantId = requireTenantId();
     return this.prisma.cmsPage.create({
       data: {
@@ -55,7 +77,7 @@ export class CmsService {
     });
   }
 
-  async update(id: string, data: Record<string, unknown>) {
+  async update(id: string, data: Partial<CmsPageInput>) {
     await this.get(id);
     const { sections, ...rest } = data;
     return this.prisma.cmsPage.update({

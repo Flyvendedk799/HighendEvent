@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { tap } from "rxjs";
 import type { Observable } from "rxjs";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { tryGetTenantContext } from "../tenant/tenant.context";
 import type { JwtPayload } from "../auth/password";
@@ -100,7 +101,7 @@ export class AuditInterceptor implements NestInterceptor {
           meta: {
             actorEmail: input.user.email,
             ...(sensitive ? { redacted: true } : { body: redact(input.body) }),
-          },
+          } as Prisma.InputJsonObject,
         },
       });
     } catch (err) {

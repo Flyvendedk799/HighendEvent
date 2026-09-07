@@ -465,7 +465,14 @@ export class BookingsService {
 
   private async priceItems(tenantId: string, input: CreateBookingInput) {
     const pricingItems = [];
-    const itemRows = [];
+    // Annotated because the rows are mutated after the fact (the effective per-day rate is
+    // written back from the pricing engine), which defeats inference from the first push.
+    const itemRows: Array<{
+      productId: string;
+      quantity: number;
+      unitPriceMinor: number;
+      nameSnapshot: string;
+    }> = [];
     const upsellLines = [];
 
     for (const item of input.items) {
