@@ -92,7 +92,7 @@ export default async function AdminCustomersPage({
                   <Td>
                     <Link
                       href={`/admin/customers/${customer.id}`}
-                      className="font-medium hover:underline"
+                      className="font-mono text-[12.5px] transition-colors duration-instant hover:text-signal"
                     >
                       {customer.firstName} {customer.lastName}
                     </Link>
@@ -100,7 +100,7 @@ export default async function AdminCustomersPage({
                   <Td muted>
                     <span className="block truncate">{customer.email}</span>
                     {customer.phone ? (
-                      <span className="block truncate text-xs">{customer.phone}</span>
+                      <span className="block truncate text-[11.5px]">{customer.phone}</span>
                     ) : null}
                   </Td>
                   <Td muted>

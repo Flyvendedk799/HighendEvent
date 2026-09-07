@@ -147,9 +147,9 @@ export function BookingActions({
           readOnly
           value={remainderUrl ?? ""}
           onFocus={(e) => e.currentTarget.select()}
-          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm"
+          className="w-full border border-line bg-ink-hover px-3 py-2 text-[13.5px]"
         />
-        <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+        <p className="mt-2 font-mono text-[11px] text-paper-faint">
           Once paid, this booking moves to fully paid automatically.
         </p>
       </Modal>

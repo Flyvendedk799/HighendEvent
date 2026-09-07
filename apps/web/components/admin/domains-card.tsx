@@ -99,12 +99,12 @@ export function DomainsCard({
               {domains.map((domain) => (
                 <li
                   key={domain.id}
-                  className="rounded-lg border border-[var(--color-border)] p-4"
+                  className="border border-line p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="font-medium">{domain.hostname}</p>
-                      <p className="text-xs text-[var(--color-muted-foreground)]">
+                      <p className="font-mono text-[11px] text-paper-faint">
                         SSL: {domain.sslStatus}
                       </p>
                     </div>
@@ -134,7 +134,7 @@ export function DomainsCard({
 
                   {!domain.verified ? (
                     <div className="mt-3 space-y-2">
-                      <p className="text-xs font-medium text-[var(--color-muted-foreground)]">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-mute">
                         Add these records at your DNS provider:
                       </p>
                       <DnsRecord record={domain.instructions.verification} />
@@ -145,7 +145,7 @@ export function DomainsCard({
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-[var(--color-muted-foreground)]">
+            <p className="mt-4 text-[13.5px] text-paper-mute">
               No custom domain yet.
             </p>
           )}
@@ -161,17 +161,17 @@ function DnsRecord({
   record: { type: string; name: string; value: string; note?: string | null };
 }) {
   return (
-    <div className="rounded-md bg-[var(--color-muted)] p-2.5 font-mono text-[11px]">
+    <div className="bg-ink-hover p-2.5 font-mono text-[11px]">
       <div className="grid gap-1 sm:grid-cols-[70px_1fr]">
-        <span className="text-[var(--color-muted-foreground)]">Type</span>
+        <span className="text-paper-mute">Type</span>
         <span>{record.type}</span>
-        <span className="text-[var(--color-muted-foreground)]">Name</span>
+        <span className="text-paper-mute">Name</span>
         <span className="break-all">{record.name}</span>
-        <span className="text-[var(--color-muted-foreground)]">Value</span>
+        <span className="text-paper-mute">Value</span>
         <span className="break-all">{record.value}</span>
       </div>
       {record.note ? (
-        <p className="mt-1.5 font-sans text-[11px] text-[var(--color-muted-foreground)]">
+        <p className="mt-1.5 font-sans text-[11px] text-paper-mute">
           {record.note}
         </p>
       ) : null}
@@ -186,7 +186,7 @@ function RemoveDomain({ domain }: { domain: CustomDomain }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="text-red-600">
+        <Button size="sm" variant="ghost" className="text-danger">
           Remove
         </Button>
       }

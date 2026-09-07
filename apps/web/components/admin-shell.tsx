@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   AppShell,
-  Badge,
   Button,
   DropdownMenu,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  ShellBrand,
+  ShellStatus,
   type NavGroup,
 } from "@rentora/ui";
 import {
@@ -18,7 +19,6 @@ import {
   Boxes,
   CalendarDays,
   ClipboardList,
-  CreditCard,
   FileText,
   Image as ImageIcon,
   LayoutDashboard,
@@ -30,25 +30,33 @@ import {
   Percent,
   Rocket,
   Settings,
+  Store,
   Tags,
   Truck,
   UserRound,
   Users,
 } from "lucide-react";
 
-const iconProps = { size: 15, strokeWidth: 1.75 } as const;
+const iconProps = { size: 14, strokeWidth: 1.75 } as const;
 
+/*
+ * The console is ordered by the day, not by the data model: what the crew touches this morning
+ * sits above what an owner edits once a quarter.
+ */
 const NAV: NavGroup[] = [
   {
+    label: "Operations",
     items: [
-      { href: "/admin", label: "Overview", icon: <LayoutDashboard {...iconProps} /> },
+      { href: "/admin", label: "Today", icon: <LayoutDashboard {...iconProps} /> },
       { href: "/admin/bookings", label: "Bookings", icon: <ClipboardList {...iconProps} /> },
-      { href: "/admin/calendar", label: "Calendar", icon: <CalendarDays {...iconProps} /> },
+      { href: "/admin/calendar", label: "Board", icon: <CalendarDays {...iconProps} /> },
       { href: "/admin/customers", label: "Customers", icon: <Users {...iconProps} /> },
+      { href: "/admin/delivery", label: "Delivery", icon: <Truck {...iconProps} /> },
+      { href: "/admin/locations", label: "Locations", icon: <MapPin {...iconProps} /> },
     ],
   },
   {
-    label: "Catalog",
+    label: "Fleet",
     items: [
       { href: "/admin/products", label: "Products", icon: <Package {...iconProps} /> },
       { href: "/admin/categories", label: "Categories", icon: <Tags {...iconProps} /> },
@@ -67,16 +75,9 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Operations",
-    items: [
-      { href: "/admin/delivery", label: "Delivery", icon: <Truck {...iconProps} /> },
-      { href: "/admin/locations", label: "Locations", icon: <MapPin {...iconProps} /> },
-      { href: "/admin/analytics", label: "Analytics", icon: <BarChart3 {...iconProps} /> },
-    ],
-  },
-  {
     label: "Account",
     items: [
+      { href: "/admin/analytics", label: "Analytics", icon: <BarChart3 {...iconProps} /> },
       { href: "/admin/staff", label: "Staff", icon: <UserRound {...iconProps} /> },
       { href: "/admin/settings", label: "Settings", icon: <Settings {...iconProps} /> },
       { href: "/admin/go-live", label: "Go live", icon: <Rocket {...iconProps} /> },
@@ -91,6 +92,9 @@ export type AdminShellProps = {
   staffRole: string;
   /** Count of bookings that need attention today; hidden when zero. */
   attentionCount?: number;
+  /** Sidebar lamps — either the shop can take money and be found, or it cannot. */
+  payoutsReady?: boolean;
+  primaryDomain?: string | null;
   logout: () => Promise<void>;
   children: ReactNode;
 };
@@ -101,16 +105,32 @@ export function AdminShell({
   userEmail,
   staffRole,
   attentionCount,
+  payoutsReady,
+  primaryDomain,
   logout,
   children,
 }: AdminShellProps) {
   const pathname = usePathname() ?? "/admin";
 
+  const renderLink = ({
+    href,
+    className,
+    children: linkChildren,
+  }: {
+    href: string;
+    className: string;
+    children: ReactNode;
+  }) => (
+    <Link href={href} className={className}>
+      {linkChildren}
+    </Link>
+  );
+
   const groups: NavGroup[] = NAV.map((group) => ({
     ...group,
     items: group.items.map((item) =>
       item.href === "/admin/bookings" && attentionCount
-        ? { ...item, badge: attentionCount }
+        ? { ...item, badge: attentionCount, badgeTone: "warn" as const }
         : item,
     ),
   }));
@@ -119,45 +139,52 @@ export function AdminShell({
     <AppShell
       activePath={pathname}
       groups={groups}
-      renderLink={({ href, className, children }) => (
-        <Link href={href} className={className}>
-          {children}
-        </Link>
-      )}
+      renderLink={renderLink}
       brand={
-        <div>
-          <p className="truncate text-sm font-semibold text-white">{storeName}</p>
-          <p className="mt-0.5 text-[11px] text-slate-400">Rentora admin</p>
-        </div>
+        <ShellBrand name={storeName} context="alarent console" href="/admin" renderLink={renderLink} />
       }
       footer={
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] text-slate-300 hover:bg-white/5 hover:text-white"
-        >
-          <CreditCard size={15} strokeWidth={1.75} />
-          View storefront
-        </Link>
+        <>
+          <ShellStatus
+            items={[
+              {
+                label: "Payouts",
+                value: payoutsReady ? "Ready" : "Not connected",
+                tone: payoutsReady ? "ok" : "warn",
+              },
+              {
+                label: "Domain",
+                value: primaryDomain ? "Live" : "Default",
+                tone: primaryDomain ? "ok" : "quiet",
+              },
+            ]}
+          />
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 border-t border-line px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-paper-mute transition-colors duration-instant hover:text-signal"
+          >
+            <Store size={13} strokeWidth={1.75} />
+            View storefront
+          </Link>
+        </>
       }
       topbar={
         <div className="flex items-center justify-end gap-2">
           <DropdownMenu
             trigger={
-              <Button variant="ghost" size="sm" className="gap-2">
-                <span className="hidden text-[13px] sm:inline">{userName}</span>
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)] text-[11px] font-semibold text-white">
+              <Button variant="ghost" size="sm" className="gap-2.5">
+                <span className="hidden normal-case tracking-normal sm:inline">{userName}</span>
+                <span className="flex h-6 w-6 items-center justify-center bg-signal text-[10px] font-semibold text-signal-ink">
                   {initialsOf(userName || userEmail)}
                 </span>
               </Button>
             }
           >
             <DropdownMenuLabel>
-              <span className="block truncate font-normal text-[var(--color-foreground)]">
-                {userEmail}
-              </span>
-              <Badge tone="neutral" className="mt-1">
+              <span className="block truncate font-mono text-[11px] text-paper">{userEmail}</span>
+              <span className="mt-1 block font-mono text-[9.5px] uppercase tracking-[0.14em] text-paper-faint">
                 {staffRole}
-              </Badge>
+              </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

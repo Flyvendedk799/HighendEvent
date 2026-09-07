@@ -15,84 +15,90 @@ export function CartTotals({
   const { pricing, currency, upsellTotalMinor } = summary;
 
   return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-        <h2 className="text-sm font-semibold">{t.cart.summary}</h2>
+    <aside className="lg:sticky lg:top-[84px] lg:self-start">
+      <div className="border border-line-raised bg-ink-raised">
+        <h2 className="border-b border-line px-5 py-3.5 font-mono text-[10px] uppercase tracking-[0.16em] text-paper-mute">
+          {t.cart.summary}
+        </h2>
 
-        {pricing ? (
-          <dl className="mt-4 space-y-1.5 text-sm">
-            <Row
-              label={t.common.subtotal}
-              value={<Money amountMinor={pricing.subtotalMinor} currency={currency} locale={locale} />}
-            />
-            {upsellTotalMinor > 0 ? (
+        <div className="p-5">
+          {pricing ? (
+            <dl className="flex flex-col gap-2.5 text-[13px]">
               <Row
-                label={t.common.addOns}
-                value={<Money amountMinor={upsellTotalMinor} currency={currency} locale={locale} />}
+                label={t.common.subtotal}
+                value={
+                  <Money amountMinor={pricing.subtotalMinor} currency={currency} locale={locale} />
+                }
               />
-            ) : null}
-            {pricing.depositMinor > 0 ? (
-              <Row
-                label={t.common.deposit}
-                value={<Money amountMinor={pricing.depositMinor} currency={currency} locale={locale} />}
-              />
-            ) : null}
-            {pricing.taxMinor > 0 ? (
-              <Row
-                label={`${t.common.tax} (${(pricing.taxPercentBps / 100).toFixed(0)}%)`}
-                value={<Money amountMinor={pricing.taxMinor} currency={currency} locale={locale} />}
-              />
-            ) : null}
-            <Row
-              label={t.common.delivery}
-              value={
-                <span className="text-[var(--color-muted-foreground)]">{t.common.quotedAtCheckout}</span>
-              }
-            />
-
-            <div className="mt-3 flex items-baseline justify-between border-t border-[var(--color-border)] pt-3">
-              <dt className="font-semibold">{t.common.total}</dt>
-              <dd className="text-lg font-semibold">
-                <Money
-                  amountMinor={pricing.totalMinor + upsellTotalMinor}
-                  currency={currency}
-                  locale={locale}
+              {upsellTotalMinor > 0 ? (
+                <Row
+                  label={t.common.addOns}
+                  value={
+                    <Money amountMinor={upsellTotalMinor} currency={currency} locale={locale} />
+                  }
                 />
-              </dd>
-            </div>
+              ) : null}
+              {pricing.depositMinor > 0 ? (
+                <Row
+                  label={t.common.deposit}
+                  value={
+                    <Money amountMinor={pricing.depositMinor} currency={currency} locale={locale} />
+                  }
+                />
+              ) : null}
+              {pricing.taxMinor > 0 ? (
+                <Row
+                  label={`${t.common.tax} (${(pricing.taxPercentBps / 100).toFixed(0)}%)`}
+                  value={<Money amountMinor={pricing.taxMinor} currency={currency} locale={locale} />}
+                />
+              ) : null}
+              <Row
+                label={t.common.delivery}
+                value={<span className="text-paper-faint">{t.common.quotedAtCheckout}</span>}
+              />
 
-            {pricing.remainingMinor > 0 ? (
-              <p className="pt-1 text-xs text-[var(--color-muted-foreground)]">
-                You pay{" "}
-                <Money amountMinor={pricing.upfrontMinor} currency={currency} locale={locale} />{" "}
-                now and the balance before your dates.
-              </p>
-            ) : null}
-          </dl>
-        ) : (
-          <p className="mt-4 text-sm text-[var(--color-muted-foreground)]">
-            {t.cart.choosePrompt}
-          </p>
-        )}
+              <div className="mt-1 flex items-baseline justify-between border-t border-line-soft pt-3">
+                <dt className="text-paper">{t.common.total}</dt>
+                <dd className="font-mono text-[19px] tabular-nums text-paper">
+                  <Money
+                    amountMinor={pricing.totalMinor + upsellTotalMinor}
+                    currency={currency}
+                    locale={locale}
+                  />
+                </dd>
+              </div>
 
-        <Button
-          size="lg"
-          className="mt-5 w-full"
-          disabled={!summary.checkoutReady}
-          asChild={summary.checkoutReady}
-        >
-          {summary.checkoutReady ? (
-            <Link href="/checkout">{t.cart.checkout}</Link>
+              {pricing.remainingMinor > 0 ? (
+                <p className="text-[12px] leading-relaxed text-paper-faint">
+                  You pay{" "}
+                  <Money amountMinor={pricing.upfrontMinor} currency={currency} locale={locale} />{" "}
+                  now and the balance before your dates.
+                </p>
+              ) : null}
+            </dl>
           ) : (
-            <span>{t.cart.resolveItems}</span>
+            <p className="text-[13px] leading-relaxed text-paper-mute">{t.cart.choosePrompt}</p>
           )}
-        </Button>
 
-        <p className="mt-3 text-center text-xs text-[var(--color-muted-foreground)]">
-          <Link href="/catalog" className="hover:underline">
-            {t.nav.keepBrowsing}
-          </Link>
-        </p>
+          <Button
+            size="lg"
+            className="mt-6 w-full"
+            disabled={!summary.checkoutReady}
+            asChild={summary.checkoutReady}
+          >
+            {summary.checkoutReady ? (
+              <Link href="/checkout">{t.cart.checkout}</Link>
+            ) : (
+              <span>{t.cart.resolveItems}</span>
+            )}
+          </Button>
+
+          <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
+            <Link href="/catalog" className="transition-colors duration-instant hover:text-signal">
+              {t.nav.keepBrowsing}
+            </Link>
+          </p>
+        </div>
       </div>
     </aside>
   );
@@ -101,8 +107,8 @@ export function CartTotals({
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[var(--color-muted-foreground)]">{label}</dt>
-      <dd className="tabular">{value}</dd>
+      <dt className="text-paper-mute">{label}</dt>
+      <dd className="font-mono text-[12.5px] tabular-nums text-paper-dim">{value}</dd>
     </div>
   );
 }

@@ -54,7 +54,7 @@ async function login(
             : err.message,
       };
     }
-    return { error: "Could not reach the Rentora API. Is it running?" };
+    return { error: "Could not reach the alarent API. Is it running?" };
   }
 
   redirect(safeNext(formData.get("next"), fallbackNext));
@@ -119,7 +119,7 @@ export async function customerRegisterAction(
             : err.message,
       };
     }
-    return { error: "Could not reach the Rentora API. Is it running?" };
+    return { error: "Could not reach the alarent API. Is it running?" };
   }
 
   redirect(safeNext(formData.get("next"), "/account/dashboard"));

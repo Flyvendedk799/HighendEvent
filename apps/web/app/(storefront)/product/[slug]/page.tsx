@@ -70,6 +70,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   ).catch(() => null);
 
   const currency = product.currency ?? bootstrap?.store.currency ?? "USD";
+
+  /* Only string and number attributes make a spec row; a nested object has no honest rendering. */
   const specs = Object.entries(product.attributes ?? {}).filter(
     ([, value]) => typeof value === "string" || typeof value === "number",
   );
@@ -77,103 +79,155 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const soldOut = (calendar?.days ?? []).every((day) => !day.isAvailable);
 
   return (
-    <article className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_400px]">
-      <div className="min-w-0">
-        <nav className="mb-3 text-xs text-[var(--color-muted-foreground)]">
-          <Link href="/catalog" className="hover:underline">
-            {t.nav.catalog}
-          </Link>
-          {product.category ? (
-            <>
-              {" / "}
-              <Link
-                href={`/catalog?category=${product.category.slug}`}
-                className="hover:underline"
-              >
-                {product.category.name}
-              </Link>
-            </>
-          ) : null}
-        </nav>
-
-        <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-          {product.name}
-        </h1>
-
-        <p className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-[var(--color-muted-foreground)]">{t.common.from}</span>
-          <span className="text-lg font-semibold">
-            <Money amountMinor={product.dailyPriceMinor} currency={currency} locale={locale} />
-          </span>
-          <span className="text-[var(--color-muted-foreground)]">{t.common.perDay}</span>
-          {product.weekendPackageMinor ? (
-            <Badge tone="accent">
-              Fri–Sun package{" "}
-              <Money
-                amountMinor={product.weekendPackageMinor}
-                currency={currency}
-                locale={locale}
-              />
-            </Badge>
-          ) : null}
-        </p>
-
-        <div className="mt-6">
-          <ProductGallery images={product.images ?? []} name={product.name} />
-        </div>
-
-        {product.description ? (
-          <div className="mt-8 max-w-2xl">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
-              {t.product.about}
-            </h2>
-            <p className="mt-2 whitespace-pre-line leading-relaxed">{product.description}</p>
-          </div>
+    <article>
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-5 flex flex-wrap items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-paper-faint"
+      >
+        <Link href="/catalog" className="transition-colors duration-instant hover:text-signal">
+          {t.nav.catalog}
+        </Link>
+        {product.category ? (
+          <>
+            <span aria-hidden="true" className="text-paper-ghost">
+              /
+            </span>
+            <Link
+              href={`/catalog?category=${product.category.slug}`}
+              className="transition-colors duration-instant hover:text-signal"
+            >
+              {product.category.name}
+            </Link>
+          </>
         ) : null}
+        <span aria-hidden="true" className="text-paper-ghost">
+          /
+        </span>
+        <span className="text-paper-dim">{product.slug}</span>
+      </nav>
 
-        {specs.length > 0 ? (
-          <div className="mt-8 max-w-2xl">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
-              {t.product.specifications}
-            </h2>
-            <dl className="mt-3 divide-y divide-[var(--color-border)] text-sm">
-              {specs.map(([key, value]) => (
-                <div key={key} className="flex justify-between gap-4 py-2">
-                  <dt className="capitalize text-[var(--color-muted-foreground)]">
-                    {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-                  </dt>
-                  <dd className="font-medium">{String(value)}</dd>
+      {soldOut ? (
+        <Banner tone="warning" title={t.product.soldOutTitle} className="mb-6">
+          {t.product.soldOutBody}
+        </Banner>
+      ) : null}
+
+      <ProductBooking
+        product={product}
+        initialCalendar={calendar}
+        deliveryEnabled={bootstrap?.features.deliveryEnabled ?? false}
+        currency={currency}
+        locale={locale}
+        t={t}
+        gallery={<ProductGallery images={product.images ?? []} name={product.name} />}
+        heading={
+          <header className="mt-8">
+            <h1 className="text-[clamp(30px,4.4vw,50px)] font-semibold leading-[0.98] tracking-[-0.04em]">
+              {product.name}
+            </h1>
+            <p className="mt-4 flex flex-wrap items-baseline gap-3 text-[13.5px]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-mute">
+                {t.common.from}
+              </span>
+              <span className="font-mono text-[19px] tabular-nums">
+                <Money amountMinor={product.dailyPriceMinor} currency={currency} locale={locale} />
+              </span>
+              <span className="text-paper-mute">{t.common.perDay}</span>
+              {product.weekendPackageMinor ? (
+                <Badge tone="accent">
+                  Fri–Sun{" "}
+                  <Money
+                    amountMinor={product.weekendPackageMinor}
+                    currency={currency}
+                    locale={locale}
+                    className="ml-1.5"
+                  />
+                </Badge>
+              ) : null}
+            </p>
+            {product.description ? (
+              <p className="mt-5 max-w-[60ch] whitespace-pre-line text-[16px] leading-relaxed text-paper-dim">
+                {product.description}
+              </p>
+            ) : null}
+          </header>
+        }
+        details={
+          <>
+            {specs.length > 0 ? (
+              <section className="mt-8 border border-line">
+                <h2 className="border-b border-line px-4 py-3.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
+                  {t.product.specifications}
+                </h2>
+                <dl>
+                  {specs.map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="grid gap-4 border-b border-line-soft bg-ink px-4 py-3 text-[13.5px] last:border-b-0 sm:grid-cols-[minmax(140px,220px)_1fr]"
+                    >
+                      <dt className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-paper-faint">
+                        {key.replace(/([A-Z])/g, " $1").toLowerCase()}
+                      </dt>
+                      <dd className="text-paper-soft">{String(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ) : null}
+
+            {product.prepBufferDays || product.cleanupBufferDays ? (
+              <section className="mt-8 border border-line">
+                <h2 className="border-b border-line px-4 py-3.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
+                  Turnaround
+                </h2>
+                <div className="grid gap-4 bg-ink px-4 py-3 text-[13.5px] sm:grid-cols-[minmax(140px,220px)_1fr]">
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-paper-faint">
+                    Buffer
+                  </span>
+                  <span className="text-paper-soft">
+                    {product.prepBufferDays} day
+                    {product.prepBufferDays === 1 ? "" : "s"} before ·{" "}
+                    {product.cleanupBufferDays} day
+                    {product.cleanupBufferDays === 1 ? "" : "s"} cleanup after. Those days show as
+                    blocked on the board — the buffer is set per item, not guessed.
+                  </span>
                 </div>
-              ))}
-            </dl>
-          </div>
-        ) : null}
+              </section>
+            ) : null}
 
-        {product.prepBufferDays || product.cleanupBufferDays ? (
-          <p className="mt-8 max-w-2xl text-xs text-[var(--color-muted-foreground)]">
-            We reserve {product.prepBufferDays} day(s) before and {product.cleanupBufferDays}{" "}
-            day(s) after each booking to prepare and clean this item, so those days show as
-            unavailable in the calendar.
-          </p>
-        ) : null}
-      </div>
-
-      {/* On mobile the panel sits below the detail; on desktop it stays alongside it. */}
-      <aside className="lg:sticky lg:top-24 lg:self-start">
-        {soldOut ? (
-          <Banner tone="warning" title={t.product.soldOutTitle} className="mb-4">
-            {t.product.soldOutBody}
-          </Banner>
-        ) : null}
-        <ProductBooking
-          product={product}
-          initialCalendar={calendar}
-          deliveryEnabled={bootstrap?.features.deliveryEnabled ?? false}
-          currency={currency}
-          locale={locale}
-          t={t}
-        />
-      </aside>
+            {(product.upsells ?? []).length > 0 ? (
+              <section className="mt-8">
+                <h2 className="mb-3.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
+                  {t.product.addToBooking}
+                </h2>
+                <div className="grid gap-px border border-line bg-line [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+                  {(product.upsells ?? []).map((link) => (
+                    <Link
+                      key={link.upsellProduct.id}
+                      href={`/product/${link.upsellProduct.slug}`}
+                      className="flex flex-col gap-2 bg-ink-raised p-4 transition-colors duration-instant hover:bg-ink-hover"
+                    >
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-paper-faint">
+                        {link.upsellProduct.slug}
+                      </span>
+                      <span className="text-[15px] font-semibold tracking-[-0.015em]">
+                        {link.upsellProduct.name}
+                      </span>
+                      <span className="font-mono text-[13px] text-signal">
+                        <Money
+                          amountMinor={link.upsellProduct.priceMinor}
+                          currency={link.upsellProduct.currency ?? currency}
+                          locale={locale}
+                        />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </>
+        }
+      />
     </article>
   );
 }

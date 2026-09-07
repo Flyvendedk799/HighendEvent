@@ -1,5 +1,14 @@
 // Foundations
-export { cx, focusRing, tabularNums, type ClassValue } from "./utils";
+export {
+  cx,
+  focusRing,
+  hairlineGrid,
+  monoLabel,
+  panel,
+  rowHeights,
+  tabularNums,
+  type ClassValue,
+} from "./utils";
 
 // Actions
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from "./button";
@@ -11,6 +20,7 @@ export {
   Textarea,
   Select,
   Checkbox,
+  QuantityStepper,
   controlClasses,
   type InputProps,
   type TextareaProps,
@@ -32,7 +42,14 @@ export {
   type SectionProps,
   type BreadcrumbItem,
 } from "./page";
-export { AppShell, type AppShellProps, type NavItem, type NavGroup } from "./app-shell";
+export {
+  AppShell,
+  ShellBrand,
+  ShellStatus,
+  type AppShellProps,
+  type NavItem,
+  type NavGroup,
+} from "./app-shell";
 
 // Surfaces
 export {
@@ -40,10 +57,12 @@ export {
   CardHeader,
   CardTitle,
   CardContent,
+  Panel,
   type CardProps,
   type CardHeaderProps,
   type CardTitleProps,
   type CardContentProps,
+  type PanelProps,
 } from "./card";
 
 // Data display
@@ -61,11 +80,13 @@ export {
   type ThProps,
   type TdProps,
 } from "./table";
-export { Badge, type BadgeProps, type BadgeTone } from "./badge";
+export { Badge, LiveDot, type BadgeProps, type BadgeTone } from "./badge";
 export {
   Money,
   StatCard,
+  StatStrip,
   StatusBadge,
+  StatusText,
   DateRange,
   formatMoneyMinor,
   statusLabel,
@@ -77,6 +98,7 @@ export {
 // Feedback
 export {
   EmptyState,
+  Meter,
   Skeleton,
   TableSkeleton,
   Banner,
@@ -110,17 +132,25 @@ export {
   FilterBar,
   SearchInput,
   Pagination,
+  ScopeSwitch,
   Switch,
   type PaginationProps,
   type SwitchProps,
 } from "./filters";
 
-// Availability calendar
+// Availability calendar and the occupancy board it shares with the console
 export {
   Calendar,
   CalendarLegend,
+  OccupancyBoard,
+  BoardLegend,
+  countBars,
   eachIsoDate,
   type CalendarProps,
   type DayState,
   type DateRangeValue,
+  type BoardBar,
+  type BoardRow,
+  type BoardTone,
+  type OccupancyBoardProps,
 } from "./calendar";

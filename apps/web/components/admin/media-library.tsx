@@ -100,7 +100,7 @@ export function MediaLibrary({
         )}
 
         {uploading.length > 0 ? (
-          <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+          <p className="mt-2 font-mono text-[11px] text-paper-faint">
             Uploading {uploading.join(", ")}…
           </p>
         ) : null}
@@ -134,17 +134,17 @@ export function MediaLibrary({
             {assets.map((asset) => (
               <li
                 key={asset.id}
-                className="overflow-hidden rounded-lg border border-[var(--color-border)]"
+                className="overflow-hidden border border-line"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={asset.url}
                   alt={asset.alt ?? ""}
-                  className="aspect-square w-full bg-[var(--color-muted)] object-cover"
+                  className="aspect-square w-full bg-ink-hover object-cover"
                   loading="lazy"
                 />
                 <div className="flex items-center justify-between gap-1 p-2">
-                  <span className="truncate text-[11px] text-[var(--color-muted-foreground)]">
+                  <span className="truncate text-[11px] text-paper-mute">
                     {asset.alt || asset.key.split("/").pop()}
                   </span>
                   <DeleteAsset asset={asset} />
@@ -165,7 +165,7 @@ function DeleteAsset({ asset }: { asset: MediaAsset }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="h-6 px-1 text-red-600">
+        <Button size="sm" variant="ghost" className="h-6 px-1 text-danger">
           Delete
         </Button>
       }

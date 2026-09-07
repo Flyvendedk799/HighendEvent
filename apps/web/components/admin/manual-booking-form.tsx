@@ -126,7 +126,7 @@ export function ManualBookingForm({
           />
 
           {lines.length === 0 ? (
-            <p className="py-4 text-sm text-[var(--color-muted-foreground)]">
+            <p className="py-4 text-[13.5px] text-paper-mute">
               No items yet. Add what the customer is renting.
             </p>
           ) : (
@@ -177,7 +177,7 @@ export function ManualBookingForm({
                       </Button>
                     </div>
                     {conflict ? (
-                      <p className="text-xs font-medium text-amber-700">{conflict.message}</p>
+                      <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-warn">{conflict.message}</p>
                     ) : null}
                   </li>
                 );
@@ -247,11 +247,11 @@ export function ManualBookingForm({
           {previewError ? <Banner tone="danger">{previewError}</Banner> : null}
 
           {previewing ? (
-            <p className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)]">
+            <p className="flex items-center gap-2 text-[13.5px] text-paper-mute">
               <Spinner /> Checking availability and pricing…
             </p>
           ) : quote ? (
-            <dl className="space-y-1.5 text-sm">
+            <dl className="space-y-1.5 text-[13.5px]">
               {quote.lineItems.map((line, i) => (
                 <Row
                   key={i}
@@ -271,21 +271,21 @@ export function ManualBookingForm({
                   value={<Money amountMinor={quote.taxMinor} currency={currency} />}
                 />
               ) : null}
-              <div className="mt-2 flex items-baseline justify-between border-t border-[var(--color-border)] pt-2">
+              <div className="mt-2 flex items-baseline justify-between border-t border-line pt-2">
                 <dt className="font-semibold">Total</dt>
-                <dd className="text-lg font-semibold">
+                <dd className="font-mono text-[17px] font-medium tabular-nums">
                   <Money amountMinor={quote.totalMinor} currency={currency} />
                 </dd>
               </div>
               {quote.remainingMinor > 0 ? (
-                <p className="pt-1 text-xs text-[var(--color-muted-foreground)]">
+                <p className="pt-1 font-mono text-[11px] text-paper-faint">
                   Deposit of <Money amountMinor={quote.upfrontMinor} currency={currency} /> due
                   first.
                 </p>
               ) : null}
             </dl>
           ) : (
-            <p className="text-sm text-[var(--color-muted-foreground)]">
+            <p className="text-[13.5px] text-paper-mute">
               Choose dates and items to see the price.
             </p>
           )}
@@ -315,7 +315,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
 function Row({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="min-w-0 truncate text-[var(--color-muted-foreground)]">{label}</dt>
+      <dt className="min-w-0 truncate text-paper-mute">{label}</dt>
       <dd className="tabular">{value}</dd>
     </div>
   );

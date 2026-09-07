@@ -86,10 +86,12 @@ export function useToast(): ToastContextValue {
   return ctx;
 }
 
-const toneStyles: Record<ToastTone, string> = {
-  success: "border-teal-200 bg-white text-teal-900",
-  error: "border-red-200 bg-white text-red-900",
-  info: "border-slate-200 bg-white text-slate-900",
+
+/* A toast is a receipt, not a decoration: one hairline, one tinted edge, no colour wash. */
+const toneStyles: Record<ToastTone, { box: string; glyph: string }> = {
+  success: { box: "border-signal-line", glyph: "text-signal" },
+  error: { box: "border-danger-line", glyph: "text-danger" },
+  info: { box: "border-line-strong", glyph: "text-paper-mute" },
 };
 
 function ToastViewport({
@@ -103,33 +105,32 @@ function ToastViewport({
     <div
       aria-live="polite"
       aria-atomic="false"
-      className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-[min(22rem,calc(100vw-2rem))] flex-col gap-2"
+      className="pointer-events-none fixed bottom-5 right-5 z-[60] flex w-[min(23rem,calc(100vw-2.5rem))] flex-col gap-2"
     >
       {toasts.map((toast) => (
         <div
           key={toast.id}
           role={toast.tone === "error" ? "alert" : "status"}
           className={cx(
-            "pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg",
-            "animate-[fade-up_180ms_ease-out]",
-            toneStyles[toast.tone],
+            "pointer-events-auto flex animate-fade-up items-start gap-3 border bg-ink-raised px-4 py-3.5 text-[13.5px] shadow-panel",
+            toneStyles[toast.tone].box,
           )}
         >
           <ToneGlyph tone={toast.tone} />
           <div className="min-w-0 flex-1">
-            <p className="font-medium">{toast.title}</p>
+            <p className="text-paper">{toast.title}</p>
             {toast.description ? (
-              <p className="mt-0.5 text-xs text-slate-600">{toast.description}</p>
+              <p className="mt-1 text-[12px] leading-snug text-paper-mute">{toast.description}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={() => onDismiss(toast.id)}
             aria-label="Dismiss"
-            className="-mr-1 -mt-0.5 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="-mr-1 -mt-0.5 shrink-0 p-1 text-paper-faint transition-colors duration-instant hover:text-signal"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />
             </svg>
           </button>
         </div>
@@ -139,15 +140,18 @@ function ToastViewport({
 }
 
 function ToneGlyph({ tone }: { tone: ToastTone }) {
-  const color =
-    tone === "success" ? "text-teal-600" : tone === "error" ? "text-red-600" : "text-slate-500";
   return (
-    <svg className={cx("mt-0.5 h-4 w-4 shrink-0", color)} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
+    <svg
+      className={cx("mt-0.5 h-4 w-4 shrink-0", toneStyles[tone].glyph)}
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+    >
+      <rect x="2.5" y="2.5" width="15" height="15" stroke="currentColor" strokeWidth="1.5" />
       {tone === "success" ? (
-        <path d="m6.5 10 2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="m6.5 10 2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
       ) : (
-        <path d="M10 6v5M10 13.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M10 6v5M10 13.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
       )}
     </svg>
   );

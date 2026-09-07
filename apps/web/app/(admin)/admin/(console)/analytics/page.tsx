@@ -138,13 +138,13 @@ export default async function AdminAnalyticsPage() {
             title="Booked together"
             description="Items that regularly appear on the same booking — worth bundling."
           />
-          <ul className="space-y-1.5 text-sm">
+          <ul className="space-y-1.5 text-[13.5px]">
             {pairs.map((pair) => (
               <li key={pair.names.join()} className="flex justify-between gap-3">
                 <span className="min-w-0 truncate">
                   {pair.names[0]} + {pair.names[1]}
                 </span>
-                <span className="shrink-0 tabular text-[var(--color-muted-foreground)]">
+                <span className="shrink-0 tabular text-paper-mute">
                   {pair.count} booking{pair.count === 1 ? "" : "s"}
                 </span>
               </li>

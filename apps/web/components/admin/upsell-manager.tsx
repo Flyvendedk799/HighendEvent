@@ -77,7 +77,7 @@ export function UpsellManager({
                       {upsell.name}
                     </button>
                     {upsell.description ? (
-                      <span className="block max-w-md truncate text-xs text-[var(--color-muted-foreground)]">
+                      <span className="block max-w-md truncate font-mono text-[11px] text-paper-faint">
                         {upsell.description}
                       </span>
                     ) : null}
@@ -129,7 +129,7 @@ function DeleteUpsell({ upsell }: { upsell: UpsellProduct }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="text-red-600">
+        <Button size="sm" variant="ghost" className="text-danger">
           Delete
         </Button>
       }

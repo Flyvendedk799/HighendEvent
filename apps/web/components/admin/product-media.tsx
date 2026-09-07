@@ -120,7 +120,7 @@ export function ProductMedia({
             {images.map((image, index) => (
               <li
                 key={image.id}
-                className="group relative overflow-hidden rounded-lg border border-[var(--color-border)]"
+                className="group relative overflow-hidden border border-line"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -130,7 +130,7 @@ export function ProductMedia({
                   loading="lazy"
                 />
                 {index === 0 ? (
-                  <span className="absolute left-2 top-2 rounded bg-slate-900/80 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                  <span className="absolute left-2 top-2 bg-ink/85 px-2 py-1 font-mono text-[9.5px] uppercase tracking-[0.12em] text-paper">
                     Primary
                   </span>
                 ) : null}
@@ -139,7 +139,7 @@ export function ProductMedia({
                     aria-label="Alt text"
                     defaultValue={image.alt}
                     placeholder="Describe the photo"
-                    className="h-8 text-xs"
+                    className="h-8 text-[11.5px]"
                     onBlur={(e) => {
                       const alt = e.target.value.trim();
                       if (alt !== image.alt) {
@@ -170,7 +170,7 @@ export function ProductMedia({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-red-600"
+                      className="text-danger"
                       disabled={pending}
                       onClick={() =>
                         run(
@@ -208,7 +208,7 @@ export function ProductMedia({
         )}
 
         {uploading.length > 0 ? (
-          <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+          <p className="mt-2 font-mono text-[11px] text-paper-faint">
             Uploading {uploading.join(", ")}…
           </p>
         ) : null}

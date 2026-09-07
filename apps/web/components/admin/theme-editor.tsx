@@ -8,85 +8,82 @@ import {
   Card,
   CardHeader,
   Input,
-  Select,
+  LiveDot,
+  cx,
   useToast,
 } from "@rentora/ui";
 import { updateThemeAction, type StoreSettings } from "@/lib/actions/store";
 
-const COLOR_FIELDS = [
-  { key: "primary", label: "Primary", hint: "Buttons, links, selected dates." },
-  { key: "accent", label: "Accent", hint: "Badges and highlights." },
-  { key: "foreground", label: "Text", hint: "Body copy and headings." },
-  { key: "background", label: "Page background", hint: "Behind everything." },
-  { key: "surface", label: "Cards", hint: "Panels and cards on the page." },
-] as const;
-
-const PRESETS: Array<{ name: string; tokens: Record<string, string> }> = [
-  {
-    name: "Teal (default)",
-    tokens: {
-      primary: "#0F766E",
-      accent: "#F59E0B",
-      foreground: "#0F172A",
-      background: "#F8FAFC",
-      surface: "#FFFFFF",
-    },
-  },
-  {
-    name: "Ink",
-    tokens: {
-      primary: "#1E293B",
-      accent: "#D97706",
-      foreground: "#0B1220",
-      background: "#F5F5F4",
-      surface: "#FFFFFF",
-    },
-  },
-  {
-    name: "Rose",
-    tokens: {
-      primary: "#BE123C",
-      accent: "#F59E0B",
-      foreground: "#1F2937",
-      background: "#FFF7F7",
-      surface: "#FFFFFF",
-    },
-  },
-  {
-    name: "Forest",
-    tokens: {
-      primary: "#166534",
-      accent: "#CA8A04",
-      foreground: "#14261A",
-      background: "#F6FAF6",
-      surface: "#FFFFFF",
-    },
-  },
+/**
+ * A tenant gets one colour.
+ *
+ * alarent is a single visual system — near-black ground, hairline grid, one acid signal — and a
+ * shop looking like itself means moving the signal, not repainting the board. Ink and paper are
+ * not editable: the storefront's availability grid and the warehouse console are the same
+ * primitive, and a shop that picked a pale background would break the one screen that has to
+ * stay readable at arm's length in a van.
+ */
+const PRESETS: Array<{ name: string; signal: string }> = [
+  { name: "Acid", signal: "#D7FF3E" },
+  { name: "Sodium", signal: "#FFB020" },
+  { name: "Hazard", signal: "#FF6A52" },
+  { name: "Ice", signal: "#7DE2FF" },
+  { name: "Mint", signal: "#4BE0A8" },
+  { name: "Bone", signal: "#EDEEEA" },
 ];
 
 function normalise(value: string): string {
   const trimmed = value.trim();
-  return trimmed.startsWith("#") ? trimmed.toUpperCase() : `#${trimmed.toUpperCase()}`;
+  return (trimmed.startsWith("#") ? trimmed : `#${trimmed}`).toUpperCase();
+}
+
+function isHex(value: string): boolean {
+  return /^#[0-9A-F]{6}$/i.test(value);
+}
+
+function channels(hex: string): [number, number, number] {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function luminance(hex: string): number {
+  const parts = channels(hex).map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2];
+}
+
+/** Contrast against the page ground — the number that decides whether a chip is readable. */
+function contrastOnInk(hex: string): number {
+  const ink = 0.0055;
+  const l = luminance(hex);
+  return (Math.max(l, ink) + 0.05) / (Math.min(l, ink) + 0.05);
+}
+
+function inkOn(hex: string): string {
+  return luminance(hex) > 0.45 ? "#0C0D0F" : "#EDEEEA";
 }
 
 export function ThemeEditor({ store }: { store: StoreSettings }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
 
-  const initial: Record<string, string> = {
-    ...PRESETS[0]!.tokens,
-    ...(store.brandColors ?? {}),
-    ...(store.theme?.tokens ?? {}),
-  };
+  const stored = { ...(store.brandColors ?? {}), ...(store.theme?.tokens ?? {}) };
+  const initialSignal = normalise(stored.signal ?? stored.primary ?? PRESETS[0]!.signal);
 
-  const [tokens, setTokens] = useState<Record<string, string>>(initial);
-  const [radius, setRadius] = useState(initial.radius ?? "lg");
+  const [signal, setSignal] = useState(initialSignal);
   const [logoUrl, setLogoUrl] = useState(store.logoUrl ?? "");
   const [faviconUrl, setFaviconUrl] = useState(store.faviconUrl ?? "");
   const [error, setError] = useState<string | null>(null);
 
+  const valid = isHex(signal);
+  const contrast = valid ? contrastOnInk(signal) : 0;
   const dirty =
-    JSON.stringify({ ...tokens, radius }) !== JSON.stringify({ ...initial, radius: initial.radius ?? "lg" }) ||
+    signal !== initialSignal ||
     logoUrl !== (store.logoUrl ?? "") ||
     faviconUrl !== (store.faviconUrl ?? "");
 
@@ -94,7 +91,8 @@ export function ThemeEditor({ store }: { store: StoreSettings }) {
     setError(null);
     startTransition(async () => {
       const result = await updateThemeAction({
-        tokens: { ...tokens, radius },
+        // `primary` is written alongside `signal` so an older storefront build still reads it.
+        tokens: { signal, primary: signal },
         logoUrl: logoUrl || null,
         faviconUrl: faviconUrl || null,
       });
@@ -108,91 +106,80 @@ export function ThemeEditor({ store }: { store: StoreSettings }) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-      <div className="space-y-6">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+      <div className="space-y-5">
         {error ? <Banner tone="danger">{error}</Banner> : null}
 
         <Card>
-          <CardHeader title="Start from a palette" />
-          <div className="grid grid-cols-2 gap-2">
+          <CardHeader
+            title="Your signal colour"
+            description="Lime by default. It marks anything live, selected or actionable — buttons, the selected dates on the calendar, a confirmed booking on the board."
+          />
+          <div className="grid grid-cols-3 gap-2">
             {PRESETS.map((preset) => (
               <button
                 key={preset.name}
                 type="button"
-                onClick={() => setTokens({ ...tokens, ...preset.tokens })}
-                className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-left text-sm hover:border-[var(--color-primary)]"
+                onClick={() => setSignal(preset.signal)}
+                aria-pressed={signal === preset.signal}
+                className={cx(
+                  "flex items-center gap-2.5 border px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.12em] transition-colors duration-instant",
+                  signal === preset.signal
+                    ? "border-signal text-paper"
+                    : "border-line-strong text-paper-mute hover:border-paper-ghost",
+                )}
               >
-                <span className="flex gap-0.5">
-                  {["primary", "accent", "foreground"].map((key) => (
-                    <span
-                      key={key}
-                      className="h-4 w-4 rounded-full border border-black/10"
-                      style={{ background: preset.tokens[key] }}
-                    />
-                  ))}
-                </span>
+                <span
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 border border-line-strong"
+                  style={{ background: preset.signal }}
+                />
                 <span className="truncate">{preset.name}</span>
               </button>
             ))}
           </div>
-        </Card>
 
-        <Card>
-          <CardHeader title="Colours" />
-          <div className="space-y-3">
-            {COLOR_FIELDS.map((field) => (
-              <div key={field.key} className="flex items-center gap-3">
-                <input
-                  type="color"
-                  aria-label={field.label}
-                  value={tokens[field.key] ?? "#000000"}
-                  onChange={(e) =>
-                    setTokens((current) => ({ ...current, [field.key]: e.target.value.toUpperCase() }))
-                  }
-                  className="h-9 w-12 shrink-0 cursor-pointer rounded border border-[var(--color-border)] bg-transparent p-0.5"
-                />
-                <div className="min-w-0 flex-1">
-                  <Input
-                    aria-label={`${field.label} hex`}
-                    value={tokens[field.key] ?? ""}
-                    onChange={(e) =>
-                      setTokens((current) => ({
-                        ...current,
-                        [field.key]: normalise(e.target.value),
-                      }))
-                    }
-                    className="h-8 font-mono text-xs"
-                  />
-                  <p className="mt-0.5 text-[11px] text-[var(--color-muted-foreground)]">
-                    {field.label} — {field.hint}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Shape and brand marks" />
-          <div className="space-y-4">
-            <Select
-              label="Corner rounding"
-              value={radius}
-              onChange={(e) => setRadius(e.target.value)}
-              options={[
-                { value: "none", label: "Square" },
-                { value: "sm", label: "Subtle" },
-                { value: "md", label: "Rounded" },
-                { value: "lg", label: "Soft (default)" },
-                { value: "xl", label: "Very soft" },
-              ]}
+          <div className="mt-4 flex items-end gap-3">
+            <input
+              type="color"
+              aria-label="Signal colour"
+              value={valid ? signal : "#D7FF3E"}
+              onChange={(e) => setSignal(e.target.value.toUpperCase())}
+              className="h-10 w-14 shrink-0 cursor-pointer border border-line-strong bg-transparent p-1"
             />
+            <Input
+              label="Hex"
+              aria-label="Signal colour hex"
+              value={signal}
+              onChange={(e) => setSignal(normalise(e.target.value))}
+              error={valid ? undefined : "Six-digit hex, e.g. #D7FF3E"}
+            />
+          </div>
+
+          {valid ? (
+            <p
+              className={cx(
+                "mt-3 font-mono text-[11px]",
+                contrast >= 4.5 ? "text-paper-mute" : "text-warn",
+              )}
+            >
+              {contrast.toFixed(1)}:1 against the page.{" "}
+              {contrast >= 4.5
+                ? "Readable as text and as a chip."
+                : "Too dark to read as text on the page — it will still work as a button fill, but status words in this colour will be hard to read."}
+            </p>
+          ) : null}
+        </Card>
+
+        <Card>
+          <CardHeader title="Brand marks" />
+          <div className="space-y-4">
             <Input
               label="Logo URL"
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
               placeholder="https://…"
-              hint="Shown instead of your store name in the header."
+              hint="Shown instead of your store name in the header. A light mark on a dark ground."
             />
             <Input
               label="Favicon URL"
@@ -204,18 +191,17 @@ export function ThemeEditor({ store }: { store: StoreSettings }) {
         </Card>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-[var(--color-muted-foreground)]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint">
             {dirty ? "Unsaved changes" : "Everything saved"}
           </p>
-          <Button onClick={save} loading={pending} disabled={!dirty}>
+          <Button onClick={save} loading={pending} disabled={!dirty || !valid}>
             Save theme
           </Button>
         </div>
       </div>
 
       <ThemePreview
-        tokens={tokens}
-        radius={radius}
+        signal={valid ? signal : "#D7FF3E"}
         storeName={store.name}
         logoUrl={logoUrl}
         currency={store.currency}
@@ -224,130 +210,96 @@ export function ThemeEditor({ store }: { store: StoreSettings }) {
   );
 }
 
-const RADIUS_SCALE: Record<string, string> = {
-  none: "0px",
-  sm: "0.25rem",
-  md: "0.5rem",
-  lg: "0.75rem",
-  xl: "1rem",
-};
-
 /**
- * A miniature of the real storefront chrome. It uses the same tokens the storefront reads, so
- * what is previewed here is what shoppers get.
+ * A miniature of the real storefront chrome, driven by the same variables the storefront reads,
+ * so what is previewed here is what shoppers get — including the calendar, which is the screen
+ * the colour choice actually matters on.
  */
 function ThemePreview({
-  tokens,
-  radius,
+  signal,
   storeName,
   logoUrl,
   currency,
 }: {
-  tokens: Record<string, string>;
-  radius: string;
+  signal: string;
   storeName: string;
   logoUrl: string;
   currency: string;
 }) {
-  const style = {
-    "--p": tokens.primary ?? "#0F766E",
-    "--a": tokens.accent ?? "#F59E0B",
-    "--fg": tokens.foreground ?? "#0F172A",
-    "--bg": tokens.background ?? "#F8FAFC",
-    "--sf": tokens.surface ?? "#FFFFFF",
-    "--r": RADIUS_SCALE[radius] ?? "0.75rem",
-  } as React.CSSProperties;
+  const ink = inkOn(signal);
+  const style = { "--signal": signal, "--signal-ink": ink } as React.CSSProperties;
 
   return (
-    <div className="lg:sticky lg:top-20 lg:self-start">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
+    <div className="lg:sticky lg:top-[76px] lg:self-start">
+      <p className="mb-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-paper-mute">
         Storefront preview
       </p>
-      <div
-        style={style}
-        className="overflow-hidden rounded-xl border border-[var(--color-border)] shadow-sm"
-      >
-        <div
-          style={{ background: "var(--sf)", color: "var(--fg)" }}
-          className="flex items-center justify-between border-b border-black/5 px-4 py-3"
-        >
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="" className="h-6 w-auto max-w-[120px] object-contain" />
-          ) : (
-            <span className="font-display text-base font-semibold">{storeName}</span>
-          )}
-          <span className="flex items-center gap-3 text-xs opacity-70">
-            <span>Catalog</span>
-            <span>Cart</span>
+
+      <div style={style} className="border border-line bg-ink">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3 font-mono text-[10px] uppercase tracking-[0.12em] text-paper-mute">
+          <span className="flex items-center gap-2.5 text-paper">
+            <LiveDot />
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="" className="h-5 w-auto max-w-[110px] object-contain" />
+            ) : (
+              <span className="font-semibold tracking-[0.2em]">{storeName}</span>
+            )}
+          </span>
+          <span className="flex gap-4">
+            <span>Catalogue</span>
+            <span>Cart · 2</span>
           </span>
         </div>
 
-        <div style={{ background: "var(--bg)", color: "var(--fg)" }} className="p-4">
-          <div
-            style={{ background: "var(--fg)", borderRadius: "var(--r)" }}
-            className="p-5 text-white"
-          >
-            <p className="text-[10px] uppercase tracking-widest opacity-60">{storeName}</p>
-            <p className="mt-1 font-display text-lg font-semibold">
-              Everything your event needs
-            </p>
-            <span
-              style={{ background: "var(--p)", borderRadius: "var(--r)" }}
-              className="mt-3 inline-block px-3 py-1.5 text-xs font-medium text-white"
-            >
-              Browse the catalog
-            </span>
-          </div>
+        <div className="p-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-signal">
+            {storeName}
+          </p>
+          <p className="mt-2.5 text-[22px] font-semibold leading-none tracking-[-0.03em]">
+            Everything your event needs
+          </p>
+          <span className="mt-4 inline-block bg-signal px-4 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-signal-ink">
+            Browse the catalogue
+          </span>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-5 grid grid-cols-2 gap-px border border-line bg-line">
             {[1, 2].map((i) => (
-              <div
-                key={i}
-                style={{ background: "var(--sf)", borderRadius: "var(--r)" }}
-                className="overflow-hidden border border-black/5"
-              >
-                <div
-                  style={{ background: "var(--bg)" }}
-                  className="flex aspect-[4/3] items-center justify-center text-[10px] opacity-40"
-                >
-                  Photo
+              <div key={i} className="bg-ink-raised">
+                <div className="flex aspect-[4/3] items-center justify-center border-b border-line bg-ink-sunk plate">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-paper-ghost">
+                    photo
+                  </span>
                 </div>
-                <div className="p-2.5">
-                  <p className="text-xs font-semibold">Marquee {i}</p>
-                  <p className="mt-1 text-[11px] opacity-60">
-                    From 2,500 {currency} / day
+                <div className="p-3">
+                  <p className="text-[13px] font-semibold tracking-[-0.015em]">Marquee {i}</p>
+                  <p className="mt-1.5 font-mono text-[11px] tabular-nums text-paper-mute">
+                    2.500 {currency} <span className="text-paper-faint">/ day</span>
                   </p>
-                  <span
-                    style={{ background: "var(--a)", borderRadius: "var(--r)" }}
-                    className="mt-2 inline-block px-1.5 py-0.5 text-[9px] font-semibold text-slate-900"
-                  >
-                    Tents
+                  <span className="mt-2 inline-block border border-signal-line bg-signal-tint px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-signal">
+                    4 in fleet
                   </span>
                 </div>
               </div>
             ))}
           </div>
 
-          <div
-            style={{ background: "var(--sf)", borderRadius: "var(--r)" }}
-            className="mt-4 border border-black/5 p-3"
-          >
-            <p className="text-[11px] font-semibold">Choose your dates</p>
-            <div className="mt-2 grid grid-cols-7 gap-1">
+          <div className="mt-4 border border-line bg-ink-raised">
+            <p className="border-b border-line px-3 py-2.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-mute">
+              Choose your dates
+            </p>
+            <div className="grid grid-cols-7">
               {Array.from({ length: 21 }, (_, i) => (
                 <span
                   key={i}
-                  style={{
-                    background: i >= 8 && i <= 10 ? "var(--p)" : "transparent",
-                    color: i >= 8 && i <= 10 ? "#fff" : undefined,
-                    borderRadius: "calc(var(--r) / 2)",
-                  }}
-                  className={
-                    i === 3 || i === 15
-                      ? "flex h-6 items-center justify-center text-[9px] opacity-25"
-                      : "flex h-6 items-center justify-center text-[9px]"
-                  }
+                  className={cx(
+                    "flex aspect-[1/0.86] items-start border-b border-l border-line-soft px-1.5 py-1 font-mono text-[10px] tabular-nums",
+                    i >= 8 && i <= 10
+                      ? "bg-signal text-signal-ink"
+                      : i === 3 || i === 15
+                        ? "bg-danger-tint text-[#FF8A72]"
+                        : "text-paper-soft",
+                  )}
                 >
                   {i + 1}
                 </span>
@@ -357,9 +309,9 @@ function ThemePreview({
         </div>
       </div>
 
-      <p className="mt-3 flex items-center gap-2 text-xs text-[var(--color-muted-foreground)]">
-        <Badge tone="neutral">Live</Badge>
-        Saving applies these colours to your storefront immediately.
+      <p className="mt-3.5 flex items-center gap-2.5 text-[12.5px] text-paper-mute">
+        <Badge tone="success">Live</Badge>
+        Saving applies this colour to your storefront immediately.
       </p>
     </div>
   );

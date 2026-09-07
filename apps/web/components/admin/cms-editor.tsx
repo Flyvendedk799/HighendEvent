@@ -47,7 +47,7 @@ export function CmsEditor({ pages }: { pages: CmsPage[] }) {
         </Button>
 
         {pages.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted-foreground)]">No pages yet.</p>
+          <p className="text-[13.5px] text-paper-mute">No pages yet.</p>
         ) : (
           <ul className="space-y-1">
             {pages.map((page) => (
@@ -57,12 +57,12 @@ export function CmsEditor({ pages }: { pages: CmsPage[] }) {
                   onClick={() => setSelectedId(page.id)}
                   className={
                     selectedId === page.id
-                      ? "w-full rounded-lg bg-[var(--color-muted)] px-3 py-2 text-left text-sm font-medium"
-                      : "w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[var(--color-muted)]"
+                      ? "w-full bg-ink-hover px-3 py-2 text-left text-[13.5px] font-medium"
+                      : "w-full px-3 py-2 text-left text-[13.5px] hover:bg-ink-hover"
                   }
                 >
                   <span className="block truncate">{page.title}</span>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)]">
+                  <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-paper-faint">
                     /pages/{page.slug}
                     {!page.isPublished ? (
                       <Badge tone="neutral" className="text-[10px]">
@@ -170,7 +170,7 @@ function PageForm({
             page ? (
               <Link
                 href={`/pages/${page.slug}`}
-                className="text-sm font-medium text-[var(--color-primary)] hover:underline"
+                className="text-[13.5px] font-medium text-signal hover:underline"
               >
                 View →
               </Link>
@@ -212,7 +212,7 @@ function PageForm({
         />
 
         {sections.length === 0 ? (
-          <p className="py-3 text-sm text-[var(--color-muted-foreground)]">
+          <p className="py-3 text-[13.5px] text-paper-mute">
             No content yet. Add a block below.
           </p>
         ) : (
@@ -220,7 +220,7 @@ function PageForm({
             {sections.map((section, index) => (
               <li
                 key={index}
-                className="rounded-lg border border-[var(--color-border)] p-4"
+                className="border border-line p-4"
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <Badge tone="neutral">{TYPE_LABELS[section.type]}</Badge>
@@ -249,7 +249,7 @@ function PageForm({
                       size="icon"
                       variant="ghost"
                       aria-label="Remove block"
-                      className="h-7 w-7 text-red-600"
+                      className="h-7 w-7 text-danger"
                       onClick={() =>
                         setSections((current) => current.filter((_, i) => i !== index))
                       }
@@ -317,7 +317,7 @@ function PageForm({
           {page ? (
             <ConfirmDialog
               trigger={
-                <Button variant="ghost" className="text-red-600">
+                <Button variant="ghost" className="text-danger">
                   Delete
                 </Button>
               }
@@ -397,7 +397,7 @@ function SectionFields({
           onChange={(e) => onChange({ ...section, heading: e.target.value })}
         />
         {section.items.map((item, i) => (
-          <div key={i} className="rounded-md bg-[var(--color-muted)] p-3">
+          <div key={i} className="bg-ink-hover p-3">
             <Input
               label="Question"
               value={item.q}
@@ -428,7 +428,7 @@ function SectionFields({
             <Button
               size="sm"
               variant="ghost"
-              className="mt-1 text-red-600"
+              className="mt-1 text-danger"
               onClick={() =>
                 onChange({ ...section, items: section.items.filter((_, j) => j !== i) })
               }
@@ -473,7 +473,7 @@ function SectionFields({
             size="icon"
             variant="ghost"
             aria-label="Remove item"
-            className="text-red-600"
+            className="text-danger"
             onClick={() =>
               onChange({ ...section, items: section.items.filter((_, j) => j !== i) })
             }

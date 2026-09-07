@@ -25,7 +25,7 @@ export function BookingSchedule({ booking }: { booking: Booking }) {
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
         Reschedule
       </Button>
-      <p className="text-xs text-[var(--color-muted-foreground)]">
+      <p className="font-mono text-[11px] text-paper-faint">
         Availability is re-checked against every other booking before the change is saved.
       </p>
 

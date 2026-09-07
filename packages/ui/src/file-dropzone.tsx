@@ -60,11 +60,9 @@ export function FileDropzone({
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       className={cx(
-        "rounded-xl border-2 border-dashed p-6 text-center transition-colors",
-        dragging
-          ? "border-[var(--color-primary,#0f766e)] bg-[var(--color-primary,#0f766e)]/5"
-          : "border-[var(--color-border,#cbd5e1)]",
-        disabled ? "opacity-60" : null,
+        "border border-dashed p-7 text-center transition-colors duration-instant",
+        dragging ? "border-signal bg-signal-tint" : "border-line-strong",
+        disabled ? "opacity-50" : null,
         className,
       )}
     >
@@ -81,7 +79,7 @@ export function FileDropzone({
         }}
       />
       <svg
-        className="mx-auto h-8 w-8 text-[var(--color-muted-foreground,#94a3b8)]"
+        className="mx-auto h-7 w-7 text-paper-faint"
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
@@ -90,26 +88,25 @@ export function FileDropzone({
           d="M12 16V4m0 0L8 8m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
           stroke="currentColor"
           strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          strokeLinecap="square"
         />
       </svg>
-      <p className="mt-2 text-sm">
+      <p className="mt-3 text-[13px]">
         <button
           type="button"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
           className={cx(
-            "rounded font-medium text-[var(--color-primary,#0f766e)] underline-offset-4 hover:underline",
+            "font-mono text-[12px] uppercase tracking-[0.14em] text-signal underline-offset-4 hover:underline",
             focusRing,
           )}
         >
           Choose files
         </button>{" "}
-        <span className="text-[var(--color-muted-foreground,#64748b)]">or drag them here</span>
+        <span className="text-paper-mute">or drag them here</span>
       </p>
       {hint ? (
-        <p className="mt-1 text-xs text-[var(--color-muted-foreground,#64748b)]">{hint}</p>
+        <p className="mt-2 text-[12px] text-paper-faint">{hint}</p>
       ) : null}
     </div>
   );

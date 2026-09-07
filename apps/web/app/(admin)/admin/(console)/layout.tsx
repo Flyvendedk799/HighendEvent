@@ -20,13 +20,12 @@ async function attentionCount(): Promise<number> {
   }
 }
 
-async function storeName(): Promise<string> {
+async function loadBootstrap(): Promise<StorefrontBootstrap | null> {
   try {
-    const bootstrap = await serverGet<StorefrontBootstrap>("/storefront/bootstrap");
-    return bootstrap.store.name;
+    return await serverGet<StorefrontBootstrap>("/storefront/bootstrap");
   } catch (err) {
     // A brand-new tenant has no store row yet; the console still has to render.
-    if (isApiError(err)) return "Your store";
+    if (isApiError(err)) return null;
     throw err;
   }
 }
@@ -37,7 +36,7 @@ export default async function AdminConsoleLayout({
   children: React.ReactNode;
 }) {
   const session = await requireStaff();
-  const [name, attention] = await Promise.all([storeName(), attentionCount()]);
+  const [bootstrap, attention] = await Promise.all([loadBootstrap(), attentionCount()]);
 
   async function logout() {
     "use server";
@@ -46,11 +45,13 @@ export default async function AdminConsoleLayout({
 
   return (
     <AdminShell
-      storeName={name}
+      storeName={bootstrap?.store.name ?? "Your store"}
       userName={session.name ?? session.email}
       userEmail={session.email}
       staffRole={session.staffRole ?? "STAFF"}
       attentionCount={attention}
+      payoutsReady={bootstrap?.tenant.connectOnboarded ?? false}
+      primaryDomain={bootstrap?.tenant.primaryDomain ?? null}
       logout={logout}
     >
       {children}

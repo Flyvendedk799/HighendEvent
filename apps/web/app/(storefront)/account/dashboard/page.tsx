@@ -47,10 +47,10 @@ export default async function AccountDashboardPage() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
+          <h1 className="text-[clamp(28px,4vw,44px)] font-semibold leading-[0.98] tracking-[-0.04em]">
             {t.account.hello}, {session.name?.split(" ")[0] ?? ""}
           </h1>
-          <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">{session.email}</p>
+          <p className="mt-1 text-[13.5px] text-paper-mute">{session.email}</p>
         </div>
         <LogoutButton label={t.account.logOut} />
       </div>
@@ -91,12 +91,12 @@ export default async function AccountDashboardPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y divide-[var(--color-border)]">
+            <ul className="divide-y divide-line-soft">
               {bookings.slice(0, 5).map((booking) => (
                 <li key={booking.id} className="flex items-center justify-between gap-3 px-5 py-3">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{booking.bookingNo}</p>
-                    <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+                    <p className="mt-0.5 font-mono text-[11px] text-paper-faint">
                       <DateRange
                         start={booking.startDate}
                         end={booking.endDate}
@@ -109,7 +109,7 @@ export default async function AccountDashboardPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <StatusBadge statusKey={booking.statusKey} />
-                    <span className="text-sm font-medium">
+                    <span className="text-[13.5px] font-medium">
                       <Money
                         amountMinor={booking.totalMinor}
                         currency={booking.currency}
@@ -139,11 +139,11 @@ export default async function AccountDashboardPage() {
             ]}
           />
           {bootstrap?.store.supportEmail ? (
-            <p className="mt-4 text-xs text-[var(--color-muted-foreground)]">
+            <p className="mt-4 font-mono text-[11px] text-paper-faint">
               Need something changed?{" "}
               <a
                 href={`mailto:${bootstrap.store.supportEmail}`}
-                className="text-[var(--color-primary)] hover:underline"
+                className="text-signal hover:underline"
               >
                 Email us
               </a>
@@ -154,7 +154,7 @@ export default async function AccountDashboardPage() {
       </div>
 
       {upcoming.length > 0 ? (
-        <p className="mt-6 text-sm text-[var(--color-muted-foreground)]">
+        <p className="mt-6 text-[13.5px] text-paper-mute">
           <Badge tone="info">Next up</Badge>{" "}
           {upcoming[0]!.items.map((item) => item.nameSnapshot).join(", ")} on{" "}
           <DateRange

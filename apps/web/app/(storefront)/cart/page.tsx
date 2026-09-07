@@ -33,22 +33,29 @@ export default async function CartPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">{t.cart.title}</h1>
-      <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-        {summary.itemCount} item{summary.itemCount === 1 ? "" : "s"}
-      </p>
+      <header className="border-b border-line pb-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
+          {summary.itemCount} item{summary.itemCount === 1 ? "" : "s"} held
+        </p>
+        <h1 className="mt-4 text-[clamp(30px,4.4vw,50px)] font-semibold leading-[0.98] tracking-[-0.04em]">
+          {t.cart.title}
+        </h1>
+      </header>
 
       {summary.issues.length > 0 ? (
-        <Banner tone="warning" title={t.cart.needsAttention} className="mt-5">
-          <ul className="mt-1 list-disc space-y-0.5 pl-4">
+        <Banner tone="warning" title={t.cart.needsAttention} className="mt-6">
+          <ul className="space-y-1">
             {summary.issues.map((issue) => (
-              <li key={issue.itemId}>{issue.message}</li>
+              <li key={issue.itemId} className="flex gap-2.5">
+                <span aria-hidden="true" className="mt-[7px] h-1 w-1 shrink-0 bg-warn" />
+                {issue.message}
+              </li>
             ))}
           </ul>
         </Banner>
       ) : null}
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="mt-7 grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_340px]">
         <CartLines
           items={summary.cart.items}
           issues={summary.issues}

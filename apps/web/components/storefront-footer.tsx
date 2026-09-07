@@ -17,24 +17,31 @@ export function StorefrontFooter({
   t: Dictionary;
 }) {
   return (
-    <footer className="border-t border-[var(--color-border)]/70 bg-[var(--color-surface)]/60">
-      <div className="mx-auto flex max-w-6xl flex-wrap gap-8 px-4 py-10 sm:px-6">
+    <footer className="mt-16 border-t border-line">
+      <div className="mx-auto flex max-w-measure flex-wrap gap-10 px-5 py-12 md:px-gutter">
         <div className="min-w-[220px] flex-1">
-          <p className="font-display text-lg font-semibold">{storeName}</p>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em]">
+            {storeName}
+          </p>
           {tagline ? (
-            <p className="mt-1 max-w-sm text-sm text-[var(--color-muted-foreground)]">{tagline}</p>
+            <p className="mt-3 max-w-[42ch] text-[13.5px] leading-relaxed text-paper-mute">
+              {tagline}
+            </p>
           ) : null}
         </div>
 
         {pages.length > 0 ? (
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-faint">
               {t.common.information}
             </p>
-            <ul className="mt-2 space-y-1.5 text-sm">
+            <ul className="mt-3 space-y-2 text-[13.5px] text-paper-dim">
               {pages.map((page) => (
                 <li key={page.slug}>
-                  <Link href={`/pages/${page.slug}`} className="hover:underline">
+                  <Link
+                    href={`/pages/${page.slug}`}
+                    className="transition-colors duration-instant hover:text-signal"
+                  >
                     {page.title}
                   </Link>
                 </li>
@@ -45,20 +52,26 @@ export function StorefrontFooter({
 
         {supportEmail || supportPhone ? (
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-faint">
               {t.common.contact}
             </p>
-            <ul className="mt-2 space-y-1.5 text-sm">
+            <ul className="mt-3 space-y-2 font-mono text-[12.5px] text-paper-dim">
               {supportEmail ? (
                 <li>
-                  <a href={`mailto:${supportEmail}`} className="hover:underline">
+                  <a
+                    href={`mailto:${supportEmail}`}
+                    className="transition-colors duration-instant hover:text-signal"
+                  >
                     {supportEmail}
                   </a>
                 </li>
               ) : null}
               {supportPhone ? (
                 <li>
-                  <a href={`tel:${supportPhone.replace(/\s/g, "")}`} className="hover:underline">
+                  <a
+                    href={`tel:${supportPhone.replace(/\s/g, "")}`}
+                    className="transition-colors duration-instant hover:text-signal"
+                  >
                     {supportPhone}
                   </a>
                 </li>
@@ -68,8 +81,8 @@ export function StorefrontFooter({
         ) : null}
       </div>
 
-      <div className="border-t border-[var(--color-border)]/60 px-4 py-4 text-center text-xs text-[var(--color-muted-foreground)] sm:px-6">
-        &copy; {new Date().getFullYear()} {storeName}
+      <div className="border-t border-line-soft px-5 py-5 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-paper-faint md:px-gutter">
+        © {new Date().getFullYear()} {storeName}
       </div>
     </footer>
   );

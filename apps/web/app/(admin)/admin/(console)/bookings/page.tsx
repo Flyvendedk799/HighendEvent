@@ -138,22 +138,22 @@ export default async function AdminBookingsPage({
             ...products.map((p) => ({ value: p.id, label: p.name })),
           ]}
         />
-        <label className="flex flex-col gap-1 text-[13px] font-medium">
+        <label className="flex flex-col gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">
           From
           <input
             type="date"
             name="from"
             defaultValue={params.from}
-            className="h-9 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-sm"
+            className="h-10 border border-line-strong bg-ink-sunk px-2.5 font-mono text-[13px] text-paper focus:border-signal focus:outline-none"
           />
         </label>
-        <label className="flex flex-col gap-1 text-[13px] font-medium">
+        <label className="flex flex-col gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-paper-dim">
           To
           <input
             type="date"
             name="to"
             defaultValue={params.to}
-            className="h-9 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-sm"
+            className="h-10 border border-line-strong bg-ink-sunk px-2.5 font-mono text-[13px] text-paper focus:border-signal focus:outline-none"
           />
         </label>
         <Button type="submit" variant="secondary">
@@ -212,18 +212,18 @@ export default async function AdminBookingsPage({
                   <Td>
                     <Link
                       href={`/admin/bookings/${booking.id}`}
-                      className="font-medium hover:underline"
+                      className="font-mono text-[12.5px] transition-colors duration-instant hover:text-signal"
                     >
                       {booking.bookingNo}
                     </Link>
-                    <span className="block text-xs text-[var(--color-muted-foreground)]">
+                    <span className="block font-mono text-[11px] text-paper-faint">
                       {booking.source === "MANUAL" ? "By staff" : "Online"}
                       {booking.isDeleted ? " · deleted" : ""}
                     </span>
                   </Td>
                   <Td>
                     <span className="block truncate">{booking.customerName}</span>
-                    <span className="block truncate text-xs text-[var(--color-muted-foreground)]">
+                    <span className="block truncate font-mono text-[11px] text-paper-faint">
                       {booking.email}
                     </span>
                   </Td>
@@ -240,14 +240,14 @@ export default async function AdminBookingsPage({
                   </Td>
                   <Td numeric>
                     {booking.remainingMinor > 0 ? (
-                      <span className="font-medium text-amber-700">
+                      <span className="font-medium text-warn">
                         <Money
                           amountMinor={booking.remainingMinor}
                           currency={booking.currency}
                         />
                       </span>
                     ) : (
-                      <span className="text-[var(--color-muted-foreground)]">—</span>
+                      <span className="text-paper-mute">—</span>
                     )}
                   </Td>
                   <Td numeric>

@@ -46,19 +46,15 @@ export function CartLines({
   }
 
   return (
-    <ul className="space-y-4">
+    <ul className="grid gap-px border border-line bg-line">
       {items.map((item) => {
         const image = item.product.heroImageUrl ?? item.product.images?.[0]?.url;
         const issue = issueFor(item.id);
-        const upsellTotal = item.upsells.reduce(
-          (sum, link) => sum + link.upsellProduct.priceMinor * link.quantity,
-          0,
-        );
 
         return (
           <li
             key={item.id}
-            className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+            className="bg-ink-raised p-4"
           >
             <div className="flex gap-4">
               {image ? (
@@ -66,11 +62,11 @@ export function CartLines({
                 <img
                   src={image}
                   alt=""
-                  className="h-24 w-28 shrink-0 rounded-lg object-cover"
+                  className="h-24 w-28 shrink-0 border border-line object-cover"
                   loading="lazy"
                 />
               ) : (
-                <div className="h-24 w-28 shrink-0 rounded-lg bg-[var(--color-muted)]" />
+                <div className="h-24 w-28 shrink-0 border border-line bg-ink-sunk plate" />
               )}
 
               <div className="min-w-0 flex-1">
@@ -78,12 +74,12 @@ export function CartLines({
                   <div className="min-w-0">
                     <Link
                       href={`/product/${item.product.slug}`}
-                      className="font-display text-lg font-semibold hover:underline"
+                      className="text-[17px] font-semibold tracking-[-0.02em] transition-colors duration-instant hover:text-signal"
                     >
                       {item.product.name}
                     </Link>
                     {item.startDate && item.endDate ? (
-                      <p className="mt-0.5 text-sm text-[var(--color-muted-foreground)]">
+                      <p className="mt-1.5 text-paper-mute">
                         <DateRange
                           start={item.startDate}
                           end={item.endDate}
@@ -91,27 +87,29 @@ export function CartLines({
                         />
                       </p>
                     ) : (
-                      <p className="mt-0.5 text-sm text-amber-700">{t.cart.noDates}</p>
+                      <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-warn">
+                        {t.cart.noDates}
+                      </p>
                     )}
-                    <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+                    <p className="mt-0.5 font-mono text-[11px] text-paper-faint">
                       {item.deliveryType === "DELIVERY" ? t.common.delivery : t.common.collection}
                     </p>
                   </div>
 
-                  <p className="shrink-0 text-right text-sm font-semibold">
+                  <p className="shrink-0 text-right font-mono text-[14px] tabular-nums">
                     <Money
                       amountMinor={item.product.dailyPriceMinor}
                       currency={currency}
                       locale={locale}
                     />
-                    <span className="block text-xs font-normal text-[var(--color-muted-foreground)]">
+                    <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.12em] text-paper-faint">
                       {t.common.perDay}
                     </span>
                   </p>
                 </div>
 
                 {item.upsells.length > 0 ? (
-                  <ul className="mt-2 space-y-0.5 text-xs text-[var(--color-muted-foreground)]">
+                  <ul className="mt-3 space-y-1 border-t border-line-soft pt-3 text-[12px] text-paper-mute">
                     {item.upsells.map((link) => (
                       <li key={link.id} className="flex justify-between gap-3">
                         <span>+ {link.upsellProduct.name}</span>
@@ -122,11 +120,10 @@ export function CartLines({
                         />
                       </li>
                     ))}
-                    {upsellTotal > 0 ? null : null}
                   </ul>
                 ) : null}
 
-                <div className="mt-3 flex flex-wrap items-end gap-3">
+                <div className="mt-4 flex flex-wrap items-end gap-2.5">
                   <Select
                     aria-label={`${t.common.quantity}: ${item.product.name}`}
                     value={String(item.quantity)}
@@ -144,7 +141,7 @@ export function CartLines({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-red-600"
+                    className="text-danger"
                     disabled={pending}
                     onClick={() => remove(item.id, item.product.name)}
                   >

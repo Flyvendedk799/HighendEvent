@@ -4,7 +4,7 @@ import { Button, useToast } from "@rentora/ui";
 import type { NewsletterSubscription } from "@/lib/actions/operations";
 
 /**
- * Exports the subscriber list as CSV. Rentora does not send campaigns itself, so the honest
+ * Exports the subscriber list as CSV. alarent does not send campaigns itself, so the honest
  * thing is to hand the tenant their list for the tool they already use.
  */
 export function NewsletterExport({

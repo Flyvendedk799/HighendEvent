@@ -28,7 +28,7 @@ Optional env (see `.env.example`):
 
 Useful hosts for `/etc/hosts` or browser:
 
-- `http://localhost:3000` — Rentora marketing
+- `http://localhost:3000` — alarent marketing
 - `http://demo.localhost:3000` — tenant storefront
 - `http://demo.localhost:3000/admin` — tenant admin
 - `http://admin.localhost:3000` — platform admin
@@ -36,9 +36,12 @@ Useful hosts for `/etc/hosts` or browser:
 ## Stack
 
 - Next.js 15 App Router + React 19
-- Tailwind CSS with CSS variables (`--color-primary`, etc.)
-- Fonts: Fraunces (display) + DM Sans (body) via `next/font`
-- Shared UI: `@rentora/ui` (`Button`, `Input`, `Card`, `Badge`)
+- Tailwind CSS over the Dispatch tokens in `app/globals.css` (`--ink`, `--line`, `--paper`,
+  `--signal`). Ink, line and paper are the system and are not themeable; a tenant may move
+  `--signal` and nothing else.
+- Fonts: IBM Plex Sans (human copy) + IBM Plex Mono (machine data) via `next/font`. No serif.
+- Shared UI: `@rentora/ui` — the design system. `/proof-sheet` renders every primitive together
+  in development so a change can be seen against the rest before it ships.
 - API helper: `lib/api.ts`
 - i18n stub: `lib/i18n.ts` (`en` / `da`)
 

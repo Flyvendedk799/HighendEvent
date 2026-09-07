@@ -19,7 +19,7 @@ import { setTenantFlagsAction, type PlatformTenant } from "@/lib/actions/platfor
 export type FlagDefinition = { key: string; label: string; description: string };
 
 /**
- * The flags Rentora actually reads. Anything not listed here would be a flag that changes
+ * The flags alarent actually reads. Anything not listed here would be a flag that changes
  * nothing, which is worse than no flag at all.
  */
 export const FLAGS: FlagDefinition[] = [
@@ -83,10 +83,10 @@ export function FeatureFlagsGrid({
         {flags.map((flag) => (
           <div
             key={flag.key}
-            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+            className="border border-line bg-ink-raised p-3"
           >
-            <dt className="text-sm font-medium">{flag.label}</dt>
-            <dd className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+            <dt className="text-[13.5px] font-medium">{flag.label}</dt>
+            <dd className="mt-0.5 font-mono text-[11px] text-paper-faint">
               {flag.description}
             </dd>
           </div>
@@ -111,11 +111,11 @@ export function FeatureFlagsGrid({
                 <Td>
                   <Link
                     href={`/platform/tenants/${tenant.slug}`}
-                    className="font-medium hover:underline"
+                    className="font-mono text-[12.5px] transition-colors duration-instant hover:text-signal"
                   >
                     {tenant.name}
                   </Link>
-                  <span className="block text-xs text-[var(--color-muted-foreground)]">
+                  <span className="block font-mono text-[11px] text-paper-faint">
                     {tenant.plan}
                   </span>
                 </Td>

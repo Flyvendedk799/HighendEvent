@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { cx, focusRing } from "./utils";
+import { useEffect, useState, type ReactNode } from "react";
+import { cx, focusRing, monoLabel } from "./utils";
 
 export type NavItem = {
   href: string;
@@ -9,6 +9,8 @@ export type NavItem = {
   icon?: ReactNode;
   /** Rendered right-aligned — a count of things needing attention, never decoration. */
   badge?: ReactNode;
+  /** Amber or red pulls a queue forward: something in it is costing money or is late. */
+  badgeTone?: "default" | "warn" | "danger" | "signal";
 };
 
 export type NavGroup = { label?: string; items: NavItem[] };
@@ -32,6 +34,13 @@ function isActive(activePath: string, href: string): boolean {
   return activePath.startsWith(`${href}/`);
 }
 
+const badgeTones = {
+  default: "text-paper-ghost",
+  signal: "text-signal",
+  warn: "text-warn",
+  danger: "text-danger",
+} as const;
+
 export function AppShell({
   brand,
   groups,
@@ -43,18 +52,32 @@ export function AppShell({
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Navigating inside the drawer must close it, or the next screen renders behind the sheet.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [activePath]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen]);
+
   const nav = (
-    <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+    <nav className="flex-1 overflow-y-auto pb-4">
       {groups.map((group, i) => (
         <div key={group.label ?? i}>
           {group.label ? (
-            // slate-400 rather than slate-500: at 11px this is normal text, and slate-500 on
-            // the slate-900 sidebar is 3.75:1, below the 4.5:1 AA floor.
-            <p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+            <p className={cx("px-4 pb-2 pt-5 text-[9px] text-paper-ghost", monoLabel)}>
               {group.label}
             </p>
-          ) : null}
-          <ul className="space-y-0.5">
+          ) : (
+            <div className="pt-3" />
+          )}
+          <ul>
             {group.items.map((item) => {
               const active = isActive(activePath, item.href);
               return (
@@ -62,26 +85,27 @@ export function AppShell({
                   {renderLink({
                     href: item.href,
                     className: cx(
-                      "group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
+                      "flex items-center gap-2.5 border-l-2 px-4 py-2 text-[13px] transition-colors duration-instant",
                       focusRing,
                       active
-                        ? "bg-white/10 font-medium text-white"
-                        : "text-slate-300 hover:bg-white/5 hover:text-white",
+                        ? "border-signal bg-ink-hover text-paper"
+                        : "border-transparent text-paper-dim hover:bg-ink-hover hover:text-paper",
                     ),
                     children: (
                       <>
-                        {active ? (
-                          <span
-                            aria-hidden="true"
-                            className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-teal-400"
-                          />
-                        ) : null}
                         {item.icon ? (
-                          <span className="shrink-0 opacity-80">{item.icon}</span>
+                          <span className={cx("shrink-0", active ? "text-signal" : "text-paper-faint")}>
+                            {item.icon}
+                          </span>
                         ) : null}
                         <span className="min-w-0 flex-1 truncate">{item.label}</span>
                         {item.badge ? (
-                          <span className="shrink-0 rounded-full bg-white/10 px-1.5 py-0.5 text-[11px] tabular-nums text-slate-200">
+                          <span
+                            className={cx(
+                              "shrink-0 font-mono text-[10px] tabular-nums",
+                              badgeTones[item.badgeTone ?? "default"],
+                            )}
+                          >
                             {item.badge}
                           </span>
                         ) : null}
@@ -98,44 +122,45 @@ export function AppShell({
   );
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-slate-900 text-slate-100">
-      <div className="border-b border-white/10 px-5 py-4">{brand}</div>
+    <div className="flex h-full flex-col border-r border-line bg-ink">
+      <div className="border-b border-line">{brand}</div>
       {nav}
-      {footer ? <div className="border-t border-white/10 p-3">{footer}</div> : null}
+      {footer ? <div className="mt-auto border-t border-line">{footer}</div> : null}
     </div>
   );
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-background,#f6f7f9)]">
-      <aside className="hidden w-60 shrink-0 md:block">
-        <div className="fixed inset-y-0 w-60">{sidebar}</div>
+    <div className="alarent-console flex min-h-screen bg-ink-sunk">
+      <aside className="hidden w-52 shrink-0 md:block">
+        <div className="fixed inset-y-0 w-52">{sidebar}</div>
       </aside>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
             aria-label="Close navigation"
-            className="absolute inset-0 bg-slate-950/50"
+            className="absolute inset-0 bg-ink/80 backdrop-blur-[2px]"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 w-64" onClick={() => setMobileOpen(false)}>
-            {sidebar}
-          </div>
+          <div className="absolute inset-y-0 left-0 w-60 shadow-panel">{sidebar}</div>
         </div>
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="sticky top-0 z-30 flex h-12 items-center gap-3 border-b border-[var(--color-border,#e2e8f0)] bg-[var(--color-surface,#fff)]/85 px-4 backdrop-blur md:px-6">
+        <div className="sticky top-0 z-40 flex min-h-[52px] items-center gap-3 border-b border-line bg-ink-sunk/85 px-4 py-2.5 backdrop-blur-md md:px-5">
           <button
             type="button"
             aria-label="Open navigation"
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen(true)}
-            className={cx("rounded-md p-1.5 text-slate-600 hover:bg-slate-100 md:hidden", focusRing)}
+            className={cx(
+              "-ml-1 p-1.5 text-paper-dim transition-colors duration-instant hover:text-signal md:hidden",
+              focusRing,
+            )}
           >
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" />
             </svg>
           </button>
           <div className="min-w-0 flex-1">{topbar}</div>
@@ -143,5 +168,77 @@ export function AppShell({
         <div className="min-w-0 flex-1">{children}</div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The sidebar brand block: a blinking lamp, the wordmark, and what this console belongs to.
+ * The lamp is the same one the occupancy board uses — it means "this is live data".
+ */
+export function ShellBrand({
+  name,
+  context,
+  href = "/",
+  renderLink,
+}: {
+  name: string;
+  context?: string;
+  href?: string;
+  renderLink: (props: { href: string; className: string; children: ReactNode }) => ReactNode;
+}) {
+  return renderLink({
+    href,
+    className: cx("flex items-center gap-2.5 px-4 py-3.5", focusRing),
+    children: (
+      <>
+        <span aria-hidden="true" className="h-[7px] w-[7px] shrink-0 bg-signal animate-blink" />
+        <span className="min-w-0">
+          <span className="block truncate font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-paper">
+            {name}
+          </span>
+          {context ? (
+            <span className="mt-0.5 block truncate font-mono text-[9px] uppercase tracking-[0.16em] text-paper-faint">
+              {context}
+            </span>
+          ) : null}
+        </span>
+      </>
+    ),
+  });
+}
+
+/**
+ * Sidebar footer readouts — payouts, domain, anything that is either ready or is not. Two words,
+ * one colour, no link: it is a lamp, and the page that fixes it is in the nav above.
+ */
+export function ShellStatus({
+  items,
+}: {
+  items: Array<{ label: string; value: string; tone?: "ok" | "warn" | "danger" | "quiet" }>;
+}) {
+  const tones = {
+    ok: "text-signal",
+    warn: "text-warn",
+    danger: "text-danger",
+    quiet: "text-paper-faint",
+  } as const;
+
+  return (
+    <dl className="space-y-1.5 px-4 py-3.5">
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center justify-between gap-3">
+          <dt className={cx("text-[9px] text-paper-faint", monoLabel)}>{item.label}</dt>
+          <dd
+            className={cx(
+              "text-[9px] font-medium",
+              monoLabel,
+              tones[item.tone ?? "quiet"],
+            )}
+          >
+            {item.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

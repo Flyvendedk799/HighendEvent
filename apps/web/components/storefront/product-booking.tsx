@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Banner,
-  Button,
   Calendar,
   Checkbox,
+  LiveDot,
   Money,
-  Select,
+  QuantityStepper,
   Spinner,
+  cx,
   useToast,
   type DateRangeValue,
   type DayState,
@@ -32,9 +33,7 @@ function addMonthsIso(iso: string, months: number): string {
 
 function endOfMonthIso(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`);
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0))
-    .toISOString()
-    .slice(0, 10);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
 }
 
 function toDayMap(calendar: AvailabilityCalendar | null): Record<string, DayState> {
@@ -49,6 +48,24 @@ function toDayMap(calendar: AvailabilityCalendar | null): Record<string, DayStat
   return map;
 }
 
+function formatDay(iso: string | null, locale: string): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat(locale === "da" ? "da-DK" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+/**
+ * The product page's working half.
+ *
+ * It owns the two-column layout rather than sitting inside one, because the availability board
+ * belongs on the wide side — a shopper picks dates before they read a spec sheet — while the
+ * quote has to stay in view as they do it. `details` and `gallery` are server-rendered and
+ * passed through, so the description, specs and upsells stay off the client bundle.
+ */
 export function ProductBooking({
   product,
   initialCalendar,
@@ -56,6 +73,9 @@ export function ProductBooking({
   currency,
   locale,
   t,
+  gallery,
+  details,
+  heading,
 }: {
   product: Product;
   initialCalendar: AvailabilityCalendar | null;
@@ -63,6 +83,9 @@ export function ProductBooking({
   currency: string;
   locale: string;
   t: Dictionary;
+  gallery: ReactNode;
+  details: ReactNode;
+  heading: ReactNode;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -104,14 +127,7 @@ export function ProductBooking({
     setQuoting(true);
 
     void getQuoteAction({
-      items: [
-        {
-          productId: product.id,
-          quantity,
-          startDate: range.start,
-          endDate: range.end,
-        },
-      ],
+      items: [{ productId: product.id, quantity, startDate: range.start, endDate: range.end }],
     }).then((result) => {
       if (cancelled) return;
       setQuoting(false);
@@ -137,15 +153,27 @@ export function ProductBooking({
   }, [range.start, range.end]);
 
   const minDaysUnmet = rentalDays > 0 && rentalDays < product.minRentalDays;
-  const maxDaysExceeded =
-    product.maxRentalDays != null && rentalDays > product.maxRentalDays;
+  const maxDaysExceeded = product.maxRentalDays != null && rentalDays > product.maxRentalDays;
 
   const upsellTotalMinor = upsells
     .filter((link) => upsellIds.includes(link.upsellProduct.id))
     .reduce((sum, link) => sum + link.upsellProduct.priceMinor, 0);
 
-  const canAdd =
-    Boolean(range.start && range.end) && !minDaysUnmet && !maxDaysExceeded && !quoting;
+  const canAdd = Boolean(range.start && range.end) && !minDaysUnmet && !maxDaysExceeded && !quoting;
+
+  /** The smallest count free across every day in the range — what the shopper can actually have. */
+  const freeOnRange = useMemo(() => {
+    if (!range.start || !range.end) return null;
+    let cursor = new Date(`${range.start}T00:00:00Z`).getTime();
+    const last = new Date(`${range.end}T00:00:00Z`).getTime();
+    let min = Infinity;
+    while (cursor <= last) {
+      const iso = new Date(cursor).toISOString().slice(0, 10);
+      min = Math.min(min, days[iso]?.availableQuantity ?? 0);
+      cursor += 86_400_000;
+    }
+    return Number.isFinite(min) ? min : null;
+  }, [days, range.start, range.end]);
 
   function addToCart() {
     if (!range.start || !range.end) return;
@@ -174,120 +202,236 @@ export function ProductBooking({
     });
   }
 
+  const stockChip =
+    freeOnRange !== null ? (
+      <span
+        className={cx(
+          "border px-2.5 py-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em]",
+          freeOnRange <= 0
+            ? "border-danger-line bg-danger-tint text-danger"
+            : freeOnRange <= 2
+              ? "border-warn-line bg-warn-tint text-warn"
+              : "border-signal-line bg-signal-tint text-signal",
+        )}
+      >
+        {freeOnRange <= 0 ? "None free on your dates" : `${freeOnRange} free on your dates`}
+      </span>
+    ) : null;
+
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <h2 className="mb-1 text-sm font-semibold">{t.product.chooseDates}</h2>
-        <p className="mb-3 text-xs text-[var(--color-muted-foreground)]">
-          {product.prepBufferDays || product.cleanupBufferDays
-            ? t.product.bufferHelp
-            : t.product.chooseDatesHelp}
-        </p>
+    <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,1fr)]">
+      <div className="min-w-0">
+        {gallery}
+        {heading}
 
-        <Calendar
-          days={days}
-          value={range}
-          onChange={setRange}
-          quantity={quantity}
-          minDate={isoToday()}
-          months={1}
-          locale={locale}
-          onMonthChange={(month) => void loadMonths(month)}
-        />
-      </div>
+        {/* Availability board */}
+        <section className="mt-9">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="flex items-center gap-2.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-paper-mute">
+              <LiveDot />
+              {t.product.chooseDates}
+            </p>
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-paper-faint">
+              {product.prepBufferDays || product.cleanupBufferDays
+                ? t.product.bufferHelp
+                : t.product.chooseDatesHelp}
+            </p>
+          </div>
 
-      {minDaysUnmet ? (
-        <Banner tone="warning">
-          This item has a minimum rental of {product.minRentalDays} days. Extend your dates to
-          continue.
-        </Banner>
-      ) : null}
-
-      {maxDaysExceeded ? (
-        <Banner tone="warning">
-          This item can be rented for at most {product.maxRentalDays} days.
-        </Banner>
-      ) : null}
-
-      {error ? <Banner tone="danger">{error}</Banner> : null}
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Select
-          label={t.common.quantity}
-          value={String(quantity)}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          options={Array.from({ length: Math.min(product.stockQty, 20) }, (_, i) => ({
-            value: String(i + 1),
-            label: String(i + 1),
-          }))}
-        />
-        {deliveryEnabled ? (
-          <Select
-            label={t.product.fulfilment}
-            value={deliveryType}
-            onChange={(e) => setDeliveryType(e.target.value as "PICKUP" | "DELIVERY")}
-            options={[
-              { value: "PICKUP", label: t.product.collectFromUs },
-              { value: "DELIVERY", label: t.product.deliverToMe },
-            ]}
+          <Calendar
+            days={days}
+            value={range}
+            onChange={setRange}
+            quantity={quantity}
+            minDate={isoToday()}
+            months={1}
+            locale={locale}
+            onMonthChange={(month) => void loadMonths(month)}
           />
+        </section>
+
+        {minDaysUnmet ? (
+          <Banner tone="warning" title="Minimum rental" className="mt-4">
+            This item has a minimum rental of {product.minRentalDays} days. Extend your dates to
+            continue.
+          </Banner>
         ) : null}
+
+        {maxDaysExceeded ? (
+          <Banner tone="warning" title="Maximum rental" className="mt-4">
+            This item can be rented for at most {product.maxRentalDays} days.
+          </Banner>
+        ) : null}
+
+        {error ? (
+          <Banner tone="danger" title="Cannot book that" className="mt-4">
+            {error}
+          </Banner>
+        ) : null}
+
+        {details}
       </div>
 
-      {upsells.length > 0 ? (
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <h2 className="mb-2 text-sm font-semibold">{t.product.addToBooking}</h2>
-          <ul className="space-y-2.5">
-            {upsells.map((link) => (
-              <li key={link.upsellProduct.id} className="flex items-start justify-between gap-3">
-                <Checkbox
-                  checked={upsellIds.includes(link.upsellProduct.id)}
-                  onChange={(e) =>
-                    setUpsellIds((current) =>
-                      e.target.checked
-                        ? [...current, link.upsellProduct.id]
-                        : current.filter((id) => id !== link.upsellProduct.id),
-                    )
-                  }
-                  label={link.upsellProduct.name}
-                  description={link.upsellProduct.description ?? undefined}
-                />
-                <span className="shrink-0 text-sm font-medium">
-                  <Money
-                    amountMinor={link.upsellProduct.priceMinor}
-                    currency={link.upsellProduct.currency ?? currency}
-                    locale={locale}
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
+      {/* Sticky quote */}
+      <aside className="min-w-0 border border-line-raised bg-ink-raised lg:sticky lg:top-[84px]">
+        <div className="px-5 pt-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-paper-mute">
+              {t.product.liveQuote}
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
+              {rentalDays > 0
+                ? `${rentalDays} ${rentalDays === 1 ? t.common.day : t.common.days}`
+                : t.product.noDates}
+            </span>
+          </div>
+
+          <p className="mt-3.5 font-mono text-[42px] font-medium leading-none tracking-[-0.04em] tabular-nums">
+            {quote ? (
+              <Money
+                amountMinor={quote.totalMinor + upsellTotalMinor}
+                currency={currency}
+                locale={locale}
+              />
+            ) : (
+              <span className="text-paper-ghost">
+                <Money amountMinor={product.dailyPriceMinor} currency={currency} locale={locale} />
+              </span>
+            )}
+          </p>
+          <p className="mt-2 text-[12.5px] text-paper-mute">
+            {quote ? t.product.quoteIncludes : `${t.common.from} · ${t.common.perDay}`}
+          </p>
         </div>
-      ) : null}
 
-      <QuotePanel
-        quote={quote}
-        quoting={quoting}
-        rentalDays={rentalDays}
-        upsellTotalMinor={upsellTotalMinor}
-        currency={currency}
-        locale={locale}
-        hasDates={Boolean(range.start && range.end)}
-        t={t}
-      />
+        <div className="mt-5 grid grid-cols-2 gap-px border-y border-line bg-line">
+          <div className="bg-ink-raised px-4 py-3">
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-mute">
+              {t.product.collect}
+            </p>
+            <p className="mt-1.5 font-mono text-[13.5px]">{formatDay(range.start, locale)}</p>
+          </div>
+          <div className="bg-ink-raised px-4 py-3">
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-mute">
+              {t.product.return}
+            </p>
+            <p className="mt-1.5 font-mono text-[13.5px]">{formatDay(range.end, locale)}</p>
+          </div>
+        </div>
 
-      <Button size="lg" className="w-full" disabled={!canAdd} loading={adding} onClick={addToCart}>
-        {range.start && range.end ? t.product.addToCart : t.product.chooseDatesFirst}
-      </Button>
+        <div className="flex flex-col gap-4 px-5 py-4">
+          {stockChip ? <div>{stockChip}</div> : null}
+
+          <QuantityStepper
+            value={quantity}
+            min={1}
+            max={Math.max(1, Math.min(product.stockQty, 20))}
+            onChange={setQuantity}
+            label={t.common.quantity}
+          />
+
+          {deliveryEnabled ? (
+            <div
+              role="group"
+              aria-label={t.product.fulfilment}
+              className="grid grid-cols-2 gap-px border border-line-strong bg-line-strong"
+            >
+              {(
+                [
+                  ["PICKUP", t.product.collectFromUs],
+                  ["DELIVERY", t.product.deliverToMe],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={deliveryType === mode}
+                  onClick={() => setDeliveryType(mode)}
+                  className={cx(
+                    "px-2 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.13em] transition-colors duration-instant",
+                    deliveryType === mode
+                      ? "bg-signal text-signal-ink"
+                      : "bg-ink-raised text-paper-dim hover:text-paper",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {upsells.length > 0 ? (
+            <div className="border-t border-line-soft pt-4">
+              <p className="mb-3 font-mono text-[9.5px] uppercase tracking-[0.16em] text-paper-mute">
+                {t.product.addToBooking}
+              </p>
+              <ul className="space-y-3">
+                {upsells.map((link) => (
+                  <li key={link.upsellProduct.id} className="flex items-start justify-between gap-3">
+                    <Checkbox
+                      checked={upsellIds.includes(link.upsellProduct.id)}
+                      onChange={(e) =>
+                        setUpsellIds((current) =>
+                          e.target.checked
+                            ? [...current, link.upsellProduct.id]
+                            : current.filter((id) => id !== link.upsellProduct.id),
+                        )
+                      }
+                      label={link.upsellProduct.name}
+                    />
+                    <span className="shrink-0 font-mono text-[12.5px] tabular-nums text-signal">
+                      <Money
+                        amountMinor={link.upsellProduct.priceMinor}
+                        currency={link.upsellProduct.currency ?? currency}
+                        locale={locale}
+                      />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <QuoteLines
+            quote={quote}
+            quoting={quoting}
+            rentalDays={rentalDays}
+            upsellTotalMinor={upsellTotalMinor}
+            deliveryType={deliveryType}
+            currency={currency}
+            locale={locale}
+            hasDates={Boolean(range.start && range.end)}
+            t={t}
+          />
+
+          <button
+            type="button"
+            disabled={!canAdd || adding}
+            onClick={addToCart}
+            className={cx(
+              "flex items-center justify-center gap-2.5 px-5 py-4 font-mono text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-colors duration-instant",
+              canAdd && !adding
+                ? "bg-signal text-signal-ink hover:bg-signal-press"
+                : "cursor-not-allowed bg-line text-paper-ghost",
+            )}
+          >
+            {adding ? <Spinner /> : null}
+            {range.start && range.end ? t.product.addToCart : t.product.chooseDatesFirst}
+          </button>
+
+          <p className="text-[12px] leading-relaxed text-paper-faint">{t.product.holdNote}</p>
+        </div>
+      </aside>
     </div>
   );
 }
 
-function QuotePanel({
+function QuoteLines({
   quote,
   quoting,
   rentalDays,
   upsellTotalMinor,
+  deliveryType,
   currency,
   locale,
   hasDates,
@@ -297,6 +441,7 @@ function QuotePanel({
   quoting: boolean;
   rentalDays: number;
   upsellTotalMinor: number;
+  deliveryType: "PICKUP" | "DELIVERY";
   currency: string;
   locale: string;
   hasDates: boolean;
@@ -304,7 +449,7 @@ function QuotePanel({
 }) {
   if (!hasDates) {
     return (
-      <p className="text-sm text-[var(--color-muted-foreground)]">
+      <p className="border-t border-line-soft pt-4 text-[12.5px] leading-relaxed text-paper-mute">
         {t.product.pricePrompt}
       </p>
     );
@@ -312,16 +457,16 @@ function QuotePanel({
 
   if (quoting || !quote) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)]">
+      <p className="flex items-center gap-2.5 border-t border-line-soft pt-4 text-[12.5px] text-paper-mute">
         <Spinner /> {t.product.pricingYourDates}
-      </div>
+      </p>
     );
   }
 
   const total = quote.totalMinor + upsellTotalMinor;
 
   return (
-    <dl className="space-y-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm">
+    <dl className="flex flex-col gap-2.5 border-t border-line-soft pt-4 text-[13px]">
       <Row
         label={`${t.common.subtotal} · ${rentalDays} ${rentalDays === 1 ? t.common.day : t.common.days}`}
         value={<Money amountMinor={quote.subtotalMinor} currency={currency} locale={locale} />}
@@ -332,6 +477,16 @@ function QuotePanel({
           value={<Money amountMinor={upsellTotalMinor} currency={currency} locale={locale} />}
         />
       ) : null}
+      <Row
+        label={deliveryType === "DELIVERY" ? t.common.delivery : t.common.collection}
+        value={
+          deliveryType === "DELIVERY" ? (
+            <span className="text-paper-faint">{t.common.quotedAtCheckout}</span>
+          ) : (
+            <span className="text-paper-faint">{t.product.freePickup}</span>
+          )
+        }
+      />
       {quote.depositMinor > 0 ? (
         <Row
           label={t.common.deposit}
@@ -345,15 +500,15 @@ function QuotePanel({
         />
       ) : null}
 
-      <div className="mt-2 flex items-baseline justify-between border-t border-[var(--color-border)] pt-2">
-        <dt className="font-semibold">{t.common.total}</dt>
-        <dd className="text-lg font-semibold">
+      <div className="mt-1 flex items-baseline justify-between gap-4 border-t border-line-soft pt-3">
+        <dt className="text-paper">{t.common.total}</dt>
+        <dd className="font-mono text-[15px] tabular-nums text-paper">
           <Money amountMinor={total} currency={currency} locale={locale} />
         </dd>
       </div>
 
       {quote.remainingMinor > 0 ? (
-        <p className="pt-1 text-xs text-[var(--color-muted-foreground)]">
+        <p className="text-[12px] leading-relaxed text-paper-faint">
           {t.product.payNow}{" "}
           <Money amountMinor={quote.upfrontMinor} currency={currency} locale={locale} />{" "}
           {t.product.payNowRest}
@@ -363,11 +518,11 @@ function QuotePanel({
   );
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[var(--color-muted-foreground)]">{label}</dt>
-      <dd className="tabular">{value}</dd>
+      <dt className="text-paper-mute">{label}</dt>
+      <dd className="font-mono text-[12.5px] tabular-nums text-paper-dim">{value}</dd>
     </div>
   );
 }

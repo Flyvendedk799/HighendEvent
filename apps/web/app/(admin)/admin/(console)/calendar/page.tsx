@@ -66,7 +66,7 @@ export default async function AdminCalendarPage({
         <Button variant="secondary" size="sm" asChild>
           <Link href={`/admin/calendar?month=${window.prev}`}>← Previous</Link>
         </Button>
-        <p className="text-sm font-semibold">{window.label}</p>
+        <p className="text-[13.5px] font-semibold">{window.label}</p>
         <Button variant="secondary" size="sm" asChild>
           <Link href={`/admin/calendar?month=${window.next}`}>Next →</Link>
         </Button>
@@ -77,7 +77,7 @@ export default async function AdminCalendarPage({
         locale={bootstrap?.store.localeDefault ?? "en"}
       />
 
-      <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+      <p className="mt-3 max-w-[68ch] text-[12.5px] leading-relaxed text-paper-faint">
         A number in a coloured bar is the quantity on that booking. A number on an amber cell is
         how many units remain free that day.
       </p>

@@ -57,7 +57,7 @@ export function PayoutsCard({ status }: { status: ConnectStatus | null }) {
 
       {status.connected ? (
         <>
-          <dl className="space-y-1.5 text-sm">
+          <dl className="space-y-1.5 text-[13.5px]">
             <Row label="Charges" value={status.chargesEnabled ? "Enabled" : "Disabled"} />
             <Row label="Payouts" value={status.payoutsEnabled ? "Enabled" : "On hold"} />
             <Row label="Account" value={status.accountId ?? "—"} />
@@ -79,7 +79,7 @@ export function PayoutsCard({ status }: { status: ConnectStatus | null }) {
         </>
       ) : (
         <>
-          <p className="text-sm text-[var(--color-muted-foreground)]">
+          <p className="text-[13.5px] text-paper-mute">
             Connect a Stripe account to accept card payments. It takes a few minutes and needs
             your business details and a bank account.
           </p>
@@ -116,7 +116,7 @@ export function PayoutsCard({ status }: { status: ConnectStatus | null }) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[var(--color-muted-foreground)]">{label}</dt>
+      <dt className="text-paper-mute">{label}</dt>
       <dd className="truncate font-medium">{value}</dd>
     </div>
   );

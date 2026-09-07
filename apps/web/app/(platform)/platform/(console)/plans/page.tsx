@@ -47,7 +47,7 @@ export default async function PlatformPlansPage() {
     <Page>
       <PageHeader
         title="Plans & billing"
-        description="What Rentora charges tenants, and what each plan includes."
+        description="What alarent charges tenants, and what each plan includes."
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -71,9 +71,9 @@ export default async function PlatformPlansPage() {
               title={plan.name}
               action={<Badge tone="neutral">{countByPlan.get(plan.tier) ?? 0} tenants</Badge>}
             />
-            <p className="text-2xl font-semibold">
+            <p className="font-mono text-[26px] font-medium tracking-[-0.03em] tabular-nums">
               <Money amountMinor={plan.priceMinor} currency={plan.currency} />
-              <span className="text-sm font-normal text-[var(--color-muted-foreground)]">
+              <span className="text-[13.5px] font-normal text-paper-mute">
                 {" "}
                 / month
               </span>
@@ -92,7 +92,7 @@ export default async function PlatformPlansPage() {
               ]}
             />
             {!plan.stripePriceId ? (
-              <p className="mt-3 text-xs text-amber-700">
+              <p className="mt-3 font-mono text-[11px] text-warn">
                 No Stripe price configured — plan changes will not bill.
               </p>
             ) : null}
@@ -101,7 +101,7 @@ export default async function PlatformPlansPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold">Who is on what</h2>
+        <h2 className="mb-3 text-[13.5px] font-semibold">Who is on what</h2>
         <TableContainer>
           <Table>
             <THead>

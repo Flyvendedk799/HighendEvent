@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Button, formatMoneyMinor } from "@rentora/ui";
+import { formatMoneyMinor } from "@rentora/ui";
+import { HeroBoard } from "@/components/marketing/hero-board";
+import { Reveal } from "@/components/marketing/reveal";
 import { apiFetch } from "@/lib/api";
 import { platformDomain } from "@/lib/platform";
 
@@ -35,6 +37,73 @@ function featuresOf(plan: Plan): string[] {
   ];
 }
 
+const SURFACES = [
+  {
+    no: "01",
+    cta: "Storefront →",
+    href: "/signup",
+    title: "A shop that knows its stock",
+    body: "Branded catalogue, live availability, delivery quote and checkout. Customers see the same occupancy the warehouse does.",
+    tags: ["Catalogue", "Calendar", "Checkout"],
+  },
+  {
+    no: "02",
+    cta: "Console →",
+    href: "/admin",
+    title: "An ops console, not a dashboard",
+    body: "Today's outbound, returns due, unpaid holds. Dense tables, allowed status transitions, no decorative charts.",
+    tags: ["Bookings", "Crew", "Payouts"],
+  },
+  {
+    no: "03",
+    cta: "Platform →",
+    href: "/platform",
+    title: "A control plane for many shops",
+    body: "Tenants, plans, Stripe billing overview and feature flags, so a rollout reaches one shop before it reaches all of them.",
+    tags: ["Tenants", "Plans", "Flags"],
+  },
+];
+
+const FLOW = [
+  {
+    step: "01",
+    title: "Date picked",
+    body: "Availability is computed from stock, live bookings and each item's prep and cleanup buffer — not a static calendar.",
+  },
+  {
+    step: "02",
+    title: "Quote held",
+    body: "Weekday, weekend and package pricing, plus a delivery fee derived from the real distance to the address.",
+  },
+  {
+    step: "03",
+    title: "Paid",
+    body: "Stripe Connect takes the deposit or the full amount into the tenant's own account. The hold becomes a booking.",
+  },
+  {
+    step: "04",
+    title: "On the board",
+    body: "The bar appears in the console the moment the webhook lands, and in the crew's calendar feed on the next sync.",
+  },
+  {
+    step: "05",
+    title: "Returned",
+    body: "Marked back in, the buffer runs, stock frees itself. Damage notes and deposit refunds attach to the booking.",
+  },
+];
+
+/**
+ * The proof strip. Every line here is a property of the system rather than a metric from a
+ * customer we cannot name — the design system's own rule is that a number without a source is
+ * decoration, and a marketing page is not exempt from it.
+ */
+const PROOF = [
+  { value: "3", label: "Surfaces on one dataset: storefront, console, platform" },
+  { value: "0", label: "Double bookings — availability is computed, never stored" },
+  { value: "2", label: "Buffers per item: prep before, cleanup after" },
+  { value: "1", label: "Board the shopper and the warehouse both read" },
+];
+
 export const dynamic = "force-dynamic";
 
 export default async function MarketingPage() {
@@ -45,156 +114,193 @@ export default async function MarketingPage() {
 
   return (
     <main>
-      <section className="relative min-h-[100svh] overflow-hidden bg-hero-glow text-white">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-20 top-32 h-72 w-72 animate-float rounded-full bg-teal-400/20 blur-3xl" />
-          <div className="absolute bottom-10 right-10 h-80 w-80 animate-float rounded-full bg-amber-400/15 blur-3xl [animation-delay:1.2s]" />
-          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:48px_48px]" />
-        </div>
+      <HeroBoard />
 
-        <div className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-6 pb-20 pt-28">
-          <p className="animate-fade-up font-display text-5xl font-semibold tracking-tight text-white sm:text-7xl md:text-8xl">
-            Rentora
-          </p>
-          <h1 className="animate-fade-up mt-6 max-w-2xl text-balance text-2xl font-medium text-teal-50/95 sm:text-3xl [animation-delay:120ms]">
-            The rental CMS that turns inventory into bookings.
-          </h1>
-          <p className="animate-fade-up mt-4 max-w-xl text-base text-teal-100/75 sm:text-lg [animation-delay:220ms]">
-            Launch a branded storefront, manage availability, and collect payments — built for
-            party hire, AV, and event equipment businesses.
-          </p>
-          <div className="animate-fade-up mt-8 flex flex-wrap gap-3 [animation-delay:320ms]">
-            <Link href="/signup">
-              <Button size="lg" className="bg-amber-400 text-slate-950 hover:bg-amber-300">
-                Start your store
-              </Button>
-            </Link>
-            <a href="#product">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="border-white/20 bg-white/10 text-white hover:bg-white/15"
-              >
-                See how it works
-              </Button>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section id="product" className="mx-auto max-w-6xl px-6 py-24">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-4xl font-semibold tracking-tight text-slate-900">
-            One platform for every rental brand
-          </h2>
-          <p className="mt-3 text-lg text-slate-600">
-            Host marketing for Rentora, tenant storefronts, and admin tools — resolved from the
-            hostname you already own.
-          </p>
-        </div>
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {[
-            {
-              title: "Branded storefront",
-              body: "Catalog, availability calendar, cart, and checkout styled with tenant theme tokens.",
-            },
-            {
-              title: "Ops console",
-              body: "Manual bookings, delivery zones, CMS pages, staff roles, and go-live checklists.",
-            },
-            {
-              title: "Platform control",
-              body: "Tenants, plans, Stripe billing overview, and feature flags for gradual rollouts.",
-            },
-          ].map((item, index) => (
-            <article
-              key={item.title}
-              className="animate-fade-up rounded-2xl border border-slate-200/80 bg-white/70 p-6 shadow-sm backdrop-blur"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="mb-4 h-1.5 w-12 rounded-full bg-gradient-to-r from-teal-600 to-amber-400" />
-              <h3 className="font-display text-xl font-semibold text-slate-900">{item.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="customers" className="border-y border-slate-200 bg-slate-900 py-20 text-white">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-display text-3xl font-semibold">Trusted by growing hire brands</h2>
-          <p className="mt-3 max-w-xl text-slate-300">
-            From boutique party rentals to multi-warehouse fleets, Rentora keeps inventory, calendar,
-            and payments in sync.
-          </p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {["Nordic Party Co.", "Lumen AV Hire", "Garden Event Rentals"].map((name) => (
-              <div
-                key={name}
-                className="rounded-xl border border-white/10 bg-white/5 px-5 py-6 font-display text-xl"
-              >
-                {name}
+      {/* Proof */}
+      <section className="border-t border-line">
+        <div className="mx-auto max-w-measure px-gutter">
+          <div className="grid gap-px border-x border-line bg-line [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
+            {PROOF.map((stat) => (
+              <div key={stat.label} className="bg-ink px-6 py-8">
+                <p className="font-mono text-[34px] font-medium leading-none tracking-[-0.03em] tabular-nums">
+                  {stat.value}
+                </p>
+                <p className="mt-3 text-[12.5px] leading-snug text-paper-mute">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="pricing" className="mx-auto max-w-6xl px-6 py-24">
-        <div className="text-center">
-          <h2 className="font-display text-4xl font-semibold text-slate-900">Simple plans</h2>
-          <p className="mt-2 text-slate-600">Grow from first booking to multi-location ops.</p>
-        </div>
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {plans.map((plan) => {
-            // The middle tier is the one most rental businesses land on, so it leads.
-            const featured = plan.tier === "GROWTH";
+      {/* Three surfaces */}
+      <section id="surfaces" className="mx-auto max-w-measure scroll-mt-20 px-gutter pt-24">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
+          02 — three surfaces, one truth
+        </p>
+        <h2 className="mt-5 max-w-[18ch] text-[clamp(32px,4.6vw,58px)] font-semibold leading-none tracking-[-0.035em]">
+          Storefront, console, platform.
+        </h2>
 
-            return (
-            <div
-              key={plan.tier}
-              className={`rounded-2xl border p-6 ${
-                featured
-                  ? "border-teal-600 bg-teal-900 text-white shadow-xl shadow-teal-900/20"
-                  : "border-slate-200 bg-white"
-              }`}
+        <div className="mt-11 grid gap-px border border-line bg-line [grid-template-columns:repeat(auto-fit,minmax(272px,1fr))]">
+          {SURFACES.map((surface, i) => (
+            <Link
+              key={surface.no}
+              href={surface.href}
+              className="group flex min-h-[250px] flex-col gap-3.5 bg-ink-raised p-6 transition-colors duration-instant hover:bg-ink-hover"
             >
-              <h3 className="font-display text-2xl font-semibold">{plan.name}</h3>
-              <p className={`mt-1 text-sm ${featured ? "text-teal-100" : "text-slate-500"}`}>
-                {PLAN_BLURB[plan.tier]}
-              </p>
-              <p className="mt-6 font-display text-4xl font-semibold">
-                {formatMoneyMinor(plan.priceMinor, plan.currency)}
-                <span className="text-base font-sans font-normal opacity-70"> / mo</span>
-              </p>
-              <ul className="mt-6 space-y-2 text-sm">
-                {featuresOf(plan).map((feature) => (
-                  <li key={feature} className="flex gap-2">
-                    <span className={featured ? "text-amber-300" : "text-teal-700"}>✓</span>
-                    {feature}
-                  </li>
+              <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-paper-mute">
+                <span>{surface.no}</span>
+                <span className="text-signal">{surface.cta}</span>
+              </div>
+              <h3 className="mt-3.5 text-[23px] font-semibold tracking-[-0.025em]">
+                {surface.title}
+              </h3>
+              <p className="text-[14px] leading-relaxed text-paper-dim">{surface.body}</p>
+              <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                {surface.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="border border-line-strong px-2 py-1 font-mono text-[9.5px] uppercase tracking-[0.12em] text-paper-mute"
+                  >
+                    {tag}
+                  </span>
                 ))}
-              </ul>
-              <Button
-                asChild
-                className={`mt-8 w-full ${
-                  featured
-                    ? "bg-amber-400 text-slate-950 hover:bg-amber-300"
-                    : "bg-teal-700 hover:bg-teal-600"
-                }`}
-              >
-                <Link href={`/signup?plan=${plan.tier}`}>Choose {plan.name}</Link>
-              </Button>
-            </div>
-            );
-          })}
+              </div>
+              <span className="sr-only">{`Surface ${i + 1}`}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white py-10">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 text-sm text-slate-500">
-          <span className="font-display text-lg text-slate-800">Rentora</span>
-          <p>© {new Date().getFullYear()} Rentora. Multi-tenant rental CMS.</p>
+      {/* How a booking moves */}
+      <section id="flow" className="mx-auto max-w-measure scroll-mt-20 px-gutter pt-24">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
+          03 — how a booking moves
+        </p>
+        <div className="mt-9 grid gap-px border border-line bg-line [grid-template-columns:repeat(auto-fit,minmax(210px,1fr))]">
+          {FLOW.map((step, i) => (
+            <Reveal key={step.step} delayMs={i * 80} className="bg-ink px-5 py-6">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-signal">
+                {step.step}
+              </p>
+              <p className="mt-3.5 text-[17px] font-semibold tracking-[-0.02em]">{step.title}</p>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-paper-mute">{step.body}</p>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      {plans.length > 0 ? (
+        <section id="pricing" className="mx-auto max-w-measure scroll-mt-20 px-gutter pt-24">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
+            04 — what it costs
+          </p>
+          <h2 className="mt-5 max-w-[16ch] text-[clamp(32px,4.6vw,58px)] font-semibold leading-none tracking-[-0.035em]">
+            One price, one fee.
+          </h2>
+
+          <div className="mt-11 grid gap-px border border-line bg-line lg:grid-cols-3">
+            {plans.map((plan) => {
+              // The middle tier is the one most rental businesses land on, so it leads.
+              const featured = plan.tier === "GROWTH";
+
+              return (
+                <div
+                  key={plan.tier}
+                  className={
+                    featured
+                      ? "flex flex-col bg-ink-raised p-7 outline outline-1 -outline-offset-1 outline-signal"
+                      : "flex flex-col bg-ink-raised p-7"
+                  }
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-[19px] font-semibold tracking-[-0.02em]">{plan.name}</h3>
+                    {featured ? (
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-signal">
+                        Most shops
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-[13px] leading-relaxed text-paper-mute">
+                    {PLAN_BLURB[plan.tier]}
+                  </p>
+
+                  <p className="mt-7 font-mono text-[38px] font-medium leading-none tracking-[-0.04em] tabular-nums">
+                    {formatMoneyMinor(plan.priceMinor, plan.currency)}
+                    <span className="text-[15px] text-paper-mute"> / mo</span>
+                  </p>
+
+                  <ul className="mt-7 space-y-2.5 text-[13.5px] text-paper-dim">
+                    {featuresOf(plan).map((feature) => (
+                      <li key={feature} className="flex gap-2.5">
+                        <span aria-hidden="true" className="mt-[7px] h-1.5 w-1.5 shrink-0 bg-signal" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    href={`/signup?plan=${plan.tier}`}
+                    className={
+                      featured
+                        ? "mt-8 block bg-signal py-3.5 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-signal-ink transition-colors duration-instant hover:bg-signal-press"
+                        : "mt-8 block border border-line-strong py-3.5 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-paper transition-colors duration-instant hover:border-signal hover:text-signal"
+                    }
+                  >
+                    Choose {plan.name}
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {/* CTA */}
+      <section className="mx-auto mt-24 max-w-measure px-gutter">
+        <div className="flex flex-wrap items-end justify-between gap-8 border border-line-raised bg-gradient-to-b from-ink-raised to-ink p-[clamp(34px,6vw,72px)]">
+          <div>
+            <h2 className="max-w-[16ch] text-[clamp(30px,5vw,58px)] font-semibold leading-none tracking-[-0.04em]">
+              Put your fleet on the board.
+            </h2>
+            <p className="mt-4 max-w-[44ch] text-[15px] leading-relaxed text-paper-dim">
+              Import your inventory, set prep and cleanup buffers, connect payouts. Live the same
+              week.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              href="/signup"
+              className="bg-signal px-6 py-4 font-mono text-[12px] font-semibold uppercase tracking-[0.14em] text-signal-ink transition-colors duration-instant hover:bg-signal-press"
+            >
+              Start free →
+            </Link>
+            <Link
+              href="/admin"
+              className="border border-line-strong px-6 py-4 font-mono text-[12px] uppercase tracking-[0.14em] text-paper transition-colors duration-instant hover:border-signal hover:text-signal"
+            >
+              See the console
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="mx-auto mt-20 max-w-measure px-gutter pb-16">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 font-mono text-[10.5px] uppercase tracking-[0.14em] text-paper-faint">
+          <span>alarent — rental operating system</span>
+          <div className="flex flex-wrap gap-5">
+            <Link href="/signup" className="transition-colors duration-instant hover:text-signal">
+              Start
+            </Link>
+            <Link href="/admin" className="transition-colors duration-instant hover:text-signal">
+              Console
+            </Link>
+            <Link href="/platform" className="transition-colors duration-instant hover:text-signal">
+              Platform
+            </Link>
+            <span>© {new Date().getFullYear()}</span>
+          </div>
         </div>
       </footer>
     </main>

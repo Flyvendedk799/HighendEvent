@@ -138,7 +138,7 @@ export default async function CustomerDetailPage({
           <div className="px-5 pt-5">
             <CardHeader title="Booking history" />
           </div>
-          <TableContainer className="rounded-none border-0 shadow-none">
+          <TableContainer className="border-0 shadow-none">
             <Table>
               <THead>
                 <Tr>
@@ -164,7 +164,7 @@ export default async function CustomerDetailPage({
                       <Td>
                         <Link
                           href={`/admin/bookings/${booking.id}`}
-                          className="font-medium hover:underline"
+                          className="font-mono text-[12.5px] transition-colors duration-instant hover:text-signal"
                         >
                           {booking.bookingNo}
                         </Link>

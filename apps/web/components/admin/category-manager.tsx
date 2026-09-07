@@ -116,7 +116,7 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
                     >
                       {category.name}
                     </button>
-                    <span className="block text-xs text-[var(--color-muted-foreground)]">
+                    <span className="block font-mono text-[11px] text-paper-faint">
                       /{category.slug}
                     </span>
                   </Td>
@@ -129,7 +129,7 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
                         {category._count.products}
                       </Link>
                     ) : (
-                      <span className="text-[var(--color-muted-foreground)]">0</span>
+                      <span className="text-paper-mute">0</span>
                     )}
                   </Td>
                   <Td>
@@ -172,7 +172,7 @@ function DeleteCategory({ category }: { category: CategoryRow }) {
   return (
     <ConfirmDialog
       trigger={
-        <Button size="sm" variant="ghost" className="text-red-600">
+        <Button size="sm" variant="ghost" className="text-danger">
           Delete
         </Button>
       }

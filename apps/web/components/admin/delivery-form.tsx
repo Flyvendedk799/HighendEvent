@@ -152,12 +152,12 @@ export function DeliveryForm({
           />
 
           {enabled ? (
-            <div className="rounded-lg bg-[var(--color-muted)] p-3 text-sm">
+            <div className="bg-ink-hover p-3 text-[13.5px]">
               <p className="font-medium">A {exampleKm} km delivery would cost</p>
-              <p className="mt-1 text-lg font-semibold">
+              <p className="mt-1 font-mono text-[17px] font-medium tabular-nums">
                 <Money amountMinor={exampleFeeMinor} currency={currency} />
               </p>
-              <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+              <p className="mt-0.5 font-mono text-[11px] text-paper-faint">
                 {chargeableKm === 0
                   ? `Inside your ${freeKm} km free radius.`
                   : `Base + ${chargeableKm} chargeable km.`}

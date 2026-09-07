@@ -152,7 +152,7 @@ export default async function AdminProductsPage({
                       <ProductThumb product={product} />
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{product.name}</span>
-                        <span className="block truncate text-xs text-[var(--color-muted-foreground)]">
+                        <span className="block truncate font-mono text-[11px] text-paper-faint">
                           /{product.slug}
                         </span>
                       </span>
@@ -198,7 +198,7 @@ export default async function AdminProductsPage({
       </TableContainer>
 
       {visible.length > 0 ? (
-        <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+        <p className="mt-3 max-w-[68ch] text-[12.5px] leading-relaxed text-paper-faint">
           Buffers show prep/cleanup days. They block the calendar around each booking so the crew
           has time to turn stock around.
         </p>
@@ -212,7 +212,7 @@ function ProductThumb({ product }: { product: Product }) {
 
   if (!src) {
     return (
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--color-muted)] text-[11px] font-medium text-[var(--color-muted-foreground)]">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-ink-hover text-[11px] font-medium text-paper-mute">
         {product.name.slice(0, 2).toUpperCase()}
       </span>
     );
@@ -224,7 +224,7 @@ function ProductThumb({ product }: { product: Product }) {
     <img
       src={src}
       alt=""
-      className="h-9 w-9 shrink-0 rounded-md object-cover"
+      className="h-9 w-9 shrink-0 object-cover"
       loading="lazy"
     />
   );

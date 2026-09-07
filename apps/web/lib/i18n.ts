@@ -55,6 +55,8 @@ const en = {
     noMatchBody: "Try a different search, or browse everything.",
     browseEverything: "Browse everything",
     checkDates: "Check dates",
+    subtitle:
+      "Everything below is filtered against live stock and the prep and cleanup buffer each item needs. Pick your dates on an item to see exactly what is free.",
   },
   product: {
     about: "About this item",
@@ -75,6 +77,14 @@ const en = {
       "Every date in the next few months is taken. Get in touch and we will let you know when this frees up.",
     payNowRest: "now, the rest before delivery.",
     payNow: "Pay",
+    liveQuote: "Live quote",
+    noDates: "No dates",
+    quoteIncludes: "Priced for your dates, tax included.",
+    collect: "Collect",
+    return: "Return",
+    freePickup: "Free",
+    holdNote:
+      "Nothing is charged until you check out. Stock is only reserved once the booking is paid.",
   },
   cart: {
     title: "Your cart",
@@ -206,6 +216,8 @@ const da: Dictionary = {
     noMatchBody: "Prøv en anden søgning, eller se hele kataloget.",
     browseEverything: "Se hele kataloget",
     checkDates: "Se ledige datoer",
+    subtitle:
+      "Alt herunder er filtreret mod aktuel beholdning og den klargørings- og rengøringsbuffer, hver vare kræver. Vælg datoer på en vare for at se præcis hvad der er ledigt.",
   },
   product: {
     about: "Om denne vare",
@@ -226,6 +238,14 @@ const da: Dictionary = {
       "Alle datoer de kommende måneder er optaget. Kontakt os, så siger vi til, når der bliver ledigt.",
     payNowRest: "nu, resten før levering.",
     payNow: "Betal",
+    liveQuote: "Aktuelt tilbud",
+    noDates: "Ingen datoer",
+    quoteIncludes: "Beregnet for dine datoer, inkl. moms.",
+    collect: "Afhentes",
+    return: "Retur",
+    freePickup: "Gratis",
+    holdNote:
+      "Der trækkes ingen betaling, før du går i kassen. Beholdningen reserveres først, når bookingen er betalt.",
   },
   cart: {
     title: "Din kurv",
