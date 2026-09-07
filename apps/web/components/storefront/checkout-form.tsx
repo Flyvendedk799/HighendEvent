@@ -13,6 +13,7 @@ import {
   Textarea,
 } from "@rentora/ui";
 import { startCheckoutAction, quoteDeliveryAction } from "@/lib/actions/checkout";
+import { quoteCouponAction, type CouponQuote } from "@/lib/actions/coupons";
 import type { CartSummary, DeliveryQuote } from "@/lib/types";
 
 export type SessionShapeLite = {
@@ -38,6 +39,9 @@ export function CheckoutForm({
   const [city, setCity] = useState("");
   const [quote, setQuote] = useState<DeliveryQuote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [coupon, setCoupon] = useState<CouponQuote | null>(null);
+  const [couponChecking, startCouponCheck] = useTransition();
   const [quoting, startQuoting] = useTransition();
 
   const err = state.fieldErrors ?? {};
@@ -56,8 +60,21 @@ export function CheckoutForm({
     });
   }
 
+  function applyCoupon() {
+    startCouponCheck(async () => {
+      const result = await quoteCouponAction({
+        code: couponCode,
+        subtotalMinor: summary.pricing?.subtotalMinor ?? 0,
+        currency: summary.currency,
+      });
+      setCoupon(result.quote ?? { valid: false, discountMinor: 0, reason: result.error ?? "Could not check that code." });
+    });
+  }
+
   const deliveryFeeMinor = deliveryType === "DELIVERY" ? (quote?.feeMinor ?? 0) : 0;
-  const total = (summary.pricing?.totalMinor ?? 0) + summary.upsellTotalMinor + deliveryFeeMinor;
+  const discountMinor = coupon?.valid ? coupon.discountMinor : 0;
+  const total =
+    (summary.pricing?.totalMinor ?? 0) + summary.upsellTotalMinor + deliveryFeeMinor - discountMinor;
 
   return (
     <form action={formAction} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -189,6 +206,44 @@ export function CheckoutForm({
         </Card>
 
         <Card>
+          <CardHeader title="Discount code" />
+          <input type="hidden" name="couponCode" value={coupon?.valid ? coupon.code : ""} />
+          <div className="flex items-end gap-2">
+            <Input
+              aria-label="Discount code"
+              placeholder="SUMMER20"
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value.toUpperCase());
+                setCoupon(null);
+              }}
+              className="h-9 font-mono"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              loading={couponChecking}
+              disabled={!couponCode.trim()}
+              onClick={applyCoupon}
+            >
+              Apply
+            </Button>
+          </div>
+
+          {coupon?.valid ? (
+            <Banner tone="success" className="mt-3">
+              {coupon.description} applied —{" "}
+              <Money amountMinor={coupon.discountMinor} currency={summary.currency} locale={locale} />{" "}
+              off.
+            </Banner>
+          ) : coupon ? (
+            <Banner tone="warning" className="mt-3">
+              {coupon.reason}
+            </Banner>
+          ) : null}
+        </Card>
+
+        <Card>
           <CardHeader title="Anything we should know?" />
           <Textarea
             name="notes"
@@ -247,6 +302,21 @@ export function CheckoutForm({
                       currency={summary.currency}
                       locale={locale}
                     />
+                  }
+                />
+              ) : null}
+              {discountMinor > 0 && coupon?.valid ? (
+                <Row
+                  label={`Discount (${coupon.code})`}
+                  value={
+                    <span className="text-teal-700">
+                      −
+                      <Money
+                        amountMinor={discountMinor}
+                        currency={summary.currency}
+                        locale={locale}
+                      />
+                    </span>
                   }
                 />
               ) : null}

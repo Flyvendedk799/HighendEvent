@@ -72,11 +72,18 @@ function buildHarness(booking: BookingRow) {
     webhookEndpoint: { findMany: jest.fn(async () => []) },
   };
 
+  // Email is queued after the state change and must never block it, so a no-op is enough here.
+  const notificationsMock = {
+    sendBookingEmail: jest.fn(async () => ({ queued: true })),
+    enqueue: jest.fn(async () => ({ queued: true })),
+  };
+
   return {
     prismaMock,
+    notificationsMock,
     updates,
     processed,
-    service: new WebhooksService(prismaMock as never),
+    service: new WebhooksService(prismaMock as never, notificationsMock as never),
   };
 }
 

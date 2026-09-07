@@ -1,37 +1,52 @@
-"use client";
+import { Banner, Page, PageHeader } from "@rentora/ui";
+import Link from "next/link";
+import { DeliveryForm } from "@/components/admin/delivery-form";
+import { getDeliverySettings, getLocations } from "@/lib/actions/operations";
+import { serverGet } from "@/lib/server-api";
+import type { StorefrontBootstrap } from "@/lib/types";
 
-import { Button, Card, Input } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+export const metadata = { title: "Delivery" };
+export const dynamic = "force-dynamic";
 
-export default function AdminDeliveryPage() {
+export default async function AdminDeliveryPage() {
+  const [settings, locations, bootstrap] = await Promise.all([
+    getDeliverySettings(),
+    getLocations(),
+    serverGet<StorefrontBootstrap>("/storefront/bootstrap").catch(() => null),
+  ]);
+
+  const delivery = settings.find((s) => s.type === "DELIVERY");
+  const pickup = settings.find((s) => s.type === "PICKUP");
+  const origin = locations.find((l) => l.isPrimary && l.isActive);
+  const originHasCoords = Boolean(origin?.latitude && origin?.longitude);
+
   return (
-    <main>
+    <Page className="max-w-3xl">
       <PageHeader
         title="Delivery"
-        description="Base fees, distance bands, and blackout windows."
+        description="What you charge to bring the kit to a customer, measured from your main location."
       />
-      <div className="grid max-w-3xl gap-6">
-        <Card className="grid gap-4 sm:grid-cols-2">
-          <Input name="base" label="Base delivery fee (DKK)" defaultValue="350" />
-          <Input name="perKm" label="Per km (DKK)" defaultValue="12" />
-          <Input name="freeRadius" label="Free radius (km)" defaultValue="5" />
-          <Input name="maxRadius" label="Max radius (km)" defaultValue="60" />
-        </Card>
-        <Card className="space-y-3">
-          <h2 className="font-display text-lg font-semibold">Zones</h2>
-          {[
-            ["Zone A · City", "0–15 km · 350 DKK"],
-            ["Zone B · Metro", "15–35 km · 550 DKK"],
-            ["Zone C · Region", "35–60 km · 850 DKK"],
-          ].map(([name, detail]) => (
-            <div key={name} className="flex justify-between rounded-lg bg-muted px-3 py-2 text-sm">
-              <span className="font-medium">{name}</span>
-              <span className="text-muted-foreground">{detail}</span>
-            </div>
-          ))}
-          <Button className="mt-2">Save delivery settings</Button>
-        </Card>
-      </div>
-    </main>
+
+      {!originHasCoords ? (
+        <Banner tone="warning" title="Delivery quotes need a starting point" className="mb-6">
+          Set coordinates on your main location and delivery distances can be calculated.{" "}
+          <Link href="/admin/locations" className="font-medium underline">
+            Open locations
+          </Link>
+        </Banner>
+      ) : (
+        <p className="mb-6 text-sm text-[var(--color-muted-foreground)]">
+          Distances are measured from <strong>{origin!.name}</strong>, {origin!.zipCode}{" "}
+          {origin!.city}.
+        </p>
+      )}
+
+      <DeliveryForm
+        delivery={delivery}
+        pickup={pickup}
+        currency={bootstrap?.store.currency ?? "USD"}
+        canEnableDelivery={originHasCoords}
+      />
+    </Page>
   );
 }

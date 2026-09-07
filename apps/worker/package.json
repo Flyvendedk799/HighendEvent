@@ -11,6 +11,8 @@
     "test": "echo \"no worker unit tests\""
   },
   "dependencies": {
+    "@rentora/db": "workspace:^",
+    "@rentora/domain": "workspace:^",
     "bullmq": "^5.34.5",
     "ioredis": "^5.4.2"
   },

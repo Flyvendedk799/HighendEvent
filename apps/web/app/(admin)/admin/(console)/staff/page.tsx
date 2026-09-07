@@ -1,32 +1,34 @@
-import { Badge, Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Page, PageHeader } from "@rentora/ui";
+import { StaffManager } from "@/components/admin/staff-manager";
+import { getStaff } from "@/lib/actions/staff";
+import { requireStaff } from "@/lib/session";
+import { serverGet } from "@/lib/server-api";
 
-const staff = [
-  { name: "Anna Owner", email: "anna@demo.rentora.app", role: "OWNER" },
-  { name: "Lars Manager", email: "lars@demo.rentora.app", role: "MANAGER" },
-  { name: "Sofie Staff", email: "sofie@demo.rentora.app", role: "STAFF" },
-  { name: "Read Only", email: "audit@demo.rentora.app", role: "READONLY" },
-];
+export const metadata = { title: "Staff" };
+export const dynamic = "force-dynamic";
 
-export default function AdminStaffPage() {
+export default async function AdminStaffPage() {
+  const session = await requireStaff();
+
+  const [staff, limits] = await Promise.all([
+    getStaff(),
+    serverGet<{ atStaffLimit: boolean }>("/billing/limits", { cache: "no-store" }).catch(
+      () => null,
+    ),
+  ]);
+
   return (
-    <main>
+    <Page className="max-w-4xl">
       <PageHeader
         title="Staff"
-        description="Invite teammates and assign role-based access."
-        action={<Button>Invite staff</Button>}
+        description="Who can get into your console, and what each of them may change."
       />
-      <div className="space-y-3">
-        {staff.map((s) => (
-          <Card key={s.email} className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-medium">{s.name}</h2>
-              <p className="text-sm text-muted-foreground">{s.email}</p>
-            </div>
-            <Badge tone={s.role === "OWNER" ? "accent" : "neutral"}>{s.role}</Badge>
-          </Card>
-        ))}
-      </div>
-    </main>
+      <StaffManager
+        staff={staff}
+        currentUserId={session.sub}
+        canManage={session.staffRole === "OWNER" || session.staffRole === "MANAGER"}
+        atSeatLimit={limits?.atStaffLimit ?? false}
+      />
+    </Page>
   );
 }

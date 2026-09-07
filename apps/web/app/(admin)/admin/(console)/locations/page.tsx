@@ -1,33 +1,20 @@
-import { Badge, Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Page, PageHeader } from "@rentora/ui";
+import { LocationsManager } from "@/components/admin/locations-manager";
+import { getLocations } from "@/lib/actions/operations";
 
-const locations = [
-  { name: "Copenhagen Warehouse", address: "Industrivej 12, 2100", primary: true },
-  { name: "Aarhus Hub", address: "Havnevej 4, 8000", primary: false },
-  { name: "Pickup locker · Nørreport", address: "Nørre Voldgade", primary: false },
-];
+export const metadata = { title: "Locations" };
+export const dynamic = "force-dynamic";
 
-export default function AdminLocationsPage() {
+export default async function AdminLocationsPage() {
+  const locations = await getLocations();
+
   return (
-    <main>
+    <Page className="max-w-4xl">
       <PageHeader
         title="Locations"
-        description="Warehouses, pickup points, and return desks."
-        action={<Button>Add location</Button>}
+        description="Where customers collect from, and the point delivery distances are measured from."
       />
-      <div className="grid gap-4 md:grid-cols-2">
-        {locations.map((l) => (
-          <Card key={l.name}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-display text-lg font-semibold">{l.name}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{l.address}</p>
-              </div>
-              {l.primary ? <Badge tone="success">Primary</Badge> : <Badge>Secondary</Badge>}
-            </div>
-          </Card>
-        ))}
-      </div>
-    </main>
+      <LocationsManager locations={locations} />
+    </Page>
   );
 }

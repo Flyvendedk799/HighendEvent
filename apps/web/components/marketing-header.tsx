@@ -28,9 +28,9 @@ export function MarketingHeader() {
           >
             Platform
           </Link>
-          <Link href="#pricing">
+          <Link href="/signup">
             <Button size="sm" className="bg-amber-400 text-slate-950 hover:bg-amber-300">
-              Start free
+              Start your store
             </Button>
           </Link>
         </div>

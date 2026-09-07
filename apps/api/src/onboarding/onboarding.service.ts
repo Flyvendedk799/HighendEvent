@@ -9,6 +9,7 @@ import {
 import { DEFAULT_BOOKING_STATUSES } from "@rentora/domain";
 import { PrismaService } from "../prisma/prisma.service";
 import { hashPassword } from "../auth/password";
+import { planLimits } from "../billing/plan-limits";
 
 export type OnboardInput = {
   tenantName: string;
@@ -26,16 +27,64 @@ export type OnboardInput = {
 export class OnboardingService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Slugs become hostnames, so the reserved list keeps a tenant off our own subdomains. */
+  private static readonly RESERVED_SLUGS = new Set([
+    "www",
+    "admin",
+    "api",
+    "app",
+    "cdn",
+    "assets",
+    "static",
+    "mail",
+    "status",
+    "docs",
+    "blog",
+    "support",
+    "help",
+    "rentora",
+  ]);
+
+  async checkSlug(input: string) {
+    const slug = input.trim().toLowerCase();
+
+    if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(slug)) {
+      return {
+        slug,
+        available: false,
+        reason:
+          "Use 3 to 30 characters: lowercase letters, numbers and hyphens, not starting or ending with a hyphen.",
+      };
+    }
+
+    if (OnboardingService.RESERVED_SLUGS.has(slug)) {
+      return { slug, available: false, reason: "That address is reserved." };
+    }
+
+    const taken = await this.prisma.tenant.findUnique({ where: { slug } });
+
+    return {
+      slug,
+      available: !taken,
+      reason: taken ? "That address is already taken." : null,
+    };
+  }
+
   async onboard(input: OnboardInput) {
-    const existing = await this.prisma.tenant.findUnique({ where: { slug: input.slug } });
-    if (existing) throw new ConflictException(`Slug '${input.slug}' already taken`);
+    const slug = input.slug.trim().toLowerCase();
+
+    const check = await this.checkSlug(slug);
+    if (!check.available) {
+      throw new ConflictException(check.reason ?? "That address is not available");
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
         data: {
           name: input.tenantName,
-          slug: input.slug.toLowerCase(),
+          slug,
           plan: input.plan ?? PlanTier.STARTER,
+          applicationFeeBps: planLimits(input.plan ?? PlanTier.STARTER).applicationFeeBps,
         },
       });
 

@@ -18,6 +18,7 @@ import {
 } from "@rentora/domain";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { NotificationsService } from "../notifications/notifications.service";
 
 export type BookingItemInput = {
   productId: string;
@@ -62,7 +63,10 @@ export type BookingListFilters = {
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async list(filters: BookingListFilters = {}) {
     const tenantId = requireTenantId();
@@ -212,7 +216,7 @@ export class BookingsService {
 
     assertTransition(booking.statusKey, toStatus, definitions);
 
-    return this.prisma.booking.update({
+    const updated = await this.prisma.booking.update({
       where: { id },
       data: {
         statusKey: toStatus,
@@ -223,6 +227,16 @@ export class BookingsService {
       },
       include: this.bookingInclude(),
     });
+
+    // The customer hears about it. Queue failures never fail the transition.
+    const label = definitions.find((d) => d.key === toStatus)?.label ?? toStatus;
+    void this.notifications.sendBookingEmail(
+      id,
+      toStatus === "cancelled" ? "booking_cancelled" : "status_changed",
+      { statusLabel: label },
+    );
+
+    return updated;
   }
 
   /** Statuses this booking may legally move to next, for the admin status control. */

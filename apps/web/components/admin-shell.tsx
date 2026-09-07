@@ -27,6 +27,7 @@ import {
   Megaphone,
   Package,
   Palette,
+  Percent,
   Rocket,
   Settings,
   Tags,
@@ -51,7 +52,8 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/admin/products", label: "Products", icon: <Package {...iconProps} /> },
       { href: "/admin/categories", label: "Categories", icon: <Tags {...iconProps} /> },
-      { href: "/admin/upsells", label: "Upsells", icon: <Boxes {...iconProps} /> },
+      { href: "/admin/upsells", label: "Add-ons", icon: <Boxes {...iconProps} /> },
+      { href: "/admin/coupons", label: "Discount codes", icon: <Percent {...iconProps} /> },
       { href: "/admin/media", label: "Media", icon: <ImageIcon {...iconProps} /> },
     ],
   },

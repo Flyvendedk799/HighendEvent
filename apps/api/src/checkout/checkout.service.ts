@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { BookingsService } from "../bookings/bookings.service";
 import { CartService, type CartOwner } from "../cart/cart.service";
 import { DeliveryService } from "../delivery/delivery.service";
+import { CouponsService } from "../coupons/coupons.service";
 import { requireTenantId } from "../common/tenant.util";
 import { hashPassword } from "../auth/password";
 
@@ -19,6 +20,7 @@ export type CheckoutInput = {
   country?: string;
   deliveryType: DeliveryType;
   notes?: string;
+  couponCode?: string;
   successUrl: string;
   cancelUrl: string;
 };
@@ -30,6 +32,7 @@ export class CheckoutService {
     private readonly bookings: BookingsService,
     private readonly cart: CartService,
     private readonly delivery: DeliveryService,
+    private readonly coupons: CouponsService,
   ) {}
 
   /**
@@ -103,6 +106,23 @@ export class CheckoutService {
       deliveryBreakdown = { ...quote };
     }
 
+    // A code is re-checked against the live cart total, never trusted from the client.
+    let discountMinor = 0;
+    let couponCode: string | undefined;
+
+    if (input.couponCode?.trim()) {
+      const quote = await this.coupons.quote(
+        input.couponCode,
+        summary.pricing?.subtotalMinor ?? 0,
+        summary.currency,
+      );
+      if (!quote.valid) {
+        throw new BadRequestException(quote.reason ?? "That discount code is not valid");
+      }
+      discountMinor = quote.discountMinor;
+      couponCode = quote.code;
+    }
+
     const customer = await this.upsertCustomer(tenantId, input);
 
     const booking = await this.bookings.create({
@@ -121,6 +141,8 @@ export class CheckoutService {
       deliveryFeeMinor,
       deliveryBreakdown,
       notes: input.notes,
+      couponCode,
+      discountMinor,
       items: summary.cart.items.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -130,6 +152,11 @@ export class CheckoutService {
         })),
       })),
     });
+
+    if (couponCode) {
+      // Redeemed only once the booking exists, so an abandoned checkout does not burn a code.
+      await this.coupons.redeem(couponCode);
+    }
 
     const session = await this.startPayment(tenant, booking, input);
 

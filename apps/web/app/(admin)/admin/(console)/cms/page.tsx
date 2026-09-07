@@ -1,32 +1,20 @@
-import { Badge, Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Page, PageHeader } from "@rentora/ui";
+import { CmsEditor } from "@/components/admin/cms-editor";
+import { getCmsPages } from "@/lib/actions/cms";
 
-const pages = [
-  { title: "About", slug: "about", status: "Published" },
-  { title: "FAQ", slug: "faq", status: "Published" },
-  { title: "Terms", slug: "terms", status: "Draft" },
-  { title: "Contact", slug: "contact", status: "Published" },
-];
+export const metadata = { title: "Pages" };
+export const dynamic = "force-dynamic";
 
-export default function AdminCmsPage() {
+export default async function AdminCmsPage() {
+  const pages = await getCmsPages();
+
   return (
-    <main>
+    <Page>
       <PageHeader
-        title="CMS pages"
-        description="Editable content blocks for the tenant storefront."
-        action={<Button>New page</Button>}
+        title="Pages"
+        description="About, FAQ, terms — anything customers ask before they book."
       />
-      <div className="space-y-3">
-        {pages.map((p) => (
-          <Card key={p.slug} className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-medium">{p.title}</h2>
-              <p className="text-sm text-muted-foreground">/{p.slug}</p>
-            </div>
-            <Badge tone={p.status === "Published" ? "success" : "warning"}>{p.status}</Badge>
-          </Card>
-        ))}
-      </div>
-    </main>
+      <CmsEditor pages={pages} />
+    </Page>
   );
 }

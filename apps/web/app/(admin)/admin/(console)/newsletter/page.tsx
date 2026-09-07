@@ -1,43 +1,90 @@
-import { Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Page,
+  PageHeader,
+  StatCard,
+  Table,
+  TableContainer,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@rentora/ui";
+import { NewsletterExport } from "@/components/admin/newsletter-export";
+import { getNewsletterSubscribers } from "@/lib/actions/operations";
 
-export default function AdminNewsletterPage() {
+export const metadata = { title: "Newsletter" };
+export const dynamic = "force-dynamic";
+
+export default async function AdminNewsletterPage() {
+  const subscribers = await getNewsletterSubscribers();
+  const active = subscribers.filter((s) => s.isActive);
+
+  const thisMonth = subscribers.filter((s) => {
+    const created = new Date(s.createdAt);
+    const now = new Date();
+    return (
+      created.getUTCFullYear() === now.getUTCFullYear() &&
+      created.getUTCMonth() === now.getUTCMonth()
+    );
+  });
+
   return (
-    <main>
+    <Page className="max-w-4xl">
       <PageHeader
         title="Newsletter"
-        description="Subscriber list and campaign stubs."
-        action={<Button>Compose</Button>}
+        description="People who asked to hear from you. Export the list to send a campaign from your email tool."
+        action={<NewsletterExport subscribers={active} />}
       />
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <p className="text-sm text-muted-foreground">Subscribers</p>
-          <p className="mt-2 font-display text-3xl font-semibold">1.284</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-muted-foreground">Open rate</p>
-          <p className="mt-2 font-display text-3xl font-semibold">41%</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-muted-foreground">Last send</p>
-          <p className="mt-2 font-display text-3xl font-semibold">Aug 28</p>
-        </Card>
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <StatCard label="Subscribed" value={active.length} />
+        <StatCard label="Joined this month" value={thisMonth.length} />
+        <StatCard
+          label="Unsubscribed"
+          value={subscribers.length - active.length}
+          hint="Kept so they are not re-added by mistake"
+        />
       </div>
-      <Card className="mt-6">
-        <h2 className="font-display text-lg font-semibold">Recent campaigns</h2>
-        <ul className="mt-4 space-y-3 text-sm">
-          {[
-            "Late summer outdoor lighting",
-            "Wedding season early-bird",
-            "Warehouse open day",
-          ].map((c) => (
-            <li key={c} className="flex justify-between rounded-lg bg-muted px-3 py-2">
-              <span>{c}</span>
-              <span className="text-muted-foreground">Sent</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-    </main>
+
+      <TableContainer>
+        <Table>
+          <THead>
+            <Tr>
+              <Th>Email</Th>
+              <Th>Joined</Th>
+              <Th>Status</Th>
+            </Tr>
+          </THead>
+          <TBody>
+            {subscribers.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-4 py-12">
+                  <EmptyState
+                    title="Nobody has subscribed yet"
+                    description="Add a signup form to your storefront footer and subscribers will appear here."
+                  />
+                </td>
+              </tr>
+            ) : (
+              subscribers.map((subscriber) => (
+                <Tr key={subscriber.id}>
+                  <Td>{subscriber.email}</Td>
+                  <Td muted>{new Date(subscriber.createdAt).toLocaleDateString()}</Td>
+                  <Td>
+                    <Badge tone={subscriber.isActive ? "success" : "neutral"}>
+                      {subscriber.isActive ? "Subscribed" : "Unsubscribed"}
+                    </Badge>
+                  </Td>
+                </Tr>
+              ))
+            )}
+          </TBody>
+        </Table>
+      </TableContainer>
+    </Page>
   );
 }

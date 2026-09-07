@@ -7,6 +7,7 @@ import {
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { NotificationsService } from "../notifications/notifications.service";
 
 type StripeEvent = {
   id: string;
@@ -21,7 +22,10 @@ const SIGNATURE_TOLERANCE_SECONDS = 300;
 export class WebhooksService {
   private readonly logger = new Logger(WebhooksService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   // ------------------------------------------------------------- outbound hooks
 
@@ -243,6 +247,13 @@ export class WebhooksService {
       // The basket has become a booking, so it must not linger and be checked out twice.
       await this.clearCartFor(booking.tenantId, booking.customerId);
     }
+
+    // Confirmation on first payment; a settled balance gets the status email instead.
+    await this.notifications.sendBookingEmail(
+      booking.id,
+      isRemainder ? "status_changed" : "booking_confirmation",
+      isRemainder ? { statusLabel: "Fully paid" } : {},
+    );
 
     await this.dispatchTenantEvent(
       "booking.paid",

@@ -53,6 +53,9 @@ importers:
       '@rentora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      bullmq:
+        specifier: ^5.34.5
+        version: 5.81.4
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -163,6 +166,12 @@ importers:
 
   apps/worker:
     dependencies:
+      '@rentora/db':
+        specifier: workspace:^
+        version: link:../../packages/db
+      '@rentora/domain':
+        specifier: workspace:^
+        version: link:../../packages/domain
       bullmq:
         specifier: ^5.34.5
         version: 5.81.4

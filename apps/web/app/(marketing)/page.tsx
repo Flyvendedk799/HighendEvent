@@ -1,29 +1,47 @@
 import Link from "next/link";
-import { Button } from "@rentora/ui";
+import { Button, formatMoneyMinor } from "@rentora/ui";
+import { apiFetch } from "@/lib/api";
 
-const plans = [
-  {
-    name: "Starter",
-    price: "€49",
-    detail: "Solo shops launching online bookings",
-    features: ["1 storefront", "Up to 50 products", "Stripe Connect", "Email templates"],
-  },
-  {
-    name: "Growth",
-    price: "€129",
-    detail: "Busy rental teams with delivery zones",
-    features: ["Unlimited products", "Calendar & staff roles", "Delivery pricing", "Analytics"],
-    featured: true,
-  },
-  {
-    name: "Scale",
-    price: "€299",
-    detail: "Multi-location fleets and agencies",
-    features: ["Custom domains", "API & webhooks", "Priority support", "Advanced CMS"],
-  },
-];
+type Plan = {
+  tier: "STARTER" | "GROWTH" | "SCALE";
+  name: string;
+  priceMinor: number;
+  currency: string;
+  maxProducts: number | null;
+  maxStaff: number | null;
+  customDomains: boolean;
+  apiAccess: boolean;
+  applicationFeeBps: number;
+};
 
-export default function MarketingPage() {
+const PLAN_BLURB: Record<string, string> = {
+  STARTER: "Solo shops taking their first online bookings",
+  GROWTH: "Busy rental teams with delivery and a crew",
+  SCALE: "Multi-location fleets and agencies",
+};
+
+/**
+ * Marketing copy is derived from the plan limits the API actually enforces, so the pricing
+ * table cannot drift away from what a customer gets.
+ */
+function featuresOf(plan: Plan): string[] {
+  return [
+    plan.maxProducts === null ? "Unlimited products" : `Up to ${plan.maxProducts} products`,
+    plan.maxStaff === null ? "Unlimited staff seats" : `${plan.maxStaff} staff seats`,
+    plan.customDomains ? "Your own domain" : "Free rentora.app address",
+    plan.apiAccess ? "API and outbound webhooks" : "Stripe payouts and email",
+    `${(plan.applicationFeeBps / 100).toFixed(2)}% booking fee`,
+  ];
+}
+
+export const dynamic = "force-dynamic";
+
+export default async function MarketingPage() {
+  const plans = await apiFetch<Plan[]>("/billing/plans", {
+    method: "GET",
+    next: { revalidate: 300 },
+  }).catch(() => [] as Plan[]);
+
   return (
     <main>
       <section className="relative min-h-[100svh] overflow-hidden bg-hero-glow text-white">
@@ -45,9 +63,9 @@ export default function MarketingPage() {
             party hire, AV, and event equipment businesses.
           </p>
           <div className="animate-fade-up mt-8 flex flex-wrap gap-3 [animation-delay:320ms]">
-            <Link href="#pricing">
+            <Link href="/signup">
               <Button size="lg" className="bg-amber-400 text-slate-950 hover:bg-amber-300">
-                Start free trial
+                Start your store
               </Button>
             </Link>
             <a href="#product">
@@ -127,42 +145,48 @@ export default function MarketingPage() {
           <p className="mt-2 text-slate-600">Grow from first booking to multi-location ops.</p>
         </div>
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {plans.map((plan) => (
+          {plans.map((plan) => {
+            // The middle tier is the one most rental businesses land on, so it leads.
+            const featured = plan.tier === "GROWTH";
+
+            return (
             <div
-              key={plan.name}
+              key={plan.tier}
               className={`rounded-2xl border p-6 ${
-                plan.featured
+                featured
                   ? "border-teal-600 bg-teal-900 text-white shadow-xl shadow-teal-900/20"
                   : "border-slate-200 bg-white"
               }`}
             >
               <h3 className="font-display text-2xl font-semibold">{plan.name}</h3>
-              <p className={`mt-1 text-sm ${plan.featured ? "text-teal-100" : "text-slate-500"}`}>
-                {plan.detail}
+              <p className={`mt-1 text-sm ${featured ? "text-teal-100" : "text-slate-500"}`}>
+                {PLAN_BLURB[plan.tier]}
               </p>
               <p className="mt-6 font-display text-4xl font-semibold">
-                {plan.price}
+                {formatMoneyMinor(plan.priceMinor, plan.currency)}
                 <span className="text-base font-sans font-normal opacity-70"> / mo</span>
               </p>
               <ul className="mt-6 space-y-2 text-sm">
-                {plan.features.map((feature) => (
+                {featuresOf(plan).map((feature) => (
                   <li key={feature} className="flex gap-2">
-                    <span className={plan.featured ? "text-amber-300" : "text-teal-700"}>✓</span>
+                    <span className={featured ? "text-amber-300" : "text-teal-700"}>✓</span>
                     {feature}
                   </li>
                 ))}
               </ul>
               <Button
+                asChild
                 className={`mt-8 w-full ${
-                  plan.featured
+                  featured
                     ? "bg-amber-400 text-slate-950 hover:bg-amber-300"
                     : "bg-teal-700 hover:bg-teal-600"
                 }`}
               >
-                Choose {plan.name}
+                <Link href={`/signup?plan=${plan.tier}`}>Choose {plan.name}</Link>
               </Button>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

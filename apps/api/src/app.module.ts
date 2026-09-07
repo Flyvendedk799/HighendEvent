@@ -28,11 +28,16 @@ import { WebhooksModule } from "./webhooks/webhooks.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { BillingModule } from "./billing/billing.module";
 import { StorefrontModule } from "./storefront/storefront.module";
+import { DomainsModule } from "./domains/domains.module";
+import { NotificationsModule } from "./notifications/notifications.module";
+import { StaffModule } from "./staff/staff.module";
+import { CouponsModule } from "./coupons/coupons.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    NotificationsModule,
     AuthModule,
     HealthModule,
     PlatformModule,
@@ -57,6 +62,9 @@ import { StorefrontModule } from "./storefront/storefront.module";
     GdprModule,
     BillingModule,
     StorefrontModule,
+    DomainsModule,
+    StaffModule,
+    CouponsModule,
   ],
   providers: [
     TenantMiddleware,

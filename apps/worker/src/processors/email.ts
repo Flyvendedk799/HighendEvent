@@ -1,55 +1,130 @@
 import type { Job } from "bullmq";
+import { prisma } from "@rentora/db";
 import type { EmailJobData } from "../queues.js";
+import { interpolate, toPlainText, wrapInLayout, type TemplateVars } from "../email/render.js";
+import { sendEmail, type SendResult } from "../email/provider.js";
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
+/**
+ * Fallback copy for a tenant that has deleted or never had a given template. Losing a booking
+ * confirmation because a template row is missing would be worse than sending a plain one.
+ */
+const FALLBACK_TEMPLATES: Record<string, { subject: string; bodyHtml: string }> = {
+  booking_confirmation: {
+    subject: "Your booking {{bookingNo}} is confirmed",
+    bodyHtml:
+      "<p>Hi {{customerName}},</p><p>Thanks for booking with {{storeName}}. Your rental runs {{startDate}} to {{endDate}}.</p><p>Total: {{total}}</p>",
+  },
+  payment_reminder: {
+    subject: "Balance due for booking {{bookingNo}}",
+    bodyHtml:
+      "<p>Hi {{customerName}},</p><p>The remaining balance of {{remaining}} for booking {{bookingNo}} is due before {{startDate}}.</p>",
+  },
+  status_changed: {
+    subject: "Booking {{bookingNo}} is now {{statusLabel}}",
+    bodyHtml: "<p>Hi {{customerName}},</p><p>Your booking is now <b>{{statusLabel}}</b>.</p>",
+  },
+  booking_cancelled: {
+    subject: "Booking {{bookingNo}} was cancelled",
+    bodyHtml: "<p>Hi {{customerName}},</p><p>Booking {{bookingNo}} has been cancelled.</p>",
+  },
+  staff_invite: {
+    subject: "You have been invited to {{storeName}}",
+    bodyHtml: "<p>{{inviterName}} invited you to help run {{storeName}}.</p><p>{{inviteUrl}}</p>",
+  },
+};
 
-/** Renders a minimal transactional HTML body (stub until Resend/templates land). */
-export function renderEmailHtml(data: EmailJobData): string {
-  if (data.html) {
-    return data.html;
+async function loadBrand(tenantId?: string) {
+  if (!tenantId) {
+    return { storeName: "Rentora", primaryColor: "#0F766E", logoUrl: null, supportEmail: null };
   }
 
-  const vars = data.vars ?? {};
-  const greeting = escapeHtml(vars.name ?? "there");
-  const body = escapeHtml(vars.body ?? "Thanks for using Rentora.");
-  const ctaLabel = escapeHtml(vars.ctaLabel ?? "Open Rentora");
-  const ctaUrl = escapeHtml(vars.ctaUrl ?? "https://rentora.app");
+  const store = await prisma.store.findFirst({
+    where: { tenantId },
+    select: {
+      name: true,
+      logoUrl: true,
+      supportEmail: true,
+      brandColors: true,
+    },
+  });
 
-  return `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>${escapeHtml(data.subject)}</title>
-  </head>
-  <body style="font-family: system-ui, sans-serif; background: #f8fafc; color: #0f172a; padding: 24px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px;">
-      <tr>
-        <td>
-          <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #0f766e;">Rentora</p>
-          <h1 style="margin: 0 0 16px; font-size: 22px;">${escapeHtml(data.subject)}</h1>
-          <p style="margin: 0 0 16px;">Hi ${greeting},</p>
-          <p style="margin: 0 0 24px; line-height: 1.5;">${body}</p>
-          <p style="margin: 0;">
-            <a href="${ctaUrl}" style="display: inline-block; background: #0f766e; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 8px;">${ctaLabel}</a>
-          </p>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+  const colors = (store?.brandColors ?? {}) as Record<string, string>;
+
+  return {
+    storeName: store?.name ?? "Rentora",
+    primaryColor: colors.primary ?? "#0F766E",
+    logoUrl: store?.logoUrl ?? null,
+    supportEmail: store?.supportEmail ?? null,
+  };
 }
 
-export async function processEmail(job: Job<EmailJobData>): Promise<{ htmlLength: number }> {
-  const html = renderEmailHtml(job.data);
+async function loadTemplate(tenantId: string | undefined, key: string, locale: string) {
+  if (tenantId) {
+    const row =
+      (await prisma.emailTemplate.findUnique({
+        where: { tenantId_key_locale: { tenantId, key, locale } },
+      })) ??
+      // Fall back to the tenant's English copy before falling back to ours.
+      (await prisma.emailTemplate.findFirst({ where: { tenantId, key, isActive: true } }));
+
+    if (row?.isActive) {
+      return { subject: row.subject, bodyHtml: row.bodyHtml, source: "tenant" as const };
+    }
+  }
+
+  const fallback = FALLBACK_TEMPLATES[key];
+  if (!fallback) return null;
+  return { ...fallback, source: "builtin" as const };
+}
+
+export async function processEmail(job: Job<EmailJobData>): Promise<SendResult> {
+  const { to, tenantId, template, locale = "en", vars = {}, subject: overrideSubject } = job.data;
+
+  if (!to?.includes("@")) {
+    // A malformed address will never succeed, so fail permanently rather than retrying.
+    throw new UnrecoverableEmailError(`Refusing to send to an invalid address: ${to}`);
+  }
+
+  const brand = await loadBrand(tenantId);
+  const templateVars: TemplateVars = { storeName: brand.storeName, ...vars };
+
+  let subject: string;
+  let bodyHtml: string;
+
+  if (job.data.html) {
+    subject = overrideSubject ?? "";
+    bodyHtml = job.data.html;
+  } else if (template) {
+    const loaded = await loadTemplate(tenantId, template, locale);
+    if (!loaded) {
+      throw new UnrecoverableEmailError(`No template named ${template}`);
+    }
+    subject = interpolate(overrideSubject ?? loaded.subject, templateVars);
+    bodyHtml = interpolate(loaded.bodyHtml, templateVars);
+  } else {
+    throw new UnrecoverableEmailError("Job has neither a template nor html");
+  }
+
+  const html = wrapInLayout(bodyHtml, subject, brand);
+
+  const result = await sendEmail({
+    to,
+    subject,
+    html,
+    text: toPlainText(html),
+    from: process.env.EMAIL_FROM ?? `${brand.storeName} <bookings@rentora.app>`,
+    replyTo: brand.supportEmail,
+  });
+
   console.log(
-    `[email] job=${job.id} to=${job.data.to} subject=${JSON.stringify(job.data.subject)} htmlBytes=${html.length}`,
+    `[email] job=${job.id} to=${to} template=${template ?? "inline"} delivered=${result.delivered}` +
+      (result.reason ? ` reason=${result.reason}` : ""),
   );
-  // Stub: wire to Resend / SMTP in a follow-up.
-  return { htmlLength: html.length };
+
+  return result;
+}
+
+/** BullMQ treats this as final: no retries, straight to the failed set. */
+export class UnrecoverableEmailError extends Error {
+  readonly name = "UnrecoverableError";
 }

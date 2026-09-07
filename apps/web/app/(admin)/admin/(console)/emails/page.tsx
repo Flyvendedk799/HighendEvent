@@ -1,38 +1,30 @@
-import { Badge, Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Page, PageHeader } from "@rentora/ui";
+import { EmailTemplates } from "@/components/admin/email-templates";
+import { getEmailTemplates } from "@/lib/actions/emails";
 
-const templates = [
-  { name: "Booking confirmation", key: "booking_confirmation", status: "Active" },
-  { name: "Deposit paid", key: "deposit_paid", status: "Active" },
-  { name: "Out for delivery", key: "out_for_delivery", status: "Active" },
-  { name: "Return reminder", key: "return_reminder", status: "Draft" },
-  { name: "Newsletter welcome", key: "newsletter_welcome", status: "Active" },
-];
+export const metadata = { title: "Emails" };
+export const dynamic = "force-dynamic";
 
-export default function AdminEmailsPage() {
+export default async function AdminEmailsPage() {
+  const { templates, catalog, variables } = await getEmailTemplates();
+
+  // The worker owns delivery; the API only knows whether a key is present in its own env.
+  const providerConfigured = Boolean(
+    process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.startsWith("re_xxx"),
+  );
+
   return (
-    <main>
+    <Page>
       <PageHeader
-        title="Email templates"
-        description="Transactional messages sent via Resend."
-        action={<Button variant="secondary">Preview sender</Button>}
+        title="Emails"
+        description="What Rentora sends your customers, in your words and your branding."
       />
-      <div className="space-y-3">
-        {templates.map((t) => (
-          <Card key={t.key} className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-medium">{t.name}</h2>
-              <p className="text-sm text-muted-foreground">{t.key}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge tone={t.status === "Active" ? "success" : "warning"}>{t.status}</Badge>
-              <Button size="sm" variant="secondary">
-                Edit
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </main>
+      <EmailTemplates
+        templates={templates}
+        catalog={catalog}
+        variables={variables}
+        providerConfigured={providerConfigured}
+      />
+    </Page>
   );
 }
