@@ -5,17 +5,20 @@ import { useTransition } from "react";
 import { Banner, Button, DateRange, Money, Select, useToast } from "@rentora/ui";
 import { removeCartItemAction, updateCartItemAction } from "@/lib/actions/cart";
 import type { CartItem } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n";
 
 export function CartLines({
   items,
   issues,
   currency,
   locale,
+  t,
 }: {
   items: CartItem[];
   issues: Array<{ itemId: string; message: string }>;
   currency: string;
   locale: string;
+  t: Dictionary;
 }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -88,10 +91,10 @@ export function CartLines({
                         />
                       </p>
                     ) : (
-                      <p className="mt-0.5 text-sm text-amber-700">No dates chosen</p>
+                      <p className="mt-0.5 text-sm text-amber-700">{t.cart.noDates}</p>
                     )}
                     <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
-                      {item.deliveryType === "DELIVERY" ? "Delivery" : "Collection"}
+                      {item.deliveryType === "DELIVERY" ? t.common.delivery : t.common.collection}
                     </p>
                   </div>
 
@@ -102,7 +105,7 @@ export function CartLines({
                       locale={locale}
                     />
                     <span className="block text-xs font-normal text-[var(--color-muted-foreground)]">
-                      / day
+                      {t.common.perDay}
                     </span>
                   </p>
                 </div>
@@ -125,7 +128,7 @@ export function CartLines({
 
                 <div className="mt-3 flex flex-wrap items-end gap-3">
                   <Select
-                    aria-label={`Quantity of ${item.product.name}`}
+                    aria-label={`${t.common.quantity}: ${item.product.name}`}
                     value={String(item.quantity)}
                     disabled={pending}
                     onChange={(e) => update(item.id, Number(e.target.value))}
@@ -136,7 +139,7 @@ export function CartLines({
                     )}
                   />
                   <Button variant="secondary" size="sm" asChild>
-                    <Link href={`/product/${item.product.slug}`}>Change dates</Link>
+                    <Link href={`/product/${item.product.slug}`}>{t.cart.changeDates}</Link>
                   </Button>
                   <Button
                     variant="ghost"
@@ -145,7 +148,7 @@ export function CartLines({
                     disabled={pending}
                     onClick={() => remove(item.id, item.product.name)}
                   >
-                    Remove
+                    {t.common.remove}
                   </Button>
                 </div>
               </div>

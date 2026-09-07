@@ -88,7 +88,8 @@ export class NotificationsService implements OnModuleDestroy {
     if (!booking) return null;
 
     const store = booking.tenant.stores[0];
-    const locale = store?.localeDefault ?? "en";
+    // The language the customer shopped in wins over the store default.
+    const locale = booking.locale || store?.localeDefault || "en";
     const money = (minor: number) =>
       new Intl.NumberFormat(locale === "da" ? "da-DK" : "en-GB", {
         style: "currency",

@@ -36,6 +36,7 @@ class CheckoutDto {
   @IsEnum(DeliveryType) deliveryType!: DeliveryType;
   @IsOptional() @IsString() notes?: string;
   @IsOptional() @IsString() couponCode?: string;
+  @IsOptional() @IsString() locale?: string;
   @IsUrl({ require_tld: false }) successUrl!: string;
   @IsUrl({ require_tld: false }) cancelUrl!: string;
 }

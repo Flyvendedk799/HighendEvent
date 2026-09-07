@@ -6,6 +6,7 @@ import { ThemeTokens } from "@/components/theme-tokens";
 import { StoreNotFound } from "@/components/store-not-found";
 import { getBootstrap } from "@/lib/tenant";
 import { getSession } from "@/lib/session";
+import { getAvailableLocales, getLocale, getT } from "@/lib/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
   const bootstrap = await getBootstrap();
@@ -35,7 +36,12 @@ export default async function StorefrontLayout({ children }: { children: React.R
     return <StoreNotFound />;
   }
 
-  const session = await getSession();
+  const [session, locale, locales, t] = await Promise.all([
+    getSession(),
+    getLocale(),
+    getAvailableLocales(),
+    getT(),
+  ]);
 
   return (
     <>
@@ -47,6 +53,9 @@ export default async function StorefrontLayout({ children }: { children: React.R
           categories={bootstrap.categories}
           pages={bootstrap.pages}
           isLoggedIn={session?.role === "customer"}
+          locale={locale}
+          locales={locales}
+          t={t}
         />
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">{children}</div>
         <StorefrontFooter
@@ -55,6 +64,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
           supportEmail={bootstrap.store.supportEmail}
           supportPhone={bootstrap.store.supportPhone}
           pages={bootstrap.pages}
+          t={t}
         />
       </div>
     </>

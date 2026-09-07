@@ -17,6 +17,7 @@ import {
 import { getAvailabilityAction, getQuoteAction } from "@/lib/actions/availability";
 import { addToCartAction } from "@/lib/actions/cart";
 import type { AvailabilityCalendar, PricingBreakdown, Product } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n";
 
 function isoToday(): string {
   return new Date().toISOString().slice(0, 10);
@@ -54,12 +55,14 @@ export function ProductBooking({
   deliveryEnabled,
   currency,
   locale,
+  t,
 }: {
   product: Product;
   initialCalendar: AvailabilityCalendar | null;
   deliveryEnabled: boolean;
   currency: string;
   locale: string;
+  t: Dictionary;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -174,11 +177,11 @@ export function ProductBooking({
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <h2 className="mb-1 text-sm font-semibold">Choose your dates</h2>
+        <h2 className="mb-1 text-sm font-semibold">{t.product.chooseDates}</h2>
         <p className="mb-3 text-xs text-[var(--color-muted-foreground)]">
           {product.prepBufferDays || product.cleanupBufferDays
-            ? `Days either side of an existing booking are blocked for prep and cleanup.`
-            : `Pick the first and last day of your rental.`}
+            ? t.product.bufferHelp
+            : t.product.chooseDatesHelp}
         </p>
 
         <Calendar
@@ -210,7 +213,7 @@ export function ProductBooking({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Select
-          label="Quantity"
+          label={t.common.quantity}
           value={String(quantity)}
           onChange={(e) => setQuantity(Number(e.target.value))}
           options={Array.from({ length: Math.min(product.stockQty, 20) }, (_, i) => ({
@@ -220,12 +223,12 @@ export function ProductBooking({
         />
         {deliveryEnabled ? (
           <Select
-            label="Fulfilment"
+            label={t.product.fulfilment}
             value={deliveryType}
             onChange={(e) => setDeliveryType(e.target.value as "PICKUP" | "DELIVERY")}
             options={[
-              { value: "PICKUP", label: "Collect from us" },
-              { value: "DELIVERY", label: "Delivery (quoted at checkout)" },
+              { value: "PICKUP", label: t.product.collectFromUs },
+              { value: "DELIVERY", label: t.product.deliverToMe },
             ]}
           />
         ) : null}
@@ -233,7 +236,7 @@ export function ProductBooking({
 
       {upsells.length > 0 ? (
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <h2 className="mb-2 text-sm font-semibold">Add to your booking</h2>
+          <h2 className="mb-2 text-sm font-semibold">{t.product.addToBooking}</h2>
           <ul className="space-y-2.5">
             {upsells.map((link) => (
               <li key={link.upsellProduct.id} className="flex items-start justify-between gap-3">
@@ -270,10 +273,11 @@ export function ProductBooking({
         currency={currency}
         locale={locale}
         hasDates={Boolean(range.start && range.end)}
+        t={t}
       />
 
       <Button size="lg" className="w-full" disabled={!canAdd} loading={adding} onClick={addToCart}>
-        {range.start && range.end ? "Add to cart" : "Choose dates to continue"}
+        {range.start && range.end ? t.product.addToCart : t.product.chooseDatesFirst}
       </Button>
     </div>
   );
@@ -287,6 +291,7 @@ function QuotePanel({
   currency,
   locale,
   hasDates,
+  t,
 }: {
   quote: PricingBreakdown | null;
   quoting: boolean;
@@ -295,11 +300,12 @@ function QuotePanel({
   currency: string;
   locale: string;
   hasDates: boolean;
+  t: Dictionary;
 }) {
   if (!hasDates) {
     return (
       <p className="text-sm text-[var(--color-muted-foreground)]">
-        Pick your dates and we will price the rental exactly, including weekend rates.
+        {t.product.pricePrompt}
       </p>
     );
   }
@@ -307,7 +313,7 @@ function QuotePanel({
   if (quoting || !quote) {
     return (
       <div className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)]">
-        <Spinner /> Pricing your dates…
+        <Spinner /> {t.product.pricingYourDates}
       </div>
     );
   }
@@ -317,30 +323,30 @@ function QuotePanel({
   return (
     <dl className="space-y-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm">
       <Row
-        label={`Rental · ${rentalDays} ${rentalDays === 1 ? "day" : "days"}`}
+        label={`${t.common.subtotal} · ${rentalDays} ${rentalDays === 1 ? t.common.day : t.common.days}`}
         value={<Money amountMinor={quote.subtotalMinor} currency={currency} locale={locale} />}
       />
       {upsellTotalMinor > 0 ? (
         <Row
-          label="Add-ons"
+          label={t.common.addOns}
           value={<Money amountMinor={upsellTotalMinor} currency={currency} locale={locale} />}
         />
       ) : null}
       {quote.depositMinor > 0 ? (
         <Row
-          label="Refundable deposit"
+          label={t.common.deposit}
           value={<Money amountMinor={quote.depositMinor} currency={currency} locale={locale} />}
         />
       ) : null}
       {quote.taxMinor > 0 ? (
         <Row
-          label={`Tax (${(quote.taxPercentBps / 100).toFixed(0)}%)`}
+          label={`${t.common.tax} (${(quote.taxPercentBps / 100).toFixed(0)}%)`}
           value={<Money amountMinor={quote.taxMinor} currency={currency} locale={locale} />}
         />
       ) : null}
 
       <div className="mt-2 flex items-baseline justify-between border-t border-[var(--color-border)] pt-2">
-        <dt className="font-semibold">Total</dt>
+        <dt className="font-semibold">{t.common.total}</dt>
         <dd className="text-lg font-semibold">
           <Money amountMinor={total} currency={currency} locale={locale} />
         </dd>
@@ -348,8 +354,9 @@ function QuotePanel({
 
       {quote.remainingMinor > 0 ? (
         <p className="pt-1 text-xs text-[var(--color-muted-foreground)]">
-          Pay <Money amountMinor={quote.upfrontMinor} currency={currency} locale={locale} /> now,
-          the rest before delivery.
+          {t.product.payNow}{" "}
+          <Money amountMinor={quote.upfrontMinor} currency={currency} locale={locale} />{" "}
+          {t.product.payNowRest}
         </p>
       ) : null}
     </dl>

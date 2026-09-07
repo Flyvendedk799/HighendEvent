@@ -3,10 +3,15 @@ import { Button, EmptyState, cx } from "@rentora/ui";
 import { ProductCard } from "@/components/product-card";
 import { serverGet } from "@/lib/server-api";
 import { getBootstrap } from "@/lib/tenant";
+import { getLocale, getT } from "@/lib/locale";
 import type { Product } from "@/lib/types";
 
-export const metadata = { title: "Catalog" };
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const t = await getT();
+  return { title: t.nav.catalog };
+}
 
 export default async function CatalogPage({
   searchParams,
@@ -14,7 +19,7 @@ export default async function CatalogPage({
   searchParams: Promise<{ q?: string; category?: string }>;
 }) {
   const { q, category } = await searchParams;
-  const bootstrap = await getBootstrap();
+  const [bootstrap, t, locale] = await Promise.all([getBootstrap(), getT(), getLocale()]);
 
   const query = new URLSearchParams();
   if (q) query.set("q", q);
@@ -26,19 +31,20 @@ export default async function CatalogPage({
   ).catch(() => [] as Product[]);
 
   const currency = bootstrap?.store.currency ?? "USD";
-  const locale = bootstrap?.store.localeDefault ?? "en";
   const categories = bootstrap?.categories ?? [];
   const activeCategory = categories.find((c) => c.slug === category);
+  const isFiltered = Boolean(q || category);
 
   return (
     <div>
       <header className="mb-6">
         <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {activeCategory ? activeCategory.name : "Everything we rent"}
+          {activeCategory ? activeCategory.name : t.catalog.title}
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-          {products.length} item{products.length === 1 ? "" : "s"} available
-          {q ? ` matching “${q}”` : ""}
+          {products.length}{" "}
+          {products.length === 1 ? t.catalog.itemAvailable : t.catalog.itemsAvailable}
+          {q ? ` · “${q}”` : ""}
         </p>
       </header>
 
@@ -47,20 +53,20 @@ export default async function CatalogPage({
           type="search"
           name="q"
           defaultValue={q}
-          placeholder="Search the catalog"
-          aria-label="Search the catalog"
+          placeholder={t.catalog.searchPlaceholder}
+          aria-label={t.catalog.searchPlaceholder}
           className="h-10 min-w-[200px] flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
         />
         {category ? <input type="hidden" name="category" value={category} /> : null}
         <Button type="submit" variant="secondary">
-          Search
+          {t.common.search}
         </Button>
       </form>
 
       {categories.length > 0 ? (
         <nav className="mb-8 flex flex-wrap gap-2">
           <CategoryChip href={buildHref({ q })} active={!category}>
-            All
+            {t.catalog.all}
           </CategoryChip>
           {categories.map((c) => (
             <CategoryChip
@@ -76,16 +82,12 @@ export default async function CatalogPage({
 
       {products.length === 0 ? (
         <EmptyState
-          title={q || category ? "Nothing matches that" : "Nothing listed yet"}
-          description={
-            q || category
-              ? "Try a different search, or browse everything."
-              : "This store has not published any items yet."
-          }
+          title={isFiltered ? t.catalog.noMatchTitle : t.catalog.emptyTitle}
+          description={isFiltered ? t.catalog.noMatchBody : t.catalog.emptyBody}
           action={
-            q || category ? (
+            isFiltered ? (
               <Button variant="secondary" asChild>
-                <Link href="/catalog">Browse everything</Link>
+                <Link href="/catalog">{t.catalog.browseEverything}</Link>
               </Button>
             ) : undefined
           }
@@ -98,6 +100,9 @@ export default async function CatalogPage({
               product={product}
               currency={currency}
               locale={locale}
+              fromLabel={t.common.from}
+              perDayLabel={t.common.perDay}
+              checkDatesLabel={t.catalog.checkDates}
             />
           ))}
         </div>

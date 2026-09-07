@@ -14,7 +14,8 @@
     "check:isolation": "tsx scripts/check-tenant-isolation.ts",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:deploy": "pnpm --filter @rentora/db migrate:deploy",
-    "db:check-migrations": "tsx scripts/check-migrations.ts"
+    "db:check-migrations": "tsx scripts/check-migrations.ts",
+    "test:e2e": "pnpm --filter @rentora/web test:e2e"
   },
   "devDependencies": {
     "@rentora/db": "workspace:*",

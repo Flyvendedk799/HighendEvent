@@ -467,6 +467,8 @@ model Booking {
   zipCode                String
   city                   String
   country                String        @default("US")
+  /// The language the customer shopped in, so their paperwork comes back the same way.
+  locale                 String        @default("en")
   startDate              DateTime      @db.Date
   endDate                DateTime      @db.Date
   currency               String        @default("USD")

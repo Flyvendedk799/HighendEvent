@@ -15,6 +15,7 @@ import { LogoutButton } from "@/components/storefront/logout-button";
 import { serverGet } from "@/lib/server-api";
 import { requireCustomer } from "@/lib/session";
 import { getBootstrap } from "@/lib/tenant";
+import { getLocale, getT } from "@/lib/locale";
 import type { Booking, Customer } from "@/lib/types";
 
 export const metadata = { title: "Your account" };
@@ -23,13 +24,14 @@ export const dynamic = "force-dynamic";
 export default async function AccountDashboardPage() {
   const session = await requireCustomer();
 
-  const [bookings, customer, bootstrap] = await Promise.all([
+  const [bookings, customer, bootstrap, t, locale] = await Promise.all([
     serverGet<Booking[]>("/bookings/mine", { cache: "no-store" }).catch(() => [] as Booking[]),
     serverGet<Customer>(`/customers/${session.sub}`, { cache: "no-store" }).catch(() => null),
     getBootstrap(),
+    getT(),
+    getLocale(),
   ]);
 
-  const locale = bootstrap?.store.localeDefault ?? "en";
   const currency = bootstrap?.store.currency ?? "USD";
   const today = new Date().toISOString().slice(0, 10);
 
@@ -46,20 +48,20 @@ export default async function AccountDashboardPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Hello, {session.name?.split(" ")[0] ?? "there"}
+            {t.account.hello}, {session.name?.split(" ")[0] ?? ""}
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">{session.email}</p>
         </div>
-        <LogoutButton />
+        <LogoutButton label={t.account.logOut} />
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Upcoming rentals" value={upcoming.length} />
-        <StatCard label="Total bookings" value={bookings.length} />
+        <StatCard label={t.account.upcoming} value={upcoming.length} />
+        <StatCard label={t.account.totalBookings} value={bookings.length} />
         <StatCard
-          label="Balance owed"
+          label={t.account.balanceOwed}
           value={<Money amountMinor={outstanding} currency={currency} dashWhenZero />}
-          hint={outstanding > 0 ? "Due before your dates" : "Nothing outstanding"}
+          hint={outstanding > 0 ? t.account.dueBefore : t.account.nothingOwed}
         />
       </div>
 
@@ -67,10 +69,10 @@ export default async function AccountDashboardPage() {
         <Card className="p-0">
           <div className="px-5 pt-5">
             <CardHeader
-              title="Your bookings"
+              title={t.account.yourBookings}
               action={
                 <Button variant="link" asChild>
-                  <Link href="/account/bookings">See all</Link>
+                  <Link href="/account/bookings">{t.account.seeAll}</Link>
                 </Button>
               }
             />
@@ -79,11 +81,11 @@ export default async function AccountDashboardPage() {
           {bookings.length === 0 ? (
             <div className="px-5 pb-6">
               <EmptyState
-                title="No bookings yet"
-                description="Once you book something it will show up here with your dates and paperwork."
+                title={t.account.noBookingsTitle}
+                description={t.account.noBookingsBody}
                 action={
                   <Button asChild>
-                    <Link href="/catalog">Browse the catalog</Link>
+                    <Link href="/catalog">{t.cart.browse}</Link>
                   </Button>
                 }
               />
@@ -122,14 +124,14 @@ export default async function AccountDashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader title="Your details" />
+          <CardHeader title={t.account.yourDetails} />
           <DataList
             items={[
-              { label: "Name", value: session.name ?? "—" },
-              { label: "Email", value: session.email },
-              { label: "Phone", value: customer?.phone ?? "—" },
+              { label: t.checkout.fullName, value: session.name ?? "—" },
+              { label: t.checkout.email, value: session.email },
+              { label: t.checkout.phone, value: customer?.phone ?? "—" },
               {
-                label: "Address",
+                label: t.checkout.deliveryAddress,
                 value: customer?.address
                   ? `${customer.address}, ${customer.zipCode ?? ""} ${customer.city ?? ""}`.trim()
                   : "—",

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { CartLink } from "@/components/cart-link";
+import { LocaleSwitcher } from "@/components/storefront/locale-switcher";
+import type { Dictionary, Locale } from "@/lib/i18n";
 
 export type StorefrontHeaderProps = {
   storeName: string;
@@ -7,6 +9,9 @@ export type StorefrontHeaderProps = {
   categories: Array<{ id: string; name: string; slug: string }>;
   pages: Array<{ slug: string; title: string }>;
   isLoggedIn: boolean;
+  locale: Locale;
+  locales: Locale[];
+  t: Dictionary;
 };
 
 export function StorefrontHeader({
@@ -15,6 +20,9 @@ export function StorefrontHeader({
   categories,
   pages,
   isLoggedIn,
+  locale,
+  locales,
+  t,
 }: StorefrontHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-border)]/80 bg-[var(--color-surface)]/85 backdrop-blur-md">
@@ -32,7 +40,7 @@ export function StorefrontHeader({
 
         <nav className="hidden items-center gap-5 text-sm text-[var(--color-muted-foreground)] md:flex">
           <Link href="/catalog" className="hover:text-[var(--color-foreground)]">
-            Catalog
+            {t.nav.catalog}
           </Link>
           {categories.slice(0, 3).map((category) => (
             <Link
@@ -54,20 +62,21 @@ export function StorefrontHeader({
           ))}
         </nav>
 
-        <div className="flex items-center gap-4 text-sm text-[var(--color-muted-foreground)]">
-          <CartLink label="Cart" />
+        <div className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] sm:gap-3">
+          <LocaleSwitcher locales={locales} current={locale} />
+          <CartLink label={t.nav.cart} />
           <Link
             href={isLoggedIn ? "/account/dashboard" : "/account/login"}
             className="rounded-lg px-3 py-1.5 hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
           >
-            {isLoggedIn ? "My bookings" : "Log in"}
+            {isLoggedIn ? t.nav.myBookings : t.nav.login}
           </Link>
         </div>
       </div>
 
       <nav className="flex gap-4 overflow-x-auto border-t border-[var(--color-border)]/60 px-4 py-2 text-sm text-[var(--color-muted-foreground)] md:hidden">
         <Link href="/catalog" className="whitespace-nowrap">
-          Catalog
+          {t.nav.catalog}
         </Link>
         {categories.map((category) => (
           <Link

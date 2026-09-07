@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Badge, Banner, Button, DateRange, EmptyState, Money } from "@rentora/ui";
 import { serverGet } from "@/lib/server-api";
-import { getBootstrap } from "@/lib/tenant";
 import { getSession } from "@/lib/session";
+import { getLocale, getT } from "@/lib/locale";
 
 export const metadata = { title: "Booking confirmed" };
 export const dynamic = "force-dynamic";
@@ -40,8 +40,7 @@ export default async function ConfirmationPage({
   searchParams: Promise<{ session_id?: string; stub?: string }>;
 }) {
   const { session_id: sessionId, stub } = await searchParams;
-  const [bootstrap, session] = await Promise.all([getBootstrap(), getSession()]);
-  const locale = bootstrap?.store.localeDefault ?? "en";
+  const [session, t, locale] = await Promise.all([getSession(), getT(), getLocale()]);
 
   if (!sessionId) {
     return (
@@ -92,10 +91,10 @@ export default async function ConfirmationPage({
           </svg>
         </span>
         <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight">
-          Thanks, {booking.customerName.split(" ")[0]}
+          {t.confirmation.thanks}, {booking.customerName.split(" ")[0]}
         </h1>
         <p className="mt-2 text-[var(--color-muted-foreground)]">
-          Your booking is <strong>{booking.bookingNo}</strong>. We sent the details to{" "}
+          {t.confirmation.bookingIs} <strong>{booking.bookingNo}</strong>. {t.confirmation.sentTo}{" "}
           {booking.email}.
         </p>
       </div>
@@ -111,25 +110,25 @@ export default async function ConfirmationPage({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)]">
-              Your dates
+              {t.confirmation.yourDates}
             </p>
             <p className="mt-1 font-medium">
               <DateRange start={booking.startDate} end={booking.endDate} locale={locale} />
             </p>
           </div>
           <Badge tone={booking.remainingMinor > 0 ? "warning" : "success"}>
-            {booking.remainingMinor > 0 ? "Deposit paid" : "Paid in full"}
+            {booking.remainingMinor > 0 ? t.confirmation.depositPaid : t.confirmation.paidInFull}
           </Badge>
         </div>
 
         <div className="mt-5 border-t border-[var(--color-border)] pt-5">
           <p className="text-xs uppercase tracking-wide text-[var(--color-muted-foreground)]">
-            {booking.deliveryType === "DELIVERY" ? "Delivering to" : "Collect from us"}
+            {booking.deliveryType === "DELIVERY" ? t.confirmation.deliveringTo : t.confirmation.collectFromUs}
           </p>
           <p className="mt-1 text-sm">
             {booking.deliveryType === "DELIVERY"
               ? `${booking.address}, ${booking.zipCode} ${booking.city}`
-              : "Bring this booking number when you collect."}
+              : t.confirmation.collectPrompt}
           </p>
         </div>
 
@@ -166,7 +165,7 @@ export default async function ConfirmationPage({
         <dl className="mt-5 space-y-1.5 border-t border-[var(--color-border)] pt-5 text-sm">
           {booking.deliveryFeeMinor > 0 ? (
             <Row
-              label="Delivery"
+              label={t.common.delivery}
               value={
                 <Money
                   amountMinor={booking.deliveryFeeMinor}
@@ -178,7 +177,7 @@ export default async function ConfirmationPage({
           ) : null}
           {booking.depositMinor > 0 ? (
             <Row
-              label="Refundable deposit"
+              label={t.common.deposit}
               value={
                 <Money
                   amountMinor={booking.depositMinor}
@@ -189,14 +188,14 @@ export default async function ConfirmationPage({
             />
           ) : null}
           <div className="flex items-baseline justify-between border-t border-[var(--color-border)] pt-2">
-            <dt className="font-semibold">Total</dt>
+            <dt className="font-semibold">{t.common.total}</dt>
             <dd className="font-semibold">
               <Money amountMinor={booking.totalMinor} currency={booking.currency} locale={locale} />
             </dd>
           </div>
           {booking.remainingMinor > 0 ? (
             <Row
-              label="Balance due before your dates"
+              label={t.confirmation.balanceDue}
               value={
                 <Money
                   amountMinor={booking.remainingMinor}
@@ -211,15 +210,15 @@ export default async function ConfirmationPage({
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Button variant="secondary" asChild>
-          <Link href="/catalog">Keep browsing</Link>
+          <Link href="/catalog">{t.nav.keepBrowsing}</Link>
         </Button>
         {session?.role === "customer" ? (
           <Button asChild>
-            <Link href="/account/bookings">See my bookings</Link>
+            <Link href="/account/bookings">{t.confirmation.seeBookings}</Link>
           </Button>
         ) : (
           <Button asChild>
-            <Link href="/account/register">Create an account to track this</Link>
+            <Link href="/account/register">{t.confirmation.createAccount}</Link>
           </Button>
         )}
       </div>

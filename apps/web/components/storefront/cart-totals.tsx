@@ -1,54 +1,57 @@
 import Link from "next/link";
 import { Button, Money } from "@rentora/ui";
 import type { CartSummary } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n";
 
 export function CartTotals({
   summary,
   locale,
+  t,
 }: {
   summary: CartSummary;
   locale: string;
+  t: Dictionary;
 }) {
   const { pricing, currency, upsellTotalMinor } = summary;
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-        <h2 className="text-sm font-semibold">Order summary</h2>
+        <h2 className="text-sm font-semibold">{t.cart.summary}</h2>
 
         {pricing ? (
           <dl className="mt-4 space-y-1.5 text-sm">
             <Row
-              label="Rental"
+              label={t.common.subtotal}
               value={<Money amountMinor={pricing.subtotalMinor} currency={currency} locale={locale} />}
             />
             {upsellTotalMinor > 0 ? (
               <Row
-                label="Add-ons"
+                label={t.common.addOns}
                 value={<Money amountMinor={upsellTotalMinor} currency={currency} locale={locale} />}
               />
             ) : null}
             {pricing.depositMinor > 0 ? (
               <Row
-                label="Refundable deposit"
+                label={t.common.deposit}
                 value={<Money amountMinor={pricing.depositMinor} currency={currency} locale={locale} />}
               />
             ) : null}
             {pricing.taxMinor > 0 ? (
               <Row
-                label={`Tax (${(pricing.taxPercentBps / 100).toFixed(0)}%)`}
+                label={`${t.common.tax} (${(pricing.taxPercentBps / 100).toFixed(0)}%)`}
                 value={<Money amountMinor={pricing.taxMinor} currency={currency} locale={locale} />}
               />
             ) : null}
             <Row
-              label="Delivery"
+              label={t.common.delivery}
               value={
-                <span className="text-[var(--color-muted-foreground)]">Quoted at checkout</span>
+                <span className="text-[var(--color-muted-foreground)]">{t.common.quotedAtCheckout}</span>
               }
             />
 
             <div className="mt-3 flex items-baseline justify-between border-t border-[var(--color-border)] pt-3">
-              <dt className="font-semibold">Total</dt>
+              <dt className="font-semibold">{t.common.total}</dt>
               <dd className="text-lg font-semibold">
                 <Money
                   amountMinor={pricing.totalMinor + upsellTotalMinor}
@@ -68,7 +71,7 @@ export function CartTotals({
           </dl>
         ) : (
           <p className="mt-4 text-sm text-[var(--color-muted-foreground)]">
-            Choose dates on each item to see your total.
+            {t.cart.choosePrompt}
           </p>
         )}
 
@@ -79,15 +82,15 @@ export function CartTotals({
           asChild={summary.checkoutReady}
         >
           {summary.checkoutReady ? (
-            <Link href="/checkout">Continue to checkout</Link>
+            <Link href="/checkout">{t.cart.checkout}</Link>
           ) : (
-            <span>Resolve the items above</span>
+            <span>{t.cart.resolveItems}</span>
           )}
         </Button>
 
         <p className="mt-3 text-center text-xs text-[var(--color-muted-foreground)]">
           <Link href="/catalog" className="hover:underline">
-            Keep browsing
+            {t.nav.keepBrowsing}
           </Link>
         </p>
       </div>

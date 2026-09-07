@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Dictionary } from "@/lib/i18n";
 
 export function StorefrontFooter({
   storeName,
@@ -6,12 +7,14 @@ export function StorefrontFooter({
   supportEmail,
   supportPhone,
   pages,
+  t,
 }: {
   storeName: string;
   tagline?: string | null;
   supportEmail?: string | null;
   supportPhone?: string | null;
   pages: Array<{ slug: string; title: string }>;
+  t: Dictionary;
 }) {
   return (
     <footer className="border-t border-[var(--color-border)]/70 bg-[var(--color-surface)]/60">
@@ -26,7 +29,7 @@ export function StorefrontFooter({
         {pages.length > 0 ? (
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-              Information
+              {t.common.information}
             </p>
             <ul className="mt-2 space-y-1.5 text-sm">
               {pages.map((page) => (
@@ -43,7 +46,7 @@ export function StorefrontFooter({
         {supportEmail || supportPhone ? (
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-              Contact
+              {t.common.contact}
             </p>
             <ul className="mt-2 space-y-1.5 text-sm">
               {supportEmail ? (

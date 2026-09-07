@@ -11,6 +11,7 @@ import {
 import { serverGet } from "@/lib/server-api";
 import { requireCustomer } from "@/lib/session";
 import { getBootstrap } from "@/lib/tenant";
+import { getLocale, getT } from "@/lib/locale";
 import type { Booking } from "@/lib/types";
 
 export const metadata = { title: "Your bookings" };
@@ -19,22 +20,21 @@ export const dynamic = "force-dynamic";
 export default async function AccountBookingsPage() {
   await requireCustomer();
 
-  const [bookings, bootstrap] = await Promise.all([
+  const [bookings, t, locale] = await Promise.all([
     serverGet<Booking[]>("/bookings/mine", { cache: "no-store" }).catch(() => [] as Booking[]),
-    getBootstrap(),
+    getT(),
+    getLocale(),
   ]);
-
-  const locale = bootstrap?.store.localeDefault ?? "en";
 
   if (bookings.length === 0) {
     return (
       <div className="mx-auto max-w-lg py-12">
         <EmptyState
-          title="No bookings yet"
-          description="Your rentals and their paperwork will live here."
+          title={t.account.noBookingsTitle}
+          description={t.account.noBookingsBody}
           action={
             <Button asChild>
-              <Link href="/catalog">Browse the catalog</Link>
+              <Link href="/catalog">{t.cart.browse}</Link>
             </Button>
           }
         />
@@ -44,7 +44,7 @@ export default async function AccountBookingsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Your bookings</h1>
+      <h1 className="font-display text-3xl font-semibold tracking-tight">{t.account.yourBookings}</h1>
       <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
         {bookings.length} booking{bookings.length === 1 ? "" : "s"}
       </p>
@@ -66,7 +66,7 @@ export default async function AccountBookingsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge tone={booking.deliveryType === "DELIVERY" ? "info" : "neutral"}>
-                    {booking.deliveryType === "DELIVERY" ? "Delivery" : "Collection"}
+                    {booking.deliveryType === "DELIVERY" ? t.common.delivery : t.common.collection}
                   </Badge>
                   <StatusBadge statusKey={booking.statusKey} />
                 </div>
@@ -89,7 +89,7 @@ export default async function AccountBookingsPage() {
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
                 <div className="text-sm">
-                  <span className="text-[var(--color-muted-foreground)]">Total </span>
+                  <span className="text-[var(--color-muted-foreground)]">{t.common.total} </span>
                   <span className="font-semibold">
                     <Money
                       amountMinor={booking.totalMinor}

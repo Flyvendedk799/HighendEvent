@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { serverPost } from "../server-api";
 import { getSession } from "../session";
 import { getCartSessionId } from "../cart-session";
+import { getLocale } from "../locale";
 import { str, optionalStr, toActionState, type ActionState } from "./action-state";
 import type { DeliveryQuote } from "../types";
 
@@ -62,6 +63,8 @@ export async function startCheckoutAction(
     zipCode: str(formData, "zipCode"),
     city: str(formData, "city"),
     country: optionalStr(formData, "country"),
+    // Recorded on the booking so the confirmation comes back in the same language.
+    locale: await getLocale(),
     deliveryType,
     notes: optionalStr(formData, "notes"),
   };

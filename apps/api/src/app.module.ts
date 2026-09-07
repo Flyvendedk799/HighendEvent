@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { TenantMiddleware } from "./tenant/tenant.middleware";
 import { TenantBindingInterceptor } from "./tenant/tenant-binding.interceptor";
+import { AuditInterceptor } from "./common/audit.interceptor";
 import { AuthModule } from "./auth/auth.module";
 import { HealthModule } from "./health/health.module";
 import { PlatformModule } from "./platform/platform.module";
@@ -68,7 +69,10 @@ import { CouponsModule } from "./coupons/coupons.module";
   ],
   providers: [
     TenantMiddleware,
+    // Order matters: the tenant is bound before the audit entry is written, so the entry
+    // knows which tenant the change belonged to.
     { provide: APP_INTERCEPTOR, useClass: TenantBindingInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
 })
 export class AppModule implements NestModule {

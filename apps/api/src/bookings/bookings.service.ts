@@ -43,6 +43,7 @@ export type CreateBookingInput = {
   customerId?: string;
   notes?: string;
   internalNotes?: string;
+  locale?: string;
   couponCode?: string;
   discountMinor?: number;
   items: BookingItemInput[];
@@ -170,6 +171,7 @@ export class BookingsService {
         zipCode: input.zipCode,
         city: input.city,
         country: input.country ?? store.country,
+        locale: input.locale ?? store.localeDefault,
         startDate: new Date(input.startDate),
         endDate: new Date(input.endDate),
         currency: store.currency,

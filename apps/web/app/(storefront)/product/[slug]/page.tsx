@@ -7,6 +7,7 @@ import { ProductGallery } from "@/components/storefront/product-gallery";
 import { serverGet } from "@/lib/server-api";
 import { isApiError } from "@/lib/api";
 import { getBootstrap } from "@/lib/tenant";
+import { getLocale, getT } from "@/lib/locale";
 import type { AvailabilityCalendar, Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,12 @@ function windowFromToday(months: number) {
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [product, bootstrap] = await Promise.all([loadProduct(slug), getBootstrap()]);
+  const [product, bootstrap, t, locale] = await Promise.all([
+    loadProduct(slug),
+    getBootstrap(),
+    getT(),
+    getLocale(),
+  ]);
   if (!product || !product.isActive) notFound();
 
   const { startDate, endDate } = windowFromToday(2);
@@ -64,7 +70,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   ).catch(() => null);
 
   const currency = product.currency ?? bootstrap?.store.currency ?? "USD";
-  const locale = bootstrap?.store.localeDefault ?? "en";
   const specs = Object.entries(product.attributes ?? {}).filter(
     ([, value]) => typeof value === "string" || typeof value === "number",
   );
@@ -76,7 +81,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <div className="min-w-0">
         <nav className="mb-3 text-xs text-[var(--color-muted-foreground)]">
           <Link href="/catalog" className="hover:underline">
-            Catalog
+            {t.nav.catalog}
           </Link>
           {product.category ? (
             <>
@@ -96,11 +101,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </h1>
 
         <p className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-[var(--color-muted-foreground)]">From</span>
+          <span className="text-[var(--color-muted-foreground)]">{t.common.from}</span>
           <span className="text-lg font-semibold">
             <Money amountMinor={product.dailyPriceMinor} currency={currency} locale={locale} />
           </span>
-          <span className="text-[var(--color-muted-foreground)]">/ day</span>
+          <span className="text-[var(--color-muted-foreground)]">{t.common.perDay}</span>
           {product.weekendPackageMinor ? (
             <Badge tone="accent">
               Fri–Sun package{" "}
@@ -120,7 +125,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {product.description ? (
           <div className="mt-8 max-w-2xl">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
-              About this item
+              {t.product.about}
             </h2>
             <p className="mt-2 whitespace-pre-line leading-relaxed">{product.description}</p>
           </div>
@@ -129,7 +134,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {specs.length > 0 ? (
           <div className="mt-8 max-w-2xl">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
-              Specifications
+              {t.product.specifications}
             </h2>
             <dl className="mt-3 divide-y divide-[var(--color-border)] text-sm">
               {specs.map(([key, value]) => (
@@ -156,9 +161,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {/* On mobile the panel sits below the detail; on desktop it stays alongside it. */}
       <aside className="lg:sticky lg:top-24 lg:self-start">
         {soldOut ? (
-          <Banner tone="warning" title="Fully booked" className="mb-4">
-            Every date in the next few months is taken. Get in touch and we will let you know
-            when this frees up.
+          <Banner tone="warning" title={t.product.soldOutTitle} className="mb-4">
+            {t.product.soldOutBody}
           </Banner>
         ) : null}
         <ProductBooking
@@ -167,6 +171,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           deliveryEnabled={bootstrap?.features.deliveryEnabled ?? false}
           currency={currency}
           locale={locale}
+          t={t}
         />
       </aside>
     </article>

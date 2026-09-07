@@ -15,6 +15,7 @@ import {
 import { startCheckoutAction, quoteDeliveryAction } from "@/lib/actions/checkout";
 import { quoteCouponAction, type CouponQuote } from "@/lib/actions/coupons";
 import type { CartSummary, DeliveryQuote } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n";
 
 export type SessionShapeLite = {
   email?: string;
@@ -25,11 +26,13 @@ export function CheckoutForm({
   summary,
   deliveryEnabled,
   locale,
+  t,
   prefill,
 }: {
   summary: CartSummary;
   deliveryEnabled: boolean;
   locale: string;
+  t: Dictionary;
   prefill: SessionShapeLite;
 }) {
   const [state, formAction] = useActionState(startCheckoutAction, {});
@@ -82,12 +85,12 @@ export function CheckoutForm({
         {state.error ? <Banner tone="danger">{state.error}</Banner> : null}
 
         <Card>
-          <CardHeader title="Your details" />
+          <CardHeader title={t.checkout.yourDetails} />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Input
                 name="customerName"
-                label="Full name"
+                label={t.checkout.fullName}
                 required
                 autoComplete="name"
                 defaultValue={prefill?.name ?? ""}
@@ -97,7 +100,7 @@ export function CheckoutForm({
             <Input
               name="email"
               type="email"
-              label="Email"
+              label={t.checkout.email}
               required
               autoComplete="email"
               defaultValue={prefill?.email ?? ""}
@@ -106,20 +109,20 @@ export function CheckoutForm({
             <Input
               name="phone"
               type="tel"
-              label="Phone"
+              label={t.checkout.phone}
               required
               autoComplete="tel"
               error={err.phone}
-              hint="For the crew on the day."
+              hint={t.checkout.phoneHint}
             />
           </div>
         </Card>
 
         <Card>
-          <CardHeader title="Delivery or collection" />
+          <CardHeader title={t.checkout.fulfilment} />
           <Select
             name="deliveryType"
-            label="How would you like it?"
+            label={t.checkout.howWouldYouLike}
             value={deliveryType}
             onChange={(e) => {
               setDeliveryType(e.target.value as "PICKUP" | "DELIVERY");
@@ -127,8 +130,8 @@ export function CheckoutForm({
               setQuoteError(null);
             }}
             options={[
-              { value: "PICKUP", label: "I will collect it" },
-              ...(deliveryEnabled ? [{ value: "DELIVERY", label: "Deliver to my address" }] : []),
+              { value: "PICKUP", label: t.checkout.iWillCollect },
+              ...(deliveryEnabled ? [{ value: "DELIVERY", label: t.checkout.deliverToMyAddress }] : []),
             ]}
           />
 
@@ -136,7 +139,7 @@ export function CheckoutForm({
             <div className="sm:col-span-2">
               <Input
                 name="address"
-                label={deliveryType === "DELIVERY" ? "Delivery address" : "Billing address"}
+                label={deliveryType === "DELIVERY" ? t.checkout.deliveryAddress : t.checkout.billingAddress}
                 required
                 autoComplete="street-address"
                 value={address}
@@ -146,7 +149,7 @@ export function CheckoutForm({
             </div>
             <Input
               name="zipCode"
-              label="Postcode"
+              label={t.checkout.postcode}
               required
               autoComplete="postal-code"
               value={zipCode}
@@ -155,7 +158,7 @@ export function CheckoutForm({
             />
             <Input
               name="city"
-              label="City"
+              label={t.checkout.city}
               required
               autoComplete="address-level2"
               value={city}
@@ -173,7 +176,7 @@ export function CheckoutForm({
                 disabled={!address.trim()}
                 onClick={requestQuote}
               >
-                Quote delivery
+                {t.checkout.quoteDelivery}
               </Button>
 
               {quote?.allowed ? (
@@ -198,7 +201,7 @@ export function CheckoutForm({
 
               {!quote && !quoteError ? (
                 <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
-                  We quote delivery from your address before you pay.
+                  {t.checkout.quotePrompt}
                 </p>
               ) : null}
             </div>
@@ -206,11 +209,11 @@ export function CheckoutForm({
         </Card>
 
         <Card>
-          <CardHeader title="Discount code" />
+          <CardHeader title={t.checkout.discountCode} />
           <input type="hidden" name="couponCode" value={coupon?.valid ? coupon.code : ""} />
           <div className="flex items-end gap-2">
             <Input
-              aria-label="Discount code"
+              aria-label={t.checkout.discountCode}
               placeholder="SUMMER20"
               value={couponCode}
               onChange={(e) => {
@@ -226,7 +229,7 @@ export function CheckoutForm({
               disabled={!couponCode.trim()}
               onClick={applyCoupon}
             >
-              Apply
+              {t.common.apply}
             </Button>
           </div>
 
@@ -244,18 +247,18 @@ export function CheckoutForm({
         </Card>
 
         <Card>
-          <CardHeader title="Anything we should know?" />
+          <CardHeader title={t.checkout.notesTitle} />
           <Textarea
             name="notes"
             rows={3}
-            placeholder="Access, gate codes, where to set up…"
+            placeholder={t.checkout.notesPlaceholder}
           />
         </Card>
       </div>
 
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <Card>
-          <CardHeader title="Order summary" />
+          <CardHeader title={t.cart.summary} />
           <ul className="space-y-2 text-sm">
             {summary.cart.items.map((item) => (
               <li key={item.id} className="flex justify-between gap-3">
@@ -272,7 +275,7 @@ export function CheckoutForm({
           {summary.pricing ? (
             <dl className="mt-4 space-y-1.5 border-t border-[var(--color-border)] pt-4 text-sm">
               <Row
-                label="Rental"
+                label={t.common.subtotal}
                 value={
                   <Money
                     amountMinor={summary.pricing.subtotalMinor}
@@ -283,7 +286,7 @@ export function CheckoutForm({
               />
               {summary.upsellTotalMinor > 0 ? (
                 <Row
-                  label="Add-ons"
+                  label={t.common.addOns}
                   value={
                     <Money
                       amountMinor={summary.upsellTotalMinor}
@@ -295,7 +298,7 @@ export function CheckoutForm({
               ) : null}
               {summary.pricing.depositMinor > 0 ? (
                 <Row
-                  label="Deposit"
+                  label={t.common.deposit}
                   value={
                     <Money
                       amountMinor={summary.pricing.depositMinor}
@@ -321,7 +324,7 @@ export function CheckoutForm({
                 />
               ) : null}
               <Row
-                label="Delivery"
+                label={t.common.delivery}
                 value={
                   deliveryType === "DELIVERY" ? (
                     quote?.allowed ? (
@@ -340,7 +343,7 @@ export function CheckoutForm({
               />
 
               <div className="mt-3 flex items-baseline justify-between border-t border-[var(--color-border)] pt-3">
-                <dt className="font-semibold">Total</dt>
+                <dt className="font-semibold">{t.common.total}</dt>
                 <dd className="text-lg font-semibold">
                   <Money amountMinor={total} currency={summary.currency} locale={locale} />
                 </dd>
@@ -363,6 +366,7 @@ export function CheckoutForm({
           <PayButton
             disabled={deliveryType === "DELIVERY" && !quote?.allowed}
             deliveryPending={deliveryType === "DELIVERY" && !quote?.allowed}
+            t={t}
           />
         </Card>
       </aside>
@@ -373,20 +377,22 @@ export function CheckoutForm({
 function PayButton({
   disabled,
   deliveryPending,
+  t,
 }: {
   disabled: boolean;
   deliveryPending: boolean;
+  t: Dictionary;
 }) {
   const { pending } = useFormStatus();
 
   return (
     <>
       <Button type="submit" size="lg" className="mt-5 w-full" loading={pending} disabled={disabled}>
-        Continue to payment
+        {t.checkout.pay}
       </Button>
       {deliveryPending ? (
         <p className="mt-2 text-center text-xs text-[var(--color-muted-foreground)]">
-          Quote delivery for your address to continue.
+          {t.checkout.quoteFirst}
         </p>
       ) : null}
     </>

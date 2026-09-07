@@ -21,6 +21,7 @@ export type CheckoutInput = {
   deliveryType: DeliveryType;
   notes?: string;
   couponCode?: string;
+  locale?: string;
   successUrl: string;
   cancelUrl: string;
 };
@@ -141,6 +142,7 @@ export class CheckoutService {
       deliveryFeeMinor,
       deliveryBreakdown,
       notes: input.notes,
+      locale: input.locale,
       couponCode,
       discountMinor,
       items: summary.cart.items.map((item) => ({

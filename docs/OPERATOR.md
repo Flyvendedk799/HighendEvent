@@ -30,18 +30,29 @@ Platform subscription prices are configured via `STRIPE_PLATFORM_PRICE_*` env va
 
 ### Operator checklist
 
-- [ ] Platform Stripe keys and webhook secret set
+- [ ] `STRIPE_WEBHOOK_SECRET` set. Without it the API accepts unverified webhooks and logs a
+      warning on every one — any POST could mark a booking paid. This is the single most
+      important production setting.
+- [ ] Platform Stripe keys set
 - [ ] Connect webhook events: `account.updated`, `capability.updated`
 - [ ] Application fee bps matches plan
 - [ ] Test mode vs live mode consistent across web + worker
 
 ## Custom domains
 
-1. Tenant adds hostname in admin → `CustomDomain` row (`sslStatus = pending`).
-2. They create DNS: CNAME → platform edge / load balancer.
-3. Enqueue `domain-ssl` job to verify DNS and issue TLS.
-4. Mark `verified = true` and `sslStatus = active` when ready.
-5. Middleware maps `Host` header → tenant before auth.
+1. The tenant adds a hostname in **Settings → Domains**. Growth and Scale only, and the plan
+   check is enforced in the service that creates the row, not just hidden in the UI.
+2. Rentora shows two DNS records: a TXT challenge proving ownership, and the routing record
+   (CNAME, or ALIAS for an apex domain).
+3. The tenant clicks **Check DNS**. The API resolves the TXT record for real and only then sets
+   `verified = true`. Verification is never granted on the tenant's word — an unverified
+   hostname that resolved would let one tenant serve traffic for a name they do not own.
+4. The edge middleware forwards the browser-facing hostname to the API as `x-tenant-host`; the
+   API resolves it against `CustomDomain` and **only matches verified rows**.
+5. Point `CUSTOM_DOMAIN_TARGET` at your edge so the instructions show the right value.
+
+A hostname is globally unique. A domain already connected to another store is refused with a
+message that does not reveal which store holds it.
 
 ## GDPR / data subject requests
 
@@ -60,7 +71,7 @@ Workers (`apps/worker`) consume Redis queues:
 
 | Queue | Purpose |
 | --- | --- |
-| `email` | Render HTML + send (stub → Resend) |
+| `email` | Load the tenant template, interpolate, wrap in tenant branding, send via Resend |
 | `pdf` | Invoice / receipt generation |
 | `stripe-sync` | Refresh Connect / subscription state |
 | `domain-ssl` | DNS verify + cert provision |
@@ -71,4 +82,9 @@ Ensure `REDIS_URL` is set and workers restart cleanly on deploy (SIGINT/SIGTERM 
 ## Incident notes
 
 - Prefer tenant-scoped queries always (`tenantWhere(tenantId)`).
-- If isolation is suspected broken, run `pnpm exec tsx scripts/check-tenant-isolation.ts` and see [TENANT_ISOLATION.md](./TENANT_ISOLATION.md).
+- If isolation is suspected broken, run `pnpm check:isolation` and see
+  [TENANT_ISOLATION.md](./TENANT_ISOLATION.md).
+- Every mutation by an identified principal is written to `AuditLog` with the request body
+  redacted. Read recent entries from the platform console, or query by `tenantId`.
+- Support impersonation (**View as owner**) issues a 30-minute staff token and is audited before
+  the token exists. The operator has to sign in again afterwards.

@@ -6,10 +6,16 @@ export function ProductCard({
   product,
   currency,
   locale = "en",
+  fromLabel = "From",
+  perDayLabel = "/ day",
+  checkDatesLabel = "Check dates",
 }: {
   product: Product;
   currency: string;
   locale?: string;
+  fromLabel?: string;
+  perDayLabel?: string;
+  checkDatesLabel?: string;
 }) {
   const image = product.heroImageUrl ?? product.images?.[0]?.url;
 
@@ -51,7 +57,7 @@ export function ProductCard({
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-2">
           <p className="text-sm">
-            <span className="text-[var(--color-muted-foreground)]">From </span>
+            <span className="text-[var(--color-muted-foreground)]">{fromLabel} </span>
             <span className="font-semibold">
               <Money
                 amountMinor={product.dailyPriceMinor}
@@ -59,10 +65,10 @@ export function ProductCard({
                 locale={locale}
               />
             </span>
-            <span className="text-[var(--color-muted-foreground)]"> / day</span>
+            <span className="text-[var(--color-muted-foreground)]"> {perDayLabel}</span>
           </p>
           <span className="text-xs font-medium text-[var(--color-primary)] opacity-0 transition group-hover:opacity-100">
-            Check dates →
+            {checkDatesLabel} →
           </span>
         </div>
       </div>

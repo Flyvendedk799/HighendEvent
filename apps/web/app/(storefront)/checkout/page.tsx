@@ -4,15 +4,21 @@ import { CheckoutForm } from "@/components/storefront/checkout-form";
 import { readCart } from "@/lib/actions/cart";
 import { getSession } from "@/lib/session";
 import { getBootstrap } from "@/lib/tenant";
+import { getLocale, getT } from "@/lib/locale";
 
-export const metadata = { title: "Checkout" };
+export async function generateMetadata() {
+  const t = await getT();
+  return { title: t.checkout.title };
+}
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
-  const [summary, bootstrap, session] = await Promise.all([
+  const [summary, bootstrap, session, t, locale] = await Promise.all([
     readCart(),
     getBootstrap(),
     getSession(),
+    getT(),
+    getLocale(),
   ]);
 
   // Nothing to pay for, or something in the cart is no longer bookable.
@@ -20,16 +26,13 @@ export default async function CheckoutPage() {
     redirect("/cart");
   }
 
-  const locale = bootstrap?.store.localeDefault ?? "en";
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Checkout</h1>
+      <h1 className="font-display text-3xl font-semibold tracking-tight">{t.checkout.title}</h1>
       <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
         {summary.itemCount} item{summary.itemCount === 1 ? "" : "s"} ·{" "}
-        {summary.paymentModel === "DEPOSIT_REMAINDER"
-          ? "Pay a deposit now, the balance before your dates"
-          : "Pay in full to confirm"}
+        {summary.paymentModel === "DEPOSIT_REMAINDER" ? t.checkout.payDeposit : t.checkout.payInFull}
       </p>
 
       {!bootstrap?.tenant.connectOnboarded ? (
@@ -44,6 +47,7 @@ export default async function CheckoutPage() {
           summary={summary}
           deliveryEnabled={bootstrap?.features.deliveryEnabled ?? false}
           locale={locale}
+          t={t}
           prefill={
             session?.role === "customer"
               ? { email: session.email, name: session.name }
