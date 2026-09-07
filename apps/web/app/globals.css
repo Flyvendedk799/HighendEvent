@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Two token scopes.
+ *
+ * :root            — the tenant brand. The storefront layout overwrites these at runtime from
+ *                    the tenant theme, so a shop looks like itself without a redeploy.
+ * .rentora-admin   — the operations console. Deliberately NOT tenant-branded: staff work across
+ *                    a dense data UI all day and it must stay legible whatever colour a tenant
+ *                    picked for their storefront.
+ */
 :root {
   --color-primary: #0f766e;
   --color-primary-hover: #0d9488;
@@ -12,6 +21,22 @@
   --color-border: #e2e8f0;
   --color-foreground: #0f172a;
   --color-muted-foreground: #64748b;
+  --ring: #0f766e;
+  --radius: 0.75rem;
+}
+
+.rentora-admin {
+  --color-primary: #0f766e;
+  --color-primary-hover: #0d9488;
+  --color-accent: #b45309;
+  --color-background: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-border: #e5e7eb;
+  --color-foreground: #111827;
+  --color-muted-foreground: #6b7280;
+  --ring: #0f766e;
+  --radius: 0.5rem;
 }
 
 * {
@@ -25,16 +50,33 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse at top left, rgba(15, 118, 110, 0.1), transparent 48%),
-    radial-gradient(ellipse at bottom right, rgba(245, 158, 11, 0.08), transparent 42%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Only the public-facing surfaces get the atmospheric wash. Ops screens stay flat so that
+ * status colour in a table means something.
+ */
+.rentora-storefront,
+.rentora-marketing {
+  background:
+    radial-gradient(ellipse at top left, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 48%),
+    radial-gradient(ellipse at bottom right, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 42%),
+    linear-gradient(180deg, var(--color-background) 0%, color-mix(in srgb, var(--color-background) 80%, #dbe3ec) 100%);
+  background-attachment: fixed;
 }
 
 .font-display {
   font-family: var(--font-display), Georgia, serif;
+}
+
+/* Data UI must never inherit the storefront display serif. */
+.rentora-admin,
+.rentora-admin .font-display {
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 
 a {
@@ -44,11 +86,39 @@ a {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+}
+
+/* Keyboard users must always see where they are. */
+:focus-visible {
+  outline: none;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

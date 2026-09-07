@@ -12,7 +12,9 @@
     "db:migrate": "pnpm --filter @rentora/db migrate:dev",
     "db:seed": "pnpm --filter @rentora/db seed",
     "check:isolation": "tsx scripts/check-tenant-isolation.ts",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:deploy": "pnpm --filter @rentora/db migrate:deploy",
+    "db:check-migrations": "tsx scripts/check-migrations.ts"
   },
   "devDependencies": {
     "@rentora/db": "workspace:*",

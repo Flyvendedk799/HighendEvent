@@ -1,26 +1,62 @@
-"use client";
-
 import Link from "next/link";
-import { Button, Card, Input } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { redirect } from "next/navigation";
+import { AuthCard } from "@/components/auth-card";
+import { AuthForm, type AuthField } from "@/components/auth-form";
+import { customerLoginAction } from "@/lib/auth-actions";
+import { getSession } from "@/lib/session";
+import { getBootstrap } from "@/lib/tenant";
 
-export default function CustomerLoginPage() {
+export const metadata = { title: "Log in" };
+
+const fields: AuthField[] = [
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    required: true,
+    autoComplete: "username",
+    placeholder: "you@example.com",
+  },
+  {
+    name: "password",
+    label: "Password",
+    type: "password",
+    required: true,
+    autoComplete: "current-password",
+  },
+];
+
+export default async function CustomerLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+
+  if ((await getSession())?.role === "customer") {
+    redirect(next?.startsWith("/") ? next : "/account/dashboard");
+  }
+
+  const bootstrap = await getBootstrap();
+
   return (
-    <main className="mx-auto max-w-md">
-      <PageHeader title="Customer login" description="Access your bookings and invoices." />
-      <Card className="space-y-4">
-        <Input name="email" type="email" label="Email" placeholder="you@example.com" />
-        <Input name="password" type="password" label="Password" />
-        <Link href="/account/dashboard">
-          <Button className="w-full">Log in</Button>
-        </Link>
-        <p className="text-center text-sm text-muted-foreground">
-          No account?{" "}
-          <Link href="/account/register" className="text-primary hover:underline">
-            Register
+    <AuthCard
+      eyebrow={bootstrap?.store.name}
+      title="Log in"
+      description="See your bookings, invoices, and rental dates."
+      footer={
+        <span>
+          No account yet?{" "}
+          <Link
+            href="/account/register"
+            className="font-medium text-[var(--color-primary)] hover:underline"
+          >
+            Create one
           </Link>
-        </p>
-      </Card>
-    </main>
+        </span>
+      }
+    >
+      <AuthForm action={customerLoginAction} fields={fields} submitLabel="Log in" next={next} />
+    </AuthCard>
   );
 }

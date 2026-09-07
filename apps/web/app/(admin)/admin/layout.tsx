@@ -1,19 +1,22 @@
-import { AdminSidebar } from "@/components/admin-sidebar";
-import { headers } from "next/headers";
+import type { Metadata } from "next";
+import { ToastProvider } from "@rentora/ui";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const h = await headers();
-  // Best-effort active path from referer/middleware is unavailable; pages highlight via CSS alone.
-  void h;
+export const metadata: Metadata = {
+  title: {
+    default: "Admin",
+    template: "%s · Rentora Admin",
+  },
+  robots: { index: false, follow: false },
+};
+
+/**
+ * The `rentora-admin` class swaps in the neutral operations palette. Everything below this
+ * point — console and login alike — is data UI, not marketing.
+ */
+export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-slate-100">
-      <AdminSidebar />
-      <div className="flex-1 overflow-x-hidden">
-        <div className="border-b border-border bg-surface px-6 py-3 text-sm text-muted-foreground md:hidden">
-          Tenant admin
-        </div>
-        <div className="p-6 md:p-8">{children}</div>
-      </div>
+    <div className="rentora-admin min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)]">
+      <ToastProvider>{children}</ToastProvider>
     </div>
   );
 }

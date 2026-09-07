@@ -1,27 +1,71 @@
-"use client";
-
 import Link from "next/link";
-import { Button, Card, Input } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { redirect } from "next/navigation";
+import { AuthCard } from "@/components/auth-card";
+import { AuthForm, type AuthField } from "@/components/auth-form";
+import { customerRegisterAction } from "@/lib/auth-actions";
+import { getSession } from "@/lib/session";
+import { getBootstrap } from "@/lib/tenant";
 
-export default function CustomerRegisterPage() {
+export const metadata = { title: "Create an account" };
+
+const fields: AuthField[] = [
+  { name: "firstName", label: "First name", required: true, autoComplete: "given-name", half: true },
+  { name: "lastName", label: "Last name", required: true, autoComplete: "family-name", half: true },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    required: true,
+    autoComplete: "email",
+    placeholder: "you@example.com",
+  },
+  { name: "phone", label: "Phone", type: "tel", autoComplete: "tel", hint: "So the crew can reach you on delivery day." },
+  {
+    name: "password",
+    label: "Password",
+    type: "password",
+    required: true,
+    autoComplete: "new-password",
+    hint: "At least 8 characters.",
+  },
+];
+
+export default async function CustomerRegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+
+  if ((await getSession())?.role === "customer") {
+    redirect("/account/dashboard");
+  }
+
+  const bootstrap = await getBootstrap();
+
   return (
-    <main className="mx-auto max-w-md">
-      <PageHeader title="Create account" description="Save bookings and speed up checkout." />
-      <Card className="space-y-4">
-        <Input name="name" label="Full name" placeholder="Maja Nielsen" />
-        <Input name="email" type="email" label="Email" placeholder="you@example.com" />
-        <Input name="password" type="password" label="Password" />
-        <Link href="/account/dashboard">
-          <Button className="w-full">Create account</Button>
-        </Link>
-        <p className="text-center text-sm text-muted-foreground">
-          Already registered?{" "}
-          <Link href="/account/login" className="text-primary hover:underline">
+    <AuthCard
+      eyebrow={bootstrap?.store.name}
+      title="Create an account"
+      description="Track your bookings and check out faster next time."
+      footer={
+        <span>
+          Already have an account?{" "}
+          <Link
+            href="/account/login"
+            className="font-medium text-[var(--color-primary)] hover:underline"
+          >
             Log in
           </Link>
-        </p>
-      </Card>
-    </main>
+        </span>
+      }
+    >
+      <AuthForm
+        action={customerRegisterAction}
+        fields={fields}
+        submitLabel="Create account"
+        next={next}
+      />
+    </AuthCard>
   );
 }

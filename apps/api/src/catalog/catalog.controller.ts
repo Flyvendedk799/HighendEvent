@@ -6,10 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
+  IsBoolean,
   IsInt,
+  IsObject,
   IsOptional,
   IsString,
   Min,
@@ -27,6 +30,20 @@ class CategoryDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() imageUrl?: string;
   @IsOptional() @Type(() => Number) @IsInt() sortOrder?: number;
+  @IsOptional() @IsBoolean() isActive?: boolean;
+}
+
+/**
+ * PATCH bodies need their own DTO: `Partial<CategoryDto>` only relaxes the TypeScript type, not
+ * the class-validator decorators, so a partial update against the create DTO is rejected.
+ */
+class UpdateCategoryDto {
+  @IsOptional() @IsString() @MinLength(1) name?: string;
+  @IsOptional() @IsString() @MinLength(1) slug?: string;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() imageUrl?: string;
+  @IsOptional() @Type(() => Number) @IsInt() sortOrder?: number;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 class ProductDto {
@@ -35,16 +52,38 @@ class ProductDto {
   @IsString() @MinLength(1) slug!: string;
   @IsOptional() @IsString() description?: string;
   @Type(() => Number) @IsInt() @Min(0) dailyPriceMinor!: number;
-  @IsOptional() @Type(() => Number) @IsInt() weekendPriceMinor?: number;
-  @IsOptional() @Type(() => Number) @IsInt() weekendPackageMinor?: number;
-  @IsOptional() @Type(() => Number) @IsInt() depositMinor?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) weekendPriceMinor?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) weekendPackageMinor?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) depositMinor?: number;
   @IsOptional() @IsString() currency?: string;
-  @IsOptional() @Type(() => Number) @IsInt() stockQty?: number;
-  @IsOptional() @Type(() => Number) @IsInt() prepBufferDays?: number;
-  @IsOptional() @Type(() => Number) @IsInt() cleanupBufferDays?: number;
-  @IsOptional() @Type(() => Number) @IsInt() minRentalDays?: number;
-  @IsOptional() @Type(() => Number) @IsInt() maxRentalDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) stockQty?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) prepBufferDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) cleanupBufferDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) minRentalDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) maxRentalDays?: number;
   @IsOptional() @IsString() heroImageUrl?: string;
+  @IsOptional() @IsObject() attributes?: Record<string, unknown>;
+  @IsOptional() @IsBoolean() isActive?: boolean;
+}
+
+class UpdateProductDto {
+  @IsOptional() @IsString() categoryId?: string;
+  @IsOptional() @IsString() @MinLength(1) name?: string;
+  @IsOptional() @IsString() @MinLength(1) slug?: string;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) dailyPriceMinor?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) weekendPriceMinor?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) weekendPackageMinor?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) depositMinor?: number;
+  @IsOptional() @IsString() currency?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) stockQty?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) prepBufferDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) cleanupBufferDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) minRentalDays?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) maxRentalDays?: number;
+  @IsOptional() @IsString() heroImageUrl?: string;
+  @IsOptional() @IsObject() attributes?: Record<string, unknown>;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 class ImageDto {
@@ -53,15 +92,33 @@ class ImageDto {
   @IsOptional() @Type(() => Number) @IsInt() sortOrder?: number;
 }
 
+class UpdateImageDto {
+  @IsOptional() @IsString() alt?: string;
+  @IsOptional() @Type(() => Number) @IsInt() sortOrder?: number;
+}
+
 class UpsellDto {
-  @IsString() name!: string;
-  @IsString() slug!: string;
+  @IsString() @MinLength(1) name!: string;
+  @IsString() @MinLength(1) slug!: string;
   @Type(() => Number) @IsInt() @Min(0) priceMinor!: number;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() categoryId?: string;
   @IsOptional() @IsString() currency?: string;
-  @IsOptional() @Type(() => Number) @IsInt() stockQty?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) stockQty?: number;
   @IsOptional() @IsString() imageUrl?: string;
+  @IsOptional() @IsBoolean() isActive?: boolean;
+}
+
+class UpdateUpsellDto {
+  @IsOptional() @IsString() @MinLength(1) name?: string;
+  @IsOptional() @IsString() @MinLength(1) slug?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) priceMinor?: number;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() categoryId?: string;
+  @IsOptional() @IsString() currency?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) stockQty?: number;
+  @IsOptional() @IsString() imageUrl?: string;
+  @IsOptional() @IsBoolean() isActive?: boolean;
 }
 
 class BlackoutDto {
@@ -70,13 +127,21 @@ class BlackoutDto {
   @IsOptional() @IsString() reason?: string;
 }
 
+class ProductQueryDto {
+  @IsOptional() @IsString() q?: string;
+  @IsOptional() @IsString() categoryId?: string;
+  @IsOptional() @IsString() categorySlug?: string;
+  /** Staff-only. Public storefront reads never see archived inventory. */
+  @IsOptional() @IsString() includeInactive?: string;
+}
+
 @Controller("catalog")
 export class CatalogController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get("categories")
-  listCategories() {
-    return this.catalog.listCategories();
+  listCategories(@Query("includeInactive") includeInactive?: string) {
+    return this.catalog.listCategories({ includeInactive: includeInactive === "true" });
   }
 
   @Post("categories")
@@ -86,10 +151,17 @@ export class CatalogController {
     return this.catalog.createCategory(body);
   }
 
+  @Patch("categories/reorder")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  reorderCategories(@Body() body: { ids: string[] }) {
+    return this.catalog.reorderCategories(body.ids ?? []);
+  }
+
   @Patch("categories/:id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform")
-  updateCategory(@Param("id") id: string, @Body() body: Partial<CategoryDto>) {
+  updateCategory(@Param("id") id: string, @Body() body: UpdateCategoryDto) {
     return this.catalog.updateCategory(id, body);
   }
 
@@ -101,8 +173,18 @@ export class CatalogController {
   }
 
   @Get("products")
-  listProducts() {
-    return this.catalog.listProducts();
+  listProducts(@Query() query: ProductQueryDto) {
+    return this.catalog.listProducts({
+      q: query.q,
+      categoryId: query.categoryId,
+      categorySlug: query.categorySlug,
+      includeInactive: query.includeInactive === "true",
+    });
+  }
+
+  @Get("products/by-slug/:slug")
+  getProductBySlug(@Param("slug") slug: string) {
+    return this.catalog.getProductBySlug(slug);
   }
 
   @Get("products/:id")
@@ -117,10 +199,17 @@ export class CatalogController {
     return this.catalog.createProduct(body);
   }
 
+  @Post("products/:id/duplicate")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  duplicateProduct(@Param("id") id: string) {
+    return this.catalog.duplicateProduct(id);
+  }
+
   @Patch("products/:id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform")
-  updateProduct(@Param("id") id: string, @Body() body: Partial<ProductDto>) {
+  updateProduct(@Param("id") id: string, @Body() body: UpdateProductDto) {
     return this.catalog.updateProduct(id, body);
   }
 
@@ -136,6 +225,24 @@ export class CatalogController {
   @Roles("staff", "platform")
   addImage(@Param("id") id: string, @Body() body: ImageDto) {
     return this.catalog.addImage(id, body);
+  }
+
+  @Patch("products/:productId/images/:imageId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  updateImage(
+    @Param("productId") productId: string,
+    @Param("imageId") imageId: string,
+    @Body() body: UpdateImageDto,
+  ) {
+    return this.catalog.updateImage(productId, imageId, body);
+  }
+
+  @Post("products/:productId/images/:imageId/primary")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  setPrimaryImage(@Param("productId") productId: string, @Param("imageId") imageId: string) {
+    return this.catalog.setPrimaryImage(productId, imageId);
   }
 
   @Delete("products/:productId/images/:imageId")
@@ -160,7 +267,7 @@ export class CatalogController {
   @Patch("upsells/:id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("staff", "platform")
-  updateUpsell(@Param("id") id: string, @Body() body: Partial<UpsellDto>) {
+  updateUpsell(@Param("id") id: string, @Body() body: UpdateUpsellDto) {
     return this.catalog.updateUpsell(id, body);
   }
 
@@ -176,6 +283,13 @@ export class CatalogController {
   @Roles("staff", "platform")
   linkUpsell(@Param("id") id: string, @Param("upsellId") upsellId: string) {
     return this.catalog.linkUpsell(id, upsellId);
+  }
+
+  @Delete("products/:id/upsells/:upsellId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("staff", "platform")
+  unlinkUpsell(@Param("id") id: string, @Param("upsellId") upsellId: string) {
+    return this.catalog.unlinkUpsell(id, upsellId);
   }
 
   @Get("products/:id/blackouts")

@@ -1,10 +1,18 @@
-import { PlatformNav } from "@/components/platform-nav";
+import type { Metadata } from "next";
+import { ToastProvider } from "@rentora/ui";
 
-export default function PlatformLayout({ children }: { children: React.ReactNode }) {
+export const metadata: Metadata = {
+  title: {
+    default: "Platform",
+    template: "%s · Rentora Platform",
+  },
+  robots: { index: false, follow: false },
+};
+
+export default function PlatformRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-mesh-light">
-      <PlatformNav />
-      <div className="mx-auto max-w-6xl px-6 py-8">{children}</div>
+    <div className="rentora-admin min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)]">
+      <ToastProvider>{children}</ToastProvider>
     </div>
   );
 }

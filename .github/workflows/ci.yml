@@ -9,10 +9,28 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rentora
+          POSTGRES_PASSWORD: rentora
+          POSTGRES_DB: rentora
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rentora"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -34,18 +52,35 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm db:generate
-        env:
-          DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+
+      # A schema change without a matching migration silently breaks every deploy, so the
+      # mismatch has to fail here rather than in production.
+      - name: Check migrations match the schema
+        run: pnpm db:check-migrations
+
+      - name: Seed the database
+        run: pnpm db:seed
+
+      # Proves two tenants on one database cannot see each other, against real Postgres.
+      - name: Tenant isolation check
+        run: pnpm check:isolation
 
       - name: Domain package tests
         run: pnpm --filter @rentora/domain test
 
       - name: Build packages
-        run: pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui --filter @rentora/worker build
-        env:
-          DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+        run: >
+          pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui
+          --filter @rentora/worker build
+
+      - name: API tests
+        run: pnpm --filter @rentora/api test
+
+      - name: Build API
+        run: pnpm --filter @rentora/api build
+
+      - name: Build web
+        run: pnpm --filter @rentora/web build
 
       - name: Typecheck
         run: pnpm typecheck
-        env:
-          DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora

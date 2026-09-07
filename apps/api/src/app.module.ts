@@ -1,7 +1,9 @@
 import { Module, MiddlewareConsumer, NestModule } from "@nestjs/common";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { TenantMiddleware } from "./tenant/tenant.middleware";
+import { TenantBindingInterceptor } from "./tenant/tenant-binding.interceptor";
 import { AuthModule } from "./auth/auth.module";
 import { HealthModule } from "./health/health.module";
 import { PlatformModule } from "./platform/platform.module";
@@ -25,6 +27,7 @@ import { EmailTemplatesModule } from "./email-templates/email-templates.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { GdprModule } from "./gdpr/gdpr.module";
 import { BillingModule } from "./billing/billing.module";
+import { StorefrontModule } from "./storefront/storefront.module";
 
 @Module({
   imports: [
@@ -53,8 +56,12 @@ import { BillingModule } from "./billing/billing.module";
     WebhooksModule,
     GdprModule,
     BillingModule,
+    StorefrontModule,
   ],
-  providers: [TenantMiddleware],
+  providers: [
+    TenantMiddleware,
+    { provide: APP_INTERCEPTOR, useClass: TenantBindingInterceptor },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
