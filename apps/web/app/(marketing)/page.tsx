@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button, formatMoneyMinor } from "@rentora/ui";
 import { apiFetch } from "@/lib/api";
+import { platformDomain } from "@/lib/platform";
 
 type Plan = {
   tier: "STARTER" | "GROWTH" | "SCALE";
@@ -28,7 +29,7 @@ function featuresOf(plan: Plan): string[] {
   return [
     plan.maxProducts === null ? "Unlimited products" : `Up to ${plan.maxProducts} products`,
     plan.maxStaff === null ? "Unlimited staff seats" : `${plan.maxStaff} staff seats`,
-    plan.customDomains ? "Your own domain" : "Free rentora.app address",
+    plan.customDomains ? "Your own domain" : `Free ${platformDomain()} address`,
     plan.apiAccess ? "API and outbound webhooks" : "Stripe payouts and email",
     `${(plan.applicationFeeBps / 100).toFixed(2)}% booking fee`,
   ];

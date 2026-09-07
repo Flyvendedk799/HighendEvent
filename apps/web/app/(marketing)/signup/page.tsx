@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card } from "@rentora/ui";
 import { SignupForm } from "@/components/marketing/signup-form";
 import { getSession } from "@/lib/session";
+import { platformDomain } from "@/lib/platform";
 
 export const metadata = {
   title: "Start your store",
@@ -22,7 +23,7 @@ export default async function SignupPage() {
     redirect("/admin");
   }
 
-  const platformDomain = (process.env.PLATFORM_DOMAIN ?? "rentora.app").split(":")[0]!;
+  const platform = platformDomain();
 
   return (
     <main className="mx-auto grid max-w-5xl gap-10 px-6 py-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:py-24">
@@ -63,7 +64,7 @@ export default async function SignupPage() {
       </div>
 
       <Card className="h-fit p-6">
-        <SignupForm platformDomain={platformDomain} />
+        <SignupForm platformDomain={platform} />
       </Card>
     </main>
   );

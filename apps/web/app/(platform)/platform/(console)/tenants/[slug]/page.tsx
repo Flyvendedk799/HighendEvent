@@ -25,6 +25,7 @@ import { TenantRowActions } from "@/components/platform/tenant-row-actions";
 import { serverGet } from "@/lib/server-api";
 import { isApiError } from "@/lib/api";
 import { getAuditLog, type PlatformTenant } from "@/lib/actions/platform";
+import { tenantSubdomain } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -167,7 +168,7 @@ export default async function PlatformTenantPage({
               <CardHeader title="Domains" />
               {tenant.domains.length === 0 ? (
                 <p className="text-sm text-[var(--color-muted-foreground)]">
-                  Using {tenant.slug}.rentora.app
+                  Using {tenantSubdomain(tenant.slug)}
                 </p>
               ) : (
                 <ul className="space-y-2 text-sm">

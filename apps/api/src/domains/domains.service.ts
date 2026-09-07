@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { promises as dns } from "node:dns";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { customDomainTarget, platformDomain } from "../common/platform";
 import { BillingService } from "../billing/billing.service";
 
 /** Hostnames only: no scheme, no path, no port, at least one dot. */
@@ -30,7 +31,7 @@ export class DomainsService {
    * CNAME/A record is what actually routes traffic.
    */
   private instructionsFor(hostname: string) {
-    const target = process.env.CUSTOM_DOMAIN_TARGET ?? "cname.rentora.app";
+    const target = customDomainTarget();
     const apex = hostname.split(".").length === 2;
 
     return {
@@ -83,10 +84,10 @@ export class DomainsService {
       throw new BadRequestException("Enter a domain like shop.example.com");
     }
 
-    const platformDomain = (process.env.PLATFORM_DOMAIN ?? "rentora.app").toLowerCase();
-    if (hostname === platformDomain || hostname.endsWith(`.${platformDomain}`)) {
+    const platform = platformDomain();
+    if (hostname === platform || hostname.endsWith(`.${platform}`)) {
       throw new BadRequestException(
-        `${platformDomain} subdomains are managed for you and cannot be added here`,
+        `${platform} subdomains are managed for you and cannot be added here`,
       );
     }
 

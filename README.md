@@ -60,7 +60,7 @@ Then open:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Platform operator | `admin@rentora.app` | `admin123` |
+| Platform operator | `admin@alarent.app` | `admin123` |
 | Tenant owner | `owner@demo.rentora.local` | `demo1234` |
 | Tenant staff | `crew@demo.rentora.local` | `demo1234` |
 | Customer | `maja@example.com` | `customer123` |

@@ -81,7 +81,7 @@ describe("RolesGuard", () => {
     const guard = new RolesGuard(
       reflectorWith({ [ROLES_KEY]: ["platform"], [STAFF_ROLES_KEY]: ["OWNER"] }),
     );
-    const platform: JwtPayload = { sub: "p1", email: "ops@rentora.app", role: "platform" };
+    const platform: JwtPayload = { sub: "p1", email: "ops@alarent.app", role: "platform" };
     expect(guard.canActivate(contextFor(platform, "POST"))).toBe(true);
   });
 });

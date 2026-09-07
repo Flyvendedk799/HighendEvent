@@ -3,6 +3,7 @@ import { PlanTier } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
 import { PLANS, planLimits, type PlanLimits } from "./plan-limits";
+import { platformDomain } from "../common/platform";
 
 @Injectable()
 export class BillingService {
@@ -95,7 +96,7 @@ export class BillingService {
 
     if (resource === "domains" && !limits.customDomains) {
       throw new ForbiddenException(
-        `Custom domains are available on Growth and Scale. The ${limits.name} plan uses a rentora.app subdomain.`,
+        `Custom domains are available on Growth and Scale. The ${limits.name} plan uses a ${platformDomain()} subdomain.`,
       );
     }
   }

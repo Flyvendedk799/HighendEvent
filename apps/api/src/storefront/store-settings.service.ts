@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { PaymentModel, Prisma, TaxMode } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { tenantSubdomain } from "../common/platform";
 
 export type StoreSettingsInput = {
   name?: string;
@@ -211,7 +212,7 @@ export class StoreSettingsService {
         href: "/admin/settings",
         detail: domains.length
           ? domains.map((d) => `${d.hostname} (${d.verified ? "verified" : "pending"})`).join(", ")
-          : `${tenant.slug}.rentora.app`,
+          : tenantSubdomain(tenant.slug),
         required: false,
       },
     ];
@@ -223,7 +224,7 @@ export class StoreSettingsService {
       readyToLaunch: required.every((item) => item.done),
       completed: items.filter((item) => item.done).length,
       total: items.length,
-      storefrontUrl: domains.find((d) => d.verified)?.hostname ?? `${tenant.slug}.rentora.app`,
+      storefrontUrl: domains.find((d) => d.verified)?.hostname ?? tenantSubdomain(tenant.slug),
     };
   }
 

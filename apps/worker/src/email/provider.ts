@@ -25,7 +25,7 @@ export function emailProviderStatus() {
   return {
     configured,
     provider: configured ? ("resend" as const) : ("console" as const),
-    defaultFrom: process.env.EMAIL_FROM ?? "Rentora <bookings@rentora.app>",
+    defaultFrom: process.env.EMAIL_FROM ?? "Rentora <bookings@alarent.app>",
     reason: configured
       ? null
       : "RESEND_API_KEY is not set. Emails are logged instead of sent.",

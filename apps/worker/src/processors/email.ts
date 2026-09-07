@@ -112,7 +112,7 @@ export async function processEmail(job: Job<EmailJobData>): Promise<SendResult> 
     subject,
     html,
     text: toPlainText(html),
-    from: process.env.EMAIL_FROM ?? `${brand.storeName} <bookings@rentora.app>`,
+    from: process.env.EMAIL_FROM ?? `${brand.storeName} <bookings@alarent.app>`,
     replyTo: brand.supportEmail,
   });
 

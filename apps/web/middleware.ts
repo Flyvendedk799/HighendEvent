@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { decodeSessionToken } from "@/lib/jwt";
 import { SESSION_COOKIE } from "@/lib/session-constants";
 
-const PLATFORM_HOSTS = new Set(["admin.localhost", "admin.rentora.app"]);
-
 const RESERVED_SUBDOMAINS = new Set(["www", "admin", "app", "api", "cdn"]);
 
 /** Routes inside a guarded area that must stay reachable while logged out. */
@@ -22,14 +20,24 @@ function platformDomain(): string {
   return (process.env.PLATFORM_DOMAIN ?? "localhost:3000").toLowerCase().split(":")[0]!;
 }
 
+/**
+ * The superadmin console lives at `admin.<platform domain>`. It has to follow PLATFORM_DOMAIN
+ * rather than being hardcoded: `admin` is a reserved subdomain, so a tenant can never claim it,
+ * and pinning it to one brand would silently strand the console when the platform is rebranded.
+ * `admin.localhost` stays reachable so the console is testable in dev.
+ */
+function isPlatformHost(host: string): boolean {
+  return host === "admin.localhost" || host === `admin.${platformDomain()}`;
+}
+
 type Surface =
   | { kind: "platform" }
   | { kind: "marketing" }
   | { kind: "tenant"; slug: string }
   | { kind: "tenant-domain"; hostname: string };
 
-function resolveSurface(host: string, hostWithPort: string): Surface {
-  if (PLATFORM_HOSTS.has(host) || PLATFORM_HOSTS.has(hostWithPort)) {
+function resolveSurface(host: string): Surface {
+  if (isPlatformHost(host)) {
     return { kind: "platform" };
   }
 
@@ -70,7 +78,7 @@ export function middleware(request: NextRequest) {
   requestHeaders.delete("x-tenant-slug");
   requestHeaders.delete("x-rentora-host");
 
-  const surface = resolveSurface(host, hostWithPort);
+  const surface = resolveSurface(host);
   requestHeaders.set("x-rentora-surface", surface.kind === "platform" ? "platform" : surface.kind);
 
   if (surface.kind === "tenant") {

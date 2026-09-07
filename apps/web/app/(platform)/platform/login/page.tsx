@@ -13,7 +13,7 @@ const fields: AuthField[] = [
     type: "email",
     required: true,
     autoComplete: "username",
-    placeholder: "ops@rentora.app",
+    placeholder: "ops@alarent.app",
   },
   {
     name: "password",

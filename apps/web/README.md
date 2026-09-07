@@ -8,7 +8,7 @@ Next.js 15 (App Router) TypeScript frontend for the Rentora multi-tenant rental 
 |------|---------|--------|
 | `localhost:3000` / apex | Marketing | `/` |
 | `{slug}.localhost:3000` | Storefront + tenant admin | `/` → rewritten to `/home`, `/catalog`, `/product/[slug]`, `/cart`, `/checkout`, `/confirmation`, `/account/*`, `/admin/*` |
-| `admin.localhost` / `admin.rentora.app` | Platform admin | rewritten under `/platform/*` |
+| `admin.localhost` / `admin.<PLATFORM_DOMAIN>` | Platform admin | rewritten under `/platform/*` |
 
 Middleware sets `x-tenant-slug` for tenant hosts and `x-rentora-surface` for routing context.
 

@@ -4,6 +4,7 @@ import { AuthForm, type AuthField } from "@/components/auth-form";
 import { staffLoginAction } from "@/lib/auth-actions";
 import { getSession } from "@/lib/session";
 import { getTenantSlug } from "@/lib/tenant";
+import { platformDomain } from "@/lib/platform";
 
 export const metadata = { title: "Staff login" };
 
@@ -45,7 +46,7 @@ export default async function AdminLoginPage({
       label: "Store address",
       required: true,
       placeholder: "demo",
-      hint: "The part before .rentora.app in your storefront address.",
+      hint: `The part before .${platformDomain()} in your storefront address.`,
     });
   }
 

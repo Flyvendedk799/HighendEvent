@@ -19,6 +19,7 @@ import {
 } from "@rentora/ui";
 import { TenantRowActions } from "@/components/platform/tenant-row-actions";
 import { getPlatformTenants } from "@/lib/actions/platform";
+import { tenantSubdomain } from "@/lib/platform";
 
 export const metadata = { title: "Tenants" };
 export const dynamic = "force-dynamic";
@@ -120,7 +121,7 @@ export default async function PlatformTenantsPage({
                       {tenant.name}
                     </Link>
                     <span className="block text-xs text-[var(--color-muted-foreground)]">
-                      {tenant.primaryDomain ?? `${tenant.slug}.rentora.app`}
+                      {tenant.primaryDomain ?? tenantSubdomain(tenant.slug)}
                     </span>
                   </Td>
                   <Td muted>{tenant.plan}</Td>

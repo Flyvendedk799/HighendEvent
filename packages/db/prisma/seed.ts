@@ -154,10 +154,10 @@ async function main() {
   const customerPassword = process.env.SEED_CUSTOMER_PASSWORD ?? "customer123";
 
   await prisma.platformUser.upsert({
-    where: { email: "admin@rentora.app" },
+    where: { email: "admin@alarent.app" },
     update: { isActive: true },
     create: {
-      email: "admin@rentora.app",
+      email: "admin@alarent.app",
       name: "Platform Admin",
       passwordHash: hashPassword(platformPassword),
       isActive: true,
@@ -538,7 +538,7 @@ async function main() {
   await seedBookings(tenant.id, store.currency, customer.id, products);
 
   console.log("Seed complete.");
-  console.log(`  platform   admin@rentora.app / ${platformPassword}`);
+  console.log(`  platform   admin@alarent.app / ${platformPassword}`);
   console.log(`  staff      owner@demo.rentora.local / ${staffPassword} (OWNER)`);
   console.log(`  staff      crew@demo.rentora.local / ${staffPassword} (STAFF)`);
   console.log(`  customer   maja@example.com / ${customerPassword}`);

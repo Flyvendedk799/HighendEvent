@@ -4,14 +4,15 @@ Rentora is three deployables plus two managed services:
 
 | Piece | What it is | Where it runs |
 | --- | --- | --- |
-| `apps/web` | Next.js storefront, tenant admin, platform console | Vercel |
-| `apps/api` | NestJS HTTP API | Any Node host (Fly, Render, Railway, Docker) |
+| `apps/web` | Next.js storefront, tenant admin, platform console | ServerHoster (VPS), port 3021 |
+| `apps/api` | NestJS HTTP API | ServerHoster (VPS), port 3022 |
 | `apps/worker` | BullMQ consumers (email, PDF, Stripe sync, SSL) | Same host as the API |
-| PostgreSQL | System of record | Managed Postgres (Neon, Supabase, RDS) |
-| Redis | Job queue | Managed Redis (Upstash, Redis Cloud) |
+| PostgreSQL | System of record | ServerHoster-managed Postgres |
+| Redis | Job queue | Managed Redis, or a ServerHoster resource |
 
-The web app never talks to Postgres. It only calls the API over HTTP, which is why it can live
-on Vercel while the database stays inside a private network.
+The web app never talks to Postgres. It only calls the API over HTTP, which is why the API and
+the database never need a public hostname: only `apps/web` is published through the tunnel, and
+it reaches the API over `localhost`.
 
 ## 1. Database
 
@@ -25,31 +26,58 @@ DATABASE_URL=postgresql://... pnpm db:seed     # optional demo tenant
 
 CI fails if `schema.prisma` has drifted from the committed migrations (`pnpm db:check-migrations`).
 
-## 2. Web on Vercel
-
-Import the repository and keep **Root Directory = the repository root**. The committed
-`vercel.json` then drives the build:
-
-- Install: `pnpm install --frozen-lockfile`
-- Build: builds `@rentora/domain` and `@rentora/ui`, then `@rentora/web`
-- Output: `apps/web/.next`
-
-There is deliberately only one `vercel.json`, at the root. A second one inside `apps/web` would
-be a competing source of truth for the same build.
+## 2. Web
 
 Required environment variables:
 
 | Variable | Example | Why |
 | --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | `https://api.rentora.app` | Where the browser-facing server calls the API |
-| `PLATFORM_DOMAIN` | `rentora.app` | Distinguishes apex marketing from `{tenant}.rentora.app` |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3022` | Where the server calls the API. Server-side only — no client component imports `lib/api` |
+| `PLATFORM_DOMAIN` | `alarent.app` | Distinguishes apex marketing from `{tenant}.alarent.app` |
 
-### Wildcard domains
+`PLATFORM_DOMAIN` is the single source of truth for every address the product quotes back to a
+user. Read it through `apps/web/lib/platform.ts` (and `apps/api/src/common/platform.ts` on the
+API side) rather than inlining the domain — the admin console, platform console, signup form and
+billing errors all print the same `{slug}.{platform domain}` address and must not disagree.
 
-Tenant storefronts are subdomains, so add `*.rentora.app` as a wildcard domain on the Vercel
-project. Customer domains are added per tenant and resolved through the `CustomDomain` table —
-the edge middleware forwards the browser hostname to the API as `x-tenant-host`, and only
-`verified` domains resolve.
+A Vercel deploy is still possible: the committed root `vercel.json` drives it (root directory =
+repository root, output `apps/web/.next`). There is deliberately only one `vercel.json` — a
+second inside `apps/web` would be a competing source of truth for the same build.
+
+### Host routing
+
+The edge middleware sorts every request into one of four surfaces by hostname:
+
+| Host | Surface | Serves |
+| --- | --- | --- |
+| `alarent.app`, `www.alarent.app` | marketing | Public site and signup |
+| `admin.alarent.app` | platform | Superadmin console, rewritten under `/platform/*` |
+| `{slug}.alarent.app` | tenant | That tenant's storefront, rewritten from `/` to `/home` |
+| Anything else | tenant-domain | Resolved against `CustomDomain`; only `verified` rows match |
+
+`www`, `admin`, `app`, `api` and `cdn` are reserved and can never be claimed as a tenant slug.
+Only one label deep counts as a tenant subdomain — `a.b.alarent.app` is not a tenant — which is
+also exactly what Cloudflare Universal SSL covers.
+
+A custom domain cannot be resolved at the edge, because the mapping lives in the database. The
+middleware therefore forwards the browser-facing hostname to the API as `x-tenant-host`, since
+the `Host` header on a server-to-server call names the API, not the customer's domain.
+
+### Wildcard domains on ServerHoster
+
+Both the apex and the wildcard are bound to the **web** service through ServerHoster's SaaS
+domain API, which writes the Cloudflare DNS record and the tunnel ingress rule together:
+
+```bash
+# apex + every tenant subdomain -> the web service
+POST /saas/services/<web service id>/domains  {"hostname": "alarent.app"}
+POST /saas/services/<web service id>/domains  {"hostname": "*.alarent.app"}
+```
+
+Wildcards are only supported inside the operator's own Cloudflare zone; tenant-owned domains are
+exact hostnames registered the same way, which routes them through Cloudflare for SaaS (custom
+hostnames) instead. That path additionally needs a Cloudflare API token and zone id saved in
+ServerHoster settings.
 
 ## 3. API and worker
 

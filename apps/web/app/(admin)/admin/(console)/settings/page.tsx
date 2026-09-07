@@ -7,6 +7,7 @@ import { getConnectStatus, getStoreSettings } from "@/lib/actions/store";
 import { getDomains } from "@/lib/actions/domains";
 import { serverGet } from "@/lib/server-api";
 import type { StorefrontBootstrap } from "@/lib/types";
+import { tenantSubdomain } from "@/lib/platform";
 
 export const metadata = { title: "Settings" };
 export const dynamic = "force-dynamic";
@@ -41,7 +42,7 @@ export default async function AdminSettingsPage({
     serverGet<PlanUsage>("/billing/limits", { cache: "no-store" }).catch(() => null),
   ]);
 
-  const fallbackHost = `${bootstrap?.tenant.slug ?? "your-store"}.rentora.app`;
+  const fallbackHost = tenantSubdomain(bootstrap?.tenant.slug ?? "your-store");
 
   return (
     <Page className="max-w-4xl">
