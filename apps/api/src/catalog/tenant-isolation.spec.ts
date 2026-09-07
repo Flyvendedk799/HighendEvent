@@ -37,7 +37,10 @@ describe("tenant isolation", () => {
     },
   };
 
-  const catalog = new CatalogService(prismaMock as never);
+  // The catalog only consults billing when creating a product, which these read paths do not.
+  const billingMock = { assertWithinLimit: jest.fn(async () => undefined) };
+
+  const catalog = new CatalogService(prismaMock as never, billingMock as never);
 
   it("lists only products for the active tenant", async () => {
     const listedA = await tenantStorage.run(tenantA, () => catalog.listProducts());

@@ -7,6 +7,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { requireTenantId } from "../common/tenant.util";
+import { BillingService } from "../billing/billing.service";
 
 export type CategoryInput = {
   name: string;
@@ -59,7 +60,10 @@ export type ProductListFilters = {
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly billing: BillingService,
+  ) {}
 
   // ---------------------------------------------------------------- Categories
 
@@ -167,6 +171,10 @@ export class CatalogService {
 
   async createProduct(data: ProductInput) {
     const tenantId = requireTenantId();
+    // Plan ceilings are enforced here, where the row is actually created.
+    if (data.isActive !== false) {
+      await this.billing.assertWithinLimit("products", tenantId);
+    }
     await this.ensureCategory(tenantId, data.categoryId);
     await this.assertUniqueProductSlug(tenantId, data.slug);
 

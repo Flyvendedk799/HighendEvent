@@ -249,3 +249,74 @@ export type LoginResponse = {
     staffRole?: StaffRole;
   };
 };
+
+export type CartItem = {
+  id: string;
+  productId: string;
+  quantity: number;
+  deliveryType: DeliveryType;
+  startDate: string | null;
+  endDate: string | null;
+  product: Product & { images?: ProductImage[] };
+  upsells: Array<{
+    id: string;
+    quantity: number;
+    upsellProduct: UpsellProduct;
+  }>;
+};
+
+export type Cart = {
+  id: string;
+  items: CartItem[];
+};
+
+export type CartSummary = {
+  cart: Cart;
+  currency: string;
+  paymentModel: PaymentModel;
+  itemCount: number;
+  upsellTotalMinor: number;
+  pricing: PricingBreakdown | null;
+  /** Per-line problems that block checkout: missing dates, sold out since adding. */
+  issues: Array<{ itemId: string; message: string }>;
+  checkoutReady: boolean;
+};
+
+export type AvailabilityCalendar = {
+  productId: string;
+  stockQty: number;
+  prepBufferDays: number;
+  cleanupBufferDays: number;
+  days: DayAvailability[];
+};
+
+export type AvailabilityOverview = {
+  startDate: string;
+  endDate: string;
+  products: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    stockQty: number;
+    days: DayAvailability[];
+  }>;
+  bookings: Array<{
+    bookingId: string;
+    bookingNo: string;
+    customerName: string;
+    productId: string;
+    quantity: number;
+    statusKey: string;
+    startDate: string;
+    endDate: string;
+  }>;
+};
+
+export type DeliveryQuote = {
+  feeMinor: number;
+  allowed: boolean;
+  distanceKm: number;
+  chargeableKm: number;
+  explanation: string;
+  currency: string;
+};

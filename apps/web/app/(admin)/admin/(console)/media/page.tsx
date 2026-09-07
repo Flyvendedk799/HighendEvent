@@ -1,35 +1,33 @@
-import { Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Page, PageHeader } from "@rentora/ui";
+import { MediaLibrary } from "@/components/admin/media-library";
+import { getStorageStatus, type MediaAsset, type StorageStatus } from "@/lib/actions/media";
+import { serverGet } from "@/lib/server-api";
 
-const assets = [
-  "champagne-tower.jpg",
-  "lounge-set.jpg",
-  "fairy-lights.jpg",
-  "warehouse-hero.jpg",
-  "logo.svg",
-  "invoice-header.png",
-];
+export const metadata = { title: "Media" };
+export const dynamic = "force-dynamic";
 
-export default function AdminMediaPage() {
+const FALLBACK_STORAGE: StorageStatus = {
+  configured: false,
+  bucket: null,
+  publicBaseUrl: null,
+  maxBytes: 15 * 1024 * 1024,
+  allowedTypes: ["image/jpeg", "image/png", "image/webp"],
+  reason: "Object storage status could not be read.",
+};
+
+export default async function AdminMediaPage() {
+  const [assets, storage] = await Promise.all([
+    serverGet<MediaAsset[]>("/media", { cache: "no-store" }).catch(() => [] as MediaAsset[]),
+    getStorageStatus().catch(() => FALLBACK_STORAGE),
+  ]);
+
   return (
-    <main>
+    <Page>
       <PageHeader
-        title="Media library"
-        description="Product photos, logos, and CMS assets (R2-backed)."
-        action={<Button>Upload</Button>}
+        title="Media"
+        description="Photos used across your products and pages."
       />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {assets.map((asset, i) => (
-          <Card key={asset} className="overflow-hidden p-0">
-            <div
-              className={`aspect-video ${
-                i % 3 === 0 ? "bg-teal-600" : i % 3 === 1 ? "bg-amber-500" : "bg-slate-600"
-              }`}
-            />
-            <div className="p-3 text-sm font-medium">{asset}</div>
-          </Card>
-        ))}
-      </div>
-    </main>
+      <MediaLibrary assets={assets} storage={storage} />
+    </Page>
   );
 }

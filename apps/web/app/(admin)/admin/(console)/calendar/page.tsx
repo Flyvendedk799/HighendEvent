@@ -1,52 +1,86 @@
-import { Badge, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import Link from "next/link";
+import { Button, Page, PageHeader } from "@rentora/ui";
+import { ResourceCalendar } from "@/components/admin/resource-calendar";
+import { serverGet } from "@/lib/server-api";
+import type { AvailabilityOverview, StorefrontBootstrap } from "@/lib/types";
 
-const days = Array.from({ length: 28 }, (_, i) => i + 1);
-const busy = new Set([6, 7, 12, 13, 14, 18, 19, 25]);
+export const metadata = { title: "Calendar" };
+export const dynamic = "force-dynamic";
 
-export default function AdminCalendarPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+/** The visible window: a whole month, defaulting to the one containing today. */
+function monthWindow(monthParam?: string) {
+  const base = monthParam ? new Date(`${monthParam}-01T00:00:00Z`) : new Date();
+  const year = base.getUTCFullYear();
+  const month = base.getUTCMonth();
+
+  const start = new Date(Date.UTC(year, month, 1));
+  const end = new Date(Date.UTC(year, month + 1, 0));
+
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+    label: new Intl.DateTimeFormat("en-GB", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(start),
+    prev: new Date(Date.UTC(year, month - 1, 1)).toISOString().slice(0, 7),
+    next: new Date(Date.UTC(year, month + 1, 1)).toISOString().slice(0, 7),
+  };
+}
+
+export default async function AdminCalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month } = await searchParams;
+  const window = monthWindow(month);
+
+  const [overview, bootstrap] = await Promise.all([
+    serverGet<AvailabilityOverview>(
+      `/availability/overview?startDate=${window.startDate}&endDate=${window.endDate}`,
+      { cache: "no-store" },
+    ),
+    serverGet<StorefrontBootstrap>("/storefront/bootstrap").catch(() => null),
+  ]);
 
   return (
-    <main>
+    <Page>
       <PageHeader
         title="Calendar"
-        description="Fleet-wide availability and booking density. Subscribe via ICS for Outlook/Google."
+        description="Occupancy across your whole catalog, including prep and cleanup buffers."
+        secondaryAction={
+          <Button variant="secondary" asChild>
+            <a href="/api/bookings.ics">Subscribe (ICS)</a>
+          </Button>
+        }
+        action={
+          <Button asChild>
+            <Link href="/admin/bookings/new">New booking</Link>
+          </Button>
+        }
       />
-      <Card>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-xl font-semibold">September 2026</h2>
-          <div className="flex items-center gap-2">
-            <a
-              href={`${apiBase}/bookings/calendar.ics`}
-              className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-900 hover:bg-teal-100"
-            >
-              Download ICS feed
-            </a>
-            <Badge tone="accent">Demo month</Badge>
-          </div>
-        </div>
-        <div className="grid grid-cols-7 gap-2 text-center text-xs text-muted-foreground">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-            <div key={d} className="py-1 font-medium">
-              {d}
-            </div>
-          ))}
-          {days.map((day) => (
-            <div
-              key={day}
-              className={`min-h-16 rounded-lg border p-2 text-left text-sm ${
-                busy.has(day)
-                  ? "border-teal-200 bg-teal-50 text-teal-900"
-                  : "border-border bg-surface text-foreground"
-              }`}
-            >
-              <div className="font-medium">{day}</div>
-              {busy.has(day) ? <div className="mt-2 text-[10px]">3 bookings</div> : null}
-            </div>
-          ))}
-        </div>
-      </Card>
-    </main>
+
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <Button variant="secondary" size="sm" asChild>
+          <Link href={`/admin/calendar?month=${window.prev}`}>← Previous</Link>
+        </Button>
+        <p className="text-sm font-semibold">{window.label}</p>
+        <Button variant="secondary" size="sm" asChild>
+          <Link href={`/admin/calendar?month=${window.next}`}>Next →</Link>
+        </Button>
+      </div>
+
+      <ResourceCalendar
+        overview={overview}
+        locale={bootstrap?.store.localeDefault ?? "en"}
+      />
+
+      <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+        A number in a coloured bar is the quantity on that booking. A number on an amber cell is
+        how many units remain free that day.
+      </p>
+    </Page>
   );
 }

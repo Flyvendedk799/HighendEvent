@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import { BillingController } from "./billing.controller";
 import { BillingService } from "./billing.service";
-import { AuthModule } from "../auth/auth.module";
+import { ConnectService } from "./connect.service";
 
 @Module({
-  imports: [AuthModule],
   controllers: [BillingController],
-  providers: [BillingService],
+  providers: [BillingService, ConnectService],
+  exports: [BillingService, ConnectService],
 })
 export class BillingModule {}

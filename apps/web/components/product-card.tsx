@@ -1,39 +1,67 @@
-import { Badge } from "@rentora/ui";
-import { formatPrice, type DemoProduct } from "@/lib/demo-data";
 import Link from "next/link";
+import { Badge, Money } from "@rentora/ui";
+import type { Product } from "@/lib/types";
 
-const tones = {
-  teal: "from-teal-700 to-teal-500",
-  amber: "from-amber-600 to-amber-400",
-  slate: "from-slate-700 to-slate-500",
-};
+export function ProductCard({
+  product,
+  currency,
+  locale = "en",
+}: {
+  product: Product;
+  currency: string;
+  locale?: string;
+}) {
+  const image = product.heroImageUrl ?? product.images?.[0]?.url;
 
-export function ProductCard({ product }: { product: DemoProduct }) {
   return (
     <Link
       href={`/product/${product.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-1 hover:border-teal-300 hover:shadow-xl"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
     >
-      <div className={`aspect-[4/3] bg-gradient-to-br ${tones[product.imageTone]} relative`}>
-        <div className="absolute inset-0 opacity-30 mix-blend-overlay [background-image:radial-gradient(circle_at_30%_20%,white,transparent_45%)]" />
-        <Badge className="absolute left-3 top-3" tone="accent">
-          {product.category}
-        </Badge>
-        <div className="absolute bottom-3 right-3 rounded-lg bg-black/35 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur">
-          {product.stock} in stock
-        </div>
+      <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-muted)]">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image}
+            alt={product.images?.[0]?.alt || product.name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+            {product.name}
+          </div>
+        )}
+        {product.category ? (
+          <Badge tone="accent" className="absolute left-3 top-3">
+            {product.category.name}
+          </Badge>
+        ) : null}
       </div>
-      <div className="space-y-2 p-4">
-        <h3 className="font-display text-lg font-semibold group-hover:text-primary">
+
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <h3 className="font-display text-lg font-semibold leading-tight group-hover:text-[var(--color-primary)]">
           {product.name}
         </h3>
-        <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
-        <div className="flex items-end justify-between gap-3 pt-1">
-          <p className="text-sm font-medium text-foreground">
-            From {formatPrice(product.priceFrom, product.currency)}
-            <span className="text-muted-foreground"> / day</span>
+        {product.description ? (
+          <p className="line-clamp-2 text-sm text-[var(--color-muted-foreground)]">
+            {product.description}
           </p>
-          <span className="text-xs font-semibold text-teal-800 opacity-0 transition group-hover:opacity-100">
+        ) : null}
+
+        <div className="mt-auto flex items-end justify-between gap-3 pt-2">
+          <p className="text-sm">
+            <span className="text-[var(--color-muted-foreground)]">From </span>
+            <span className="font-semibold">
+              <Money
+                amountMinor={product.dailyPriceMinor}
+                currency={product.currency ?? currency}
+                locale={locale}
+              />
+            </span>
+            <span className="text-[var(--color-muted-foreground)]"> / day</span>
+          </p>
+          <span className="text-xs font-medium text-[var(--color-primary)] opacity-0 transition group-hover:opacity-100">
             Check dates →
           </span>
         </div>

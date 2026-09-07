@@ -1,37 +1,24 @@
-import { Badge, Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Page, PageHeader } from "@rentora/ui";
+import { UpsellManager } from "@/components/admin/upsell-manager";
+import { serverGet } from "@/lib/server-api";
+import type { StorefrontBootstrap, UpsellProduct } from "@/lib/types";
 
-const upsells = [
-  { name: "Linen package", price: "185 DKK", attached: 12 },
-  { name: "Extra syrup kit", price: "95 DKK", attached: 4 },
-  { name: "Extension cord set", price: "45 DKK", attached: 21 },
-  { name: "Setup assistant (2h)", price: "650 DKK", attached: 3 },
-];
+export const metadata = { title: "Add-ons" };
+export const dynamic = "force-dynamic";
 
-export default function AdminUpsellsPage() {
+export default async function AdminUpsellsPage() {
+  const [upsells, bootstrap] = await Promise.all([
+    serverGet<UpsellProduct[]>("/catalog/upsells", { cache: "no-store" }),
+    serverGet<StorefrontBootstrap>("/storefront/bootstrap").catch(() => null),
+  ]);
+
   return (
-    <main>
+    <Page className="max-w-4xl">
       <PageHeader
-        title="Upsells"
-        description="Attach add-ons that appear on product and checkout flows."
-        action={<Button>Add upsell</Button>}
+        title="Add-ons"
+        description="Extras a customer can add to a booking. Attach them to products on the product page."
       />
-      <div className="space-y-3">
-        {upsells.map((u) => (
-          <Card key={u.name} className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-medium">{u.name}</h2>
-              <p className="text-sm text-muted-foreground">Attached to {u.attached} products</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge tone="accent">{u.price}</Badge>
-              <Button variant="secondary" size="sm">
-                Edit
-              </Button>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </main>
+      <UpsellManager upsells={upsells} currency={bootstrap?.store.currency ?? "USD"} />
+    </Page>
   );
 }

@@ -1,38 +1,49 @@
-"use client";
-
 import Link from "next/link";
-import { Button, Card, Input } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import { Banner, Breadcrumbs, Button, Page, PageHeader } from "@rentora/ui";
+import { ManualBookingForm } from "@/components/admin/manual-booking-form";
+import { serverGet } from "@/lib/server-api";
+import type { Product, StorefrontBootstrap } from "@/lib/types";
 
-export default function AdminBookingCreatePage() {
+export const metadata = { title: "New booking" };
+export const dynamic = "force-dynamic";
+
+export default async function NewBookingPage() {
+  const [products, bootstrap] = await Promise.all([
+    serverGet<Product[]>("/catalog/products", { cache: "no-store" }),
+    serverGet<StorefrontBootstrap>("/storefront/bootstrap").catch(() => null),
+  ]);
+
   return (
-    <main>
+    <Page>
       <PageHeader
-        title="Create manual booking"
-        description="For phone / walk-in orders with custom pricing."
+        breadcrumbs={
+          <Breadcrumbs
+            items={[{ label: "Bookings", href: "/admin/bookings" }, { label: "New booking" }]}
+          />
+        }
+        title="New booking"
+        description="For phone and walk-in bookings. Availability and price are checked as you type."
       />
-      <form className="grid max-w-3xl gap-6">
-        <Card className="grid gap-4 sm:grid-cols-2">
-          <Input name="customer" label="Customer name" placeholder="Event House ApS" />
-          <Input name="email" type="email" label="Email" placeholder="hello@eventhouse.dk" />
-          <Input name="start" type="date" label="Start date" />
-          <Input name="end" type="date" label="End date" />
-          <Input name="product" label="Product" placeholder="Champagne Tower" />
-          <Input name="qty" type="number" label="Quantity" defaultValue={1} />
-          <Input name="total" label="Manual total (DKK)" placeholder="4280" />
-          <Input name="notes" label="Internal notes" placeholder="Deposit waived" />
-        </Card>
-        <div className="flex gap-3">
-          <Link href="/admin/bookings/BK-1042">
-            <Button type="button">Save booking</Button>
-          </Link>
-          <Link href="/admin/bookings">
-            <Button type="button" variant="secondary">
-              Cancel
+
+      {products.length === 0 ? (
+        <Banner
+          tone="warning"
+          title="You have no published products"
+          action={
+            <Button size="sm" variant="secondary" asChild>
+              <Link href="/admin/products/new">Add a product</Link>
             </Button>
-          </Link>
-        </div>
-      </form>
-    </main>
+          }
+        >
+          Add something rentable before taking a booking.
+        </Banner>
+      ) : (
+        <ManualBookingForm
+          products={products}
+          currency={bootstrap?.store.currency ?? "USD"}
+          deliveryEnabled={bootstrap?.features.deliveryEnabled ?? false}
+        />
+      )}
+    </Page>
   );
 }

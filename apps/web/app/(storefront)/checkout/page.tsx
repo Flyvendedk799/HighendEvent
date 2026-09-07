@@ -1,52 +1,56 @@
-"use client";
+import { redirect } from "next/navigation";
+import { Banner } from "@rentora/ui";
+import { CheckoutForm } from "@/components/storefront/checkout-form";
+import { readCart } from "@/lib/actions/cart";
+import { getSession } from "@/lib/session";
+import { getBootstrap } from "@/lib/tenant";
 
-import Link from "next/link";
-import { Button, Card, Input } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
-import { getDictionary } from "@/lib/i18n";
+export const metadata = { title: "Checkout" };
+export const dynamic = "force-dynamic";
 
-export default function CheckoutPage() {
-  const t = getDictionary("en");
+export default async function CheckoutPage() {
+  const [summary, bootstrap, session] = await Promise.all([
+    readCart(),
+    getBootstrap(),
+    getSession(),
+  ]);
+
+  // Nothing to pay for, or something in the cart is no longer bookable.
+  if (summary.cart.items.length === 0 || !summary.checkoutReady) {
+    redirect("/cart");
+  }
+
+  const locale = bootstrap?.store.localeDefault ?? "en";
 
   return (
-    <main>
-      <PageHeader title={t.checkout.title} description="Guest checkout with delivery or pickup." />
-      <form className="grid gap-6 lg:grid-cols-2">
-        <Card className="space-y-4">
-          <h2 className="font-display text-xl font-semibold">{t.checkout.contact}</h2>
-          <Input name="name" label="Full name" placeholder="Maja Nielsen" required />
-          <Input name="email" type="email" label="Email" placeholder="maja@example.com" required />
-          <Input name="phone" label="Phone" placeholder="+45 12 34 56 78" />
-        </Card>
-        <Card className="space-y-4">
-          <h2 className="font-display text-xl font-semibold">{t.checkout.delivery}</h2>
-          <div className="grid gap-3">
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3">
-              <input type="radio" name="fulfillment" defaultChecked className="accent-teal-700" />
-              <span>
-                <span className="font-medium">Delivery</span>
-                <span className="block text-sm text-muted-foreground">Zone-based fee at checkout</span>
-              </span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3">
-              <input type="radio" name="fulfillment" className="accent-teal-700" />
-              <span>
-                <span className="font-medium">Pickup</span>
-                <span className="block text-sm text-muted-foreground">Collect from warehouse</span>
-              </span>
-            </label>
-          </div>
-          <Input name="address" label="Delivery address" placeholder="Street, city, ZIP" />
-          <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
-            {t.checkout.payment}: Stripe Checkout (redirect) — demo mode.
-          </div>
-          <Link href="/confirmation">
-            <Button type="button" className="w-full" size="lg">
-              {t.checkout.placeOrder}
-            </Button>
-          </Link>
-        </Card>
-      </form>
-    </main>
+    <div>
+      <h1 className="font-display text-3xl font-semibold tracking-tight">Checkout</h1>
+      <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
+        {summary.itemCount} item{summary.itemCount === 1 ? "" : "s"} ·{" "}
+        {summary.paymentModel === "DEPOSIT_REMAINDER"
+          ? "Pay a deposit now, the balance before your dates"
+          : "Pay in full to confirm"}
+      </p>
+
+      {!bootstrap?.tenant.connectOnboarded ? (
+        <Banner tone="info" className="mt-5">
+          This store is still finishing its payment setup, so no card will be charged yet. Your
+          booking will be held and the team will be in touch.
+        </Banner>
+      ) : null}
+
+      <div className="mt-6">
+        <CheckoutForm
+          summary={summary}
+          deliveryEnabled={bootstrap?.features.deliveryEnabled ?? false}
+          locale={locale}
+          prefill={
+            session?.role === "customer"
+              ? { email: session.email, name: session.name }
+              : null
+          }
+        />
+      </div>
+    </div>
   );
 }

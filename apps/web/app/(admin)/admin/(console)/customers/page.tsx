@@ -1,45 +1,123 @@
-import { Badge, Button, Card } from "@rentora/ui";
-import { PageHeader } from "@/components/page-header";
+import Link from "next/link";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  FilterBar,
+  Page,
+  PageHeader,
+  SearchInput,
+  Table,
+  TableContainer,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "@rentora/ui";
+import { serverGet } from "@/lib/server-api";
+import type { Customer } from "@/lib/types";
 
-const customers = [
-  { name: "Maja Nielsen", email: "maja@example.com", bookings: 4, tier: "Returning" },
-  { name: "Event House ApS", email: "hello@eventhouse.dk", bookings: 18, tier: "VIP" },
-  { name: "Jonas Holm", email: "jonas@holm.dk", bookings: 1, tier: "New" },
-  { name: "Studio North", email: "book@studionorth.dk", bookings: 9, tier: "Returning" },
-];
+export const metadata = { title: "Customers" };
+export const dynamic = "force-dynamic";
 
-export default function AdminCustomersPage() {
+type CustomerRow = Customer & { _count?: { bookings: number } };
+
+export default async function AdminCustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+
+  const customers = await serverGet<CustomerRow[]>(
+    `/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+    { cache: "no-store" },
+  );
+
   return (
-    <main>
+    <Page>
       <PageHeader
         title="Customers"
-        description="CRM-lite view of renters and company accounts."
-        action={<Button variant="secondary">Export CSV</Button>}
+        description="Everyone who has booked with you, including guest checkouts."
       />
-      <Card className="overflow-x-auto p-0">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-border bg-muted/60 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Bookings</th>
-              <th className="px-4 py-3 font-medium">Tier</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((c) => (
-              <tr key={c.email} className="border-b border-border last:border-0">
-                <td className="px-4 py-3 font-medium">{c.name}</td>
-                <td className="px-4 py-3">{c.email}</td>
-                <td className="px-4 py-3">{c.bookings}</td>
-                <td className="px-4 py-3">
-                  <Badge tone={c.tier === "VIP" ? "accent" : "neutral"}>{c.tier}</Badge>
+
+      <FilterBar>
+        <SearchInput defaultValue={q} placeholder="Name, email, phone, city" />
+        <Button type="submit" variant="secondary">
+          Search
+        </Button>
+        {q ? (
+          <Button variant="ghost" asChild>
+            <Link href="/admin/customers">Clear</Link>
+          </Button>
+        ) : null}
+      </FilterBar>
+
+      <TableContainer>
+        <Table>
+          <THead>
+            <Tr>
+              <Th>Customer</Th>
+              <Th>Contact</Th>
+              <Th>Location</Th>
+              <Th align="right">Bookings</Th>
+              <Th>Account</Th>
+            </Tr>
+          </THead>
+          <TBody>
+            {customers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-12">
+                  <EmptyState
+                    title={q ? "No customers match that search" : "No customers yet"}
+                    description={
+                      q
+                        ? "Try a different name, email, or phone number."
+                        : "Customers appear here as soon as someone books, whether or not they created an account."
+                    }
+                    action={
+                      q ? (
+                        <Button variant="secondary" asChild>
+                          <Link href="/admin/customers">Clear search</Link>
+                        </Button>
+                      ) : undefined
+                    }
+                  />
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-    </main>
+            ) : (
+              customers.map((customer) => (
+                <Tr key={customer.id} interactive>
+                  <Td>
+                    <Link
+                      href={`/admin/customers/${customer.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {customer.firstName} {customer.lastName}
+                    </Link>
+                  </Td>
+                  <Td muted>
+                    <span className="block truncate">{customer.email}</span>
+                    {customer.phone ? (
+                      <span className="block truncate text-xs">{customer.phone}</span>
+                    ) : null}
+                  </Td>
+                  <Td muted>
+                    {customer.city ? `${customer.zipCode ?? ""} ${customer.city}`.trim() : "—"}
+                  </Td>
+                  <Td numeric>{customer._count?.bookings ?? 0}</Td>
+                  <Td>
+                    <Badge tone={customer.isGuest ? "neutral" : "success"}>
+                      {customer.isGuest ? "Guest" : "Registered"}
+                    </Badge>
+                  </Td>
+                </Tr>
+              ))
+            )}
+          </TBody>
+        </Table>
+      </TableContainer>
+    </Page>
   );
 }

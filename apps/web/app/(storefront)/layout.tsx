@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { StorefrontHeader } from "@/components/storefront-header";
 import { StorefrontFooter } from "@/components/storefront-footer";
-import { StorefrontProviders } from "@/components/storefront-providers";
+
 import { ThemeTokens } from "@/components/theme-tokens";
 import { StoreNotFound } from "@/components/store-not-found";
 import { getBootstrap } from "@/lib/tenant";
@@ -38,7 +38,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const session = await getSession();
 
   return (
-    <StorefrontProviders>
+    <>
       <ThemeTokens brandColors={bootstrap.store.brandColors} tokens={bootstrap.theme.tokens} />
       <div className="rentora-storefront flex min-h-screen flex-col">
         <StorefrontHeader
@@ -57,6 +57,6 @@ export default async function StorefrontLayout({ children }: { children: React.R
           pages={bootstrap.pages}
         />
       </div>
-    </StorefrontProviders>
+    </>
   );
 }
