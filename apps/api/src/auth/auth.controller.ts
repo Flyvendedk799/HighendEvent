@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
@@ -60,6 +60,15 @@ class ChangePasswordDto {
   newPassword!: string;
 }
 
+class ResendVerifyDto {
+  @IsEmail()
+  email!: string;
+
+  @IsOptional()
+  @IsString()
+  tenantSlug?: string;
+}
+
 @Controller("auth")
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -72,6 +81,21 @@ export class AuthController {
   @Post("register")
   register(@Body() body: RegisterDto) {
     return this.auth.registerCustomer(body);
+  }
+
+  /**
+   * Confirmation link target. GET because it is opened from an email client,
+   * and unauthenticated because the whole point is that the customer cannot
+   * sign in yet.
+   */
+  @Get("verify")
+  verify(@Query("token") token: string) {
+    return this.auth.verifyEmail(token ?? "");
+  }
+
+  @Post("verify/resend")
+  resendVerify(@Body() body: ResendVerifyDto) {
+    return this.auth.resendVerifyEmail(body);
   }
 
   @Get("me")

@@ -27,6 +27,16 @@ const FALLBACK_TEMPLATES: Record<string, { subject: string; bodyHtml: string }> 
     subject: "Booking {{bookingNo}} was cancelled",
     bodyHtml: "<p>Hi {{customerName}},</p><p>Booking {{bookingNo}} has been cancelled.</p>",
   },
+  customer_welcome: {
+    subject: "Welcome to {{storeName}}",
+    bodyHtml:
+      "<p>Hi {{customerName}},</p><p>Your {{storeName}} account is ready — you can review your bookings and details any time.</p><p><a href=\"{{accountUrl}}\">Go to your account</a></p>",
+  },
+  customer_verify: {
+    subject: "Confirm your email for {{storeName}}",
+    bodyHtml:
+      "<p>Hi {{customerName}},</p><p>Confirm this address to finish setting up your {{storeName}} account.</p><p><a href=\"{{verifyUrl}}\">Confirm my email</a></p><p>The link is good for {{expiresHours}} hours. If you did not sign up, you can ignore this.</p>",
+  },
   staff_invite: {
     subject: "You have been invited to {{storeName}}",
     bodyHtml: "<p>{{inviterName}} invited you to help run {{storeName}}.</p><p>{{inviteUrl}}</p>",
