@@ -1,0 +1,44 @@
+# Runs on ServerHoster (in Docker on the VPS), not GitHub Actions.
+# Replaces .github/workflows/ci.yml: pushes to main and pull requests into main.
+# The weekly e2e smoke test (.github/workflows/e2e.yml) stays on GitHub.
+image: node:22-bookworm
+timeoutMinutes: 30
+memoryMb: 6144
+cpus: 2
+env:
+  # pnpm comes from corepack, linked into /tmp/bin (the image's own bin is read-only).
+  PATH: /tmp/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  DATABASE_URL: postgresql://rentora:rentora@localhost:5432/rentora
+steps:
+  - name: Install pnpm
+    run: mkdir -p /tmp/bin && corepack enable --install-directory /tmp/bin && pnpm --version
+  # Postgres 16 inside the job (no service containers here).
+  - name: Start Postgres
+    run: .survhub/services.sh postgres=16 pguser=rentora pgpassword=rentora pgdb=rentora
+  - name: Install dependencies
+    run: pnpm install --frozen-lockfile
+  - name: Generate Prisma client
+    run: pnpm db:generate
+  # A schema change without a matching migration silently breaks every deploy.
+  - name: Check migrations match the schema
+    run: pnpm db:check-migrations
+  # Must come before anything that imports @rentora/db (it resolves through its built dist).
+  - name: Build packages
+    run: >-
+      pnpm --filter @rentora/domain --filter @rentora/db --filter @rentora/ui
+      --filter @rentora/worker build
+  - name: Seed the database
+    run: pnpm db:seed
+  # Proves two tenants on one database cannot see each other, against real Postgres.
+  - name: Tenant isolation check
+    run: pnpm check:isolation
+  - name: Domain package tests
+    run: pnpm --filter @rentora/domain test
+  - name: API tests
+    run: pnpm --filter @rentora/api test
+  - name: Build API
+    run: pnpm --filter @rentora/api build
+  - name: Build web
+    run: pnpm --filter @rentora/web build
+  - name: Typecheck
+    run: pnpm typecheck
